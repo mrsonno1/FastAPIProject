@@ -1,5 +1,5 @@
 # db/models.py
-from sqlalchemy import Column, Integer, String, TIMESTAMP
+from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -21,3 +21,18 @@ class AdminUser(Base):
     # '접속시간'은 로그인 시마다 업데이트해야 하므로, Python 코드에서 처리합니다.
     # DB 기본값으로 CURRENT_TIMESTAMP를 사용하면 생성 시에만 적용됩니다.
     last_login_at = Column("접속시간", TIMESTAMP(timezone=True), server_default=func.now())
+
+class Image(Base):
+    __tablename__ = "images"
+    __table_args__ = (
+        UniqueConstraint('category', 'display_name', name='_category_display_name_uc'),
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    category = Column(String, nullable=False, index=True)
+    # 사용자가 지정하는 파일 이름 (예: '내 고양이 사진')
+    display_name = Column(String, index=True, nullable=False)
+    # S3/MinIO에 저장된 객체 이름 (예: uuid.jpg)
+    object_name = Column(String, index=True)
+    # 외부에서 접근 가능한 전체 URL
+    public_url = Column(String, unique=True)
+    uploaded_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
