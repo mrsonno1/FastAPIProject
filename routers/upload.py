@@ -6,7 +6,7 @@ from db.database import get_db
 # 수정/검색을 위한 스키마 및 CRUD 함수 임포트
 from schemas.image import ImageResponse
 from crud import image as image_crud  # image_crud로 임포트
-from services.minio_service import minio_service
+from services.storage_service import storage_service
 from db import models
 
 router = APIRouter(prefix="/images", tags=["Images"])  # prefix를 /images로 변경하는 것이 더 명확
@@ -30,7 +30,7 @@ def upload_image(
             detail=f"'{category}' 종류에 해당 표시 이름이 이미 존재합니다."
         )
 
-    upload_result = minio_service.upload_file(file)
+    upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(...)
 
@@ -106,14 +106,14 @@ def update_image_file(
     old_object_name = db_image.object_name
 
     # 2. 새로운 파일을 먼저 업로드합니다.
-    upload_result = minio_service.upload_file(file)
+    upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="새 파일 업로드에 실패했습니다.")
 
     # ▼▼▼▼▼ 이 부분이 핵심입니다 ▼▼▼▼▼
     # 3. 새 파일 업로드가 성공하면, 기존 파일을 MinIO에서 삭제합니다.
     if old_object_name:  # 기존 파일 이름이 DB에 있는 경우에만 삭제 시도
-        minio_service.delete_file(old_object_name)
+        storage_service.delete_file(old_object_name)
     # ▲▲▲▲▲ 여기까지 ▲▲▲▲▲
 
     # 4. DB 정보를 새로운 파일 정보로 업데이트합니다.
