@@ -36,3 +36,16 @@ class Image(Base):
     # 외부에서 접근 가능한 전체 URL
     public_url = Column(String, unique=True)
     uploaded_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+class Color(Base):
+    __tablename__ = "colors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    color_name = Column(String, unique=True, index=True, nullable=False)
+    color_values = Column(String(100), nullable=False)
+    monochrome_type = Column(String(10), nullable=False)
+    updated_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )
