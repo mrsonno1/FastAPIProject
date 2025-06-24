@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, admin, upload, color, raw_sql, brand
+from routers import auth, admin, upload, color, raw_sql, brand, country
 from db.database import engine, Base
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
@@ -39,6 +39,7 @@ app.include_router(upload.router) # upload 라우터 등록
 app.include_router(color.router)
 app.include_router(raw_sql.router)
 app.include_router(brand.router)
+app.include_router(country.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the FastAPI Token Auth System"}

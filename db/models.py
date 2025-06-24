@@ -32,6 +32,14 @@ class Brand(Base):
     # 순위를 나타내는 정수형 컬럼. 값이 작을수록 순위가 높음.
     rank = Column(Integer, nullable=False, index=True)
 
+class Country(Base):
+    __tablename__ = "countries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    country_name = Column(String, unique=True, index=True, nullable=False)
+    # 순위를 나타내는 정수형 컬럼. 값이 작을수록 순위가 높음.
+    rank = Column(Integer, nullable=False, index=True)
+
 class Image(Base):
     __tablename__ = "images"
     __table_args__ = (
