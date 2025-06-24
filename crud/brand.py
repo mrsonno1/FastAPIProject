@@ -1,0 +1,98 @@
+# crud/brand.py
+from sqlalchemy.orm import Session
+from sqlalchemy import func, case
+from db import models
+from typing import Optional
+from schemas import brand as brand_schema
+
+
+def get_brand_by_name(db: Session, brand_name: str):
+    return db.query(models.Brand).filter(models.Brand.brand_name == brand_name).first()
+
+
+def get_all_brands_ordered(db: Session):
+    """모든 브랜드를 순위(rank) 순으로 정렬하여 가져옵니다."""
+    return db.query(models.Brand).order_by(models.Brand.rank).all()
+
+
+def create_brand(db: Session, brand_name: str, brand_image_url: str, object_name: str):
+    """새로운 브랜드를 가장 낮은 순위로 생성합니다."""
+    max_rank = db.query(func.max(models.Brand.rank)).scalar() or 0
+
+    db_brand = models.Brand(
+        brand_name=brand_name,
+        brand_image_url=brand_image_url,
+        object_name=object_name,
+        rank=max_rank + 1
+    )
+    db.add(db_brand)
+    db.commit()
+    db.refresh(db_brand)
+    return db_brand
+
+
+def update_brand_info(
+        db: Session,
+        db_brand: models.Brand,
+        brand_name: str,
+        brand_image_url: str,
+        object_name: Optional[str]
+):
+    """브랜드의 이름과 이미지 URL을 수정합니다."""
+    db_brand.brand_name = brand_name
+    db_brand.brand_image_url = brand_image_url
+    if object_name: # 새 파일로 교체된 경우 object_name도 업데이트
+        db_brand.object_name = object_name
+    db.commit()
+    db.refresh(db_brand)
+    return db_brand
+
+
+def update_brand_rank(db: Session, brand_id: int, action: str):
+    """브랜드의 순위를 변경합니다."""
+    target_brand = db.query(models.Brand).filter(models.Brand.id == brand_id).first()
+    if not target_brand:
+        return None
+
+    all_brands = get_all_brands_ordered(db)
+    if len(all_brands) <= 1:  # 브랜드가 하나뿐이면 순위 변경 의미 없음
+        return all_brands
+
+    # 순위 변경 로직
+    if action == "up":
+        # 현재 순위보다 한 단계 위로
+        current_index = all_brands.index(target_brand)
+        if current_index > 0:
+            prev_brand = all_brands[current_index - 1]
+            # 두 브랜드의 rank 값 맞바꾸기
+            target_brand.rank, prev_brand.rank = prev_brand.rank, target_brand.rank
+
+    elif action == "down":
+        # 현재 순위보다 한 단계 아래로
+        current_index = all_brands.index(target_brand)
+        if current_index < len(all_brands) - 1:
+            next_brand = all_brands[current_index + 1]
+            target_brand.rank, next_brand.rank = next_brand.rank, target_brand.rank
+
+    elif action == "top":
+        # 가장 위로 (rank=1)
+        # 1. target_brand를 제외한 모든 브랜드의 rank를 1씩 증가시킴
+        db.query(models.Brand).filter(models.Brand.id != brand_id).update(
+            {models.Brand.rank: models.Brand.rank + 1}, synchronize_session=False
+        )
+        # 2. target_brand의 rank를 1로 설정
+        target_brand.rank = 1
+
+    elif action == "bottom":
+        # 가장 아래로
+        max_rank = all_brands[-1].rank
+        # 1. target_brand를 제외하고 순위가 더 높았던 브랜드들의 rank를 1씩 감소시킴
+        db.query(models.Brand).filter(
+            models.Brand.id != brand_id,
+            models.Brand.rank > target_brand.rank
+        ).update({models.Brand.rank: models.Brand.rank - 1}, synchronize_session=False)
+        # 2. target_brand의 rank를 가장 높은 값으로 설정
+        target_brand.rank = max_rank
+
+    db.commit()
+    return get_all_brands_ordered(db)  # 변경된 전체 순위 목록 반환

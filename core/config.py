@@ -16,11 +16,12 @@ class Settings(BaseSettings):
     AWS_S3_BUCKET_NAME: Optional[str] = None
     AWS_S3_REGION: Optional[str] = None
 
-    MINIO_ENDPOINT: str
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
-    MINIO_BUCKET_NAME: str
-    MINIO_USE_SECURE: bool
+    # ▼▼▼▼▼ 모든 MinIO 필드를 선택사항으로 변경합니다 ▼▼▼▼▼
+    MINIO_ENDPOINT: Optional[str] = None
+    MINIO_ACCESS_KEY: Optional[str] = None
+    MINIO_SECRET_KEY: Optional[str] = None
+    MINIO_BUCKET_NAME: Optional[str] = None
+    MINIO_USE_SECURE: Optional[bool] = None
 
     class Config:
         env_file = ".env"

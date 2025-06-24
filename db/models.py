@@ -22,6 +22,16 @@ class AdminUser(Base):
     # DB 기본값으로 CURRENT_TIMESTAMP를 사용하면 생성 시에만 적용됩니다.
     last_login_at = Column("접속시간", TIMESTAMP(timezone=True), server_default=func.now())
 
+class Brand(Base):
+    __tablename__ = "brands"
+
+    id = Column(Integer, primary_key=True, index=True)
+    brand_name = Column(String, unique=True, index=True, nullable=False)
+    brand_image_url = Column(String)
+    object_name = Column(String, nullable=True)
+    # 순위를 나타내는 정수형 컬럼. 값이 작을수록 순위가 높음.
+    rank = Column(Integer, nullable=False, index=True)
+
 class Image(Base):
     __tablename__ = "images"
     __table_args__ = (
