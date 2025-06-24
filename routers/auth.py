@@ -1,5 +1,5 @@
 # routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -9,7 +9,8 @@ from crud import user as user_crud
 from core.security import create_access_token, create_refresh_token, get_current_user, verify_password
 from db import models
 from pydantic import BaseModel # BaseModel 임포트
-
+from jose import JWTError, jwt
+from core.config import settings
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
@@ -87,3 +88,48 @@ def login_for_access_token(db: Session = Depends(get_db), form_data: OAuth2Passw
 def read_users_me(current_user: models.AdminUser = Depends(get_current_user)):
     """현재 로그인된 사용자 정보 확인 API (토큰 필요)"""
     return current_user
+
+
+@router.post("/refresh", response_model=user_schema.Token)
+def refresh_token(
+        refresh_token: str = Header(..., description="Refresh Token"),
+        db: Session = Depends(get_db)
+):
+    """
+    Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급받습니다.
+    (Refresh Token Rotation 적용)
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        # 1. Refresh Token 검증 (만료, 서명 등)
+        payload = jwt.decode(
+            refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+    # 2. DB에서 사용자 정보 확인
+    user = user_crud.get_user_by_username(db, username=username)
+    if user is None:
+        raise credentials_exception
+
+    # 3. 새로운 Access Token 생성
+    new_access_token = create_access_token(data={"sub": user.username})
+
+    # 4. (보안 강화) 새로운 Refresh Token도 함께 생성 (Refresh Token Rotation)
+    new_refresh_token = create_refresh_token(data={"sub": user.username})
+
+    # Token 스키마에 맞게 응답 반환
+    return user_schema.Token(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token
+    )
