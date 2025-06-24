@@ -22,7 +22,7 @@ def run_select_query(
     'admin' 권한을 가진 사용자만 이 API를 호출할 수 있습니다.
     """
     # 2. 'admin' 권한이 있는지 확인
-    if current_user.permission != 'admin':
+    if current_user.permission not in ['admin', 'superadmin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="이 작업을 수행할 권한이 없습니다."
@@ -42,7 +42,7 @@ def run_mutation_query(
     'admin' 권한을 가진 사용자만 이 API를 호출할 수 있습니다.
     """
     # 2. 'admin' 권한이 있는지 확인
-    if current_user.permission != 'admin':
+    if current_user.permission not in ['admin', 'superadmin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="이 작업을 수행할 권한이 없습니다."

@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo # zoneinfo 임포트
 from db import models
 from schemas import user as user_schema
 from core.security import get_password_hash
+from typing import Optional
+
 
 def get_user_by_username(db: Session, username: str):
     """아이디로 사용자 정보 조회"""
@@ -63,18 +65,41 @@ def get_users_by_contact_name(db: Session, name: str):
     return db.query(models.AdminUser).filter(models.AdminUser.contact_name.like(search_pattern)).all()
 
 
-def get_users_paginated(db: Session, page: int, size: int):
+
+def get_admin_users_paginated(
+    db: Session,
+    page: int,
+    size: int,
+    permission: Optional[str] = None,
+    username: Optional[str] = None,
+    company_name: Optional[str] = None,
+    contact_name: Optional[str] = None,
+    contact_phone: Optional[str] = None
+):
     """
-    모든 관리자 계정 목록을 페이지네이션하여 가져옵니다.
+    관리자 계정 목록을 검색 조건과 함께 페이지네이션하여 가져옵니다.
     """
-    # 1. 건너뛸 항목 수를 계산합니다. (페이지 1이면 0개, 페이지 2이면 size만큼 건너뜀)
+    # 1. 기본 쿼리를 시작합니다.
+    query = db.query(models.AdminUser)
+
+    # 2. 검색 조건이 제공되면, 동적으로 filter를 추가합니다.
+    if permission:
+        query = query.filter(models.AdminUser.permission == permission)
+    if username:
+        # 부분 일치 검색 (LIKE)
+        query = query.filter(models.AdminUser.username.like(f"%{username}%"))
+    if company_name:
+        query = query.filter(models.AdminUser.company_name.like(f"%{company_name}%"))
+    if contact_name:
+        query = query.filter(models.AdminUser.contact_name.like(f"%{contact_name}%"))
+    if contact_phone:
+        query = query.filter(models.AdminUser.contact_phone.like(f"%{contact_phone}%"))
+
+    # 3. 필터가 적용된 쿼리에서 전체 항목 수를 계산합니다.
+    total_count = query.count()
+
+    # 4. 순서 정렬 및 페이지네이션을 적용하여 실제 데이터를 가져옵니다.
     offset = (page - 1) * size
+    items = query.order_by(models.AdminUser.id.desc()).offset(offset).limit(size).all()
 
-    # 2. 전체 항목 수를 계산하기 위한 쿼리
-    total_count = db.query(models.AdminUser).count()
-
-    # 3. 실제 페이지에 해당하는 데이터만 가져오는 쿼리 (offset과 limit 사용)
-    items = db.query(models.AdminUser).offset(offset).limit(size).all()
-
-    # 4. 데이터 목록과 전체 개수를 딕셔너리로 반환
     return {"items": items, "total_count": total_count}

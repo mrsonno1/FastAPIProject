@@ -3,7 +3,7 @@ import math # 총 페이지 계산을 위해 math 라이브러리 임포트
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List # List 타입을 임포트합니다.
-
+from typing import List, Optional
 from db.database import get_db
 from schemas import user as user_schema
 from crud import user as user_crud
@@ -73,32 +73,49 @@ def read_user_by_id(
 
 
 @router.get("/list", response_model=user_schema.PaginatedAdminUserResponse)
-def list_all_users(
-        page: int = Query(1, ge=1, description="페이지 번호 (1부터 시작)"),
-        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수 (최대 100)"),
+def list_all_admin_users(
+        # 페이지네이션 파라미터
+        page: int = Query(1, ge=1, description="페이지 번호"),
+        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+
+        # ▼▼▼▼▼ 선택적 검색 파라미터 추가 ▼▼▼▼▼
+        permission: Optional[str] = Query(None, description="권한으로 검색"),
+        username: Optional[str] = Query(None, min_length=1, description="아이디로 검색"),
+        company_name: Optional[str] = Query(None, min_length=1, description="소속사업자명으로 검색"),
+        contact_name: Optional[str] = Query(None, min_length=1, description="담당자명으로 검색"),
+        contact_phone: Optional[str] = Query(None, min_length=1, description="담당자연락처로 검색"),
+
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
-    모든 관리자 계정 목록을 페이지네이션하여 조회합니다.
+    모든 관리자 계정 목록을 검색 조건과 함께 페이지네이션하여 조회합니다.
     """
-    # 권한 검사 (예: admin만 이 API를 사용 가능하게)
-    if current_user.permission != 'admin':
+    # 1단계에서 수정한 권한 검사 로직
+    if current_user.permission not in ['admin', 'superadmin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="이 작업을 수행할 권한이 없습니다."
         )
 
-    # CRUD 함수를 호출하여 데이터와 전체 개수를 가져옴
-    paginated_data = user_crud.get_users_paginated(db, page=page, size=size)
+    # 수정된 CRUD 함수 호출
+    paginated_data = user_crud.get_admin_users_paginated(
+        db,
+        page=page,
+        size=size,
+        permission=permission,
+        username=username,
+        company_name=company_name,
+        contact_name=contact_name,
+        contact_phone=contact_phone
+    )
 
     items = paginated_data["items"]
     total_count = paginated_data["total_count"]
 
-    # 총 페이지 수 계산
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
-    # 최종 응답 객체 구성
+    # PaginatedAdminUserResponse 스키마를 사용한다고 가정합니다.
     return {
         "total_count": total_count,
         "total_pages": total_pages,

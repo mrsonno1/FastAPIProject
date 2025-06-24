@@ -15,13 +15,13 @@ app = FastAPI(title="LensGrapick")
 # 예: React는 3000, Vue는 8080, Svelte는 5173 등
 origins = [
     "http://localhost",
-    "http://localhost:3000", # React 개발 서버
-    "http://localhost:8080", # Vue 개발 서버
-    "https://52.79.185.227",
-    "http://52.79.185.227",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "https://52.79.185.227:3000",
+    "http://52.79.185.227:3000",
     "http://10.10.100.85:3000",
     "null"  # 로컬 파일(file://)에서의 요청을 허용하기 위해 추가
-    # 여기에 실제 배포될 프론트엔드 도메인을 추가해야 합니다.
+
     # "https://your-frontend-domain.com",
 ]
 
