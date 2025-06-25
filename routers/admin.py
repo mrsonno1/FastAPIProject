@@ -46,60 +46,6 @@ def fix_user_info_by_username(  # 함수 이름도 변경
     # 4. CRUD 함수 호출하여 업데이트
     return user_crud.fix_admin_user(db, db_user=user_to_update, user_fix=user_fix)
 
-@router.get("/by-username/{username}", response_model=user_schema.AdminUserResponse)
-def read_user_by_username(
-    username: str,
-    db: Session = Depends(get_db),
-    current_user: models.AdminUser = Depends(get_current_user)
-):
-    """
-    사용자 아이디(username)로 특정 관리자 정보 조회.
-    인증된 사용자만 접근 가능합니다.
-    """
-    db_user = user_crud.get_user_by_username(db, username=username)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="해당 아이디의 사용자를 찾을 수 없습니다.")
-    return db_user
-
-
-@router.get("/by-contact-name/", response_model=List[user_schema.AdminUserResponse])
-def read_users_by_contact_name(
-        name: str = Query(..., min_length=1, description="검색할 담당자 이름"),
-        db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user)
-):
-    """
-    담당자 이름(contact_name)의 일부를 포함하는 모든 사용자 목록을 조회합니다.
-    (예: '민수'로 검색)
-    """
-    # 권한 검사를 원한다면 여기에 추가할 수 있습니다.
-    # if current_user.permission != 'admin':
-    #     raise HTTPException(status_code=403, detail="권한이 없습니다.")
-
-    users = user_crud.get_users_by_contact_name(db, name=name)
-    if not users:
-        # 검색 결과가 없는 것은 에러가 아니므로, 빈 리스트를 반환하는 것이 일반적입니다.
-        # 혹은 404 에러를 발생시켜도 됩니다.
-        return []
-
-    return users
-
-
-@router.get("/by-id/{user_id}", response_model=user_schema.AdminUserResponse)
-def read_user_by_id(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.AdminUser = Depends(get_current_user)
-):
-    """
-    사용자 고유 ID(PK, index)로 특정 관리자 정보 조회.
-    인증된 사용자만 접근 가능합니다.
-    """
-    db_user = user_crud.get_user_by_id(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="해당 ID의 사용자를 찾을 수 없습니다.")
-    return db_user
-
 
 @router.get("/list", response_model=user_schema.PaginatedAdminUserResponse)
 def list_all_admin_users(
