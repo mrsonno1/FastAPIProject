@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from db import models
 from schemas import color as color_schema
 from typing import Optional
+from sqlalchemy import or_, cast, Integer, func
 
 def get_color_by_name(db: Session, color_name: str):
     """color_name으로 컬러 정보 조회"""
@@ -53,13 +54,21 @@ def get_colors_paginated(
 
     # 2. 동적 정렬
     if orderBy:
-        order_column_name, order_direction = orderBy.split()
-        if hasattr(models.Color, order_column_name):
+        try:
+            order_column_name, order_direction = orderBy.split()
+            direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
+
             order_column = getattr(models.Color, order_column_name)
-            if order_direction.lower() == 'desc':
-                query = query.order_by(order_column.desc())
+
+            # 만약 정렬 대상이 color_name이라면, 숫자로 형 변환하여 정렬
+            if order_column_name == 'color_name':
+                numeric_expression = cast(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), Integer)
+                query = query.order_by(direction_func(numeric_expression))
             else:
-                query = query.order_by(order_column.asc())
+                query = query.order_by(direction_func(order_column))
+
+        except (ValueError, AttributeError):
+            query = query.order_by(models.Color.id.desc())
     else:
         query = query.order_by(models.Color.id.desc())
 
