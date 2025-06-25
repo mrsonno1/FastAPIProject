@@ -2,6 +2,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
+from typing import List
 
 # 기본 필드를 포함하는 Base 스키마
 class ColorBase(BaseModel):
@@ -28,3 +29,10 @@ class ColorResponse(ColorBase):
 # 중복 확인 응답을 위한 스키마
 class NameCheckResponse(BaseModel):
     exists: bool
+
+class PaginatedColorResponse(BaseModel):
+    total_count: int
+    total_pages: int
+    page: int
+    size: int
+    items: List[ColorResponse]

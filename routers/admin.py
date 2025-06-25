@@ -1,14 +1,15 @@
 # routers/admin.py
 import math # 총 페이지 계산을 위해 math 라이브러리 임포트
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
 from typing import List # List 타입을 임포트합니다.
 from typing import List, Optional
 from db.database import get_db
 from schemas import user as user_schema
 from crud import user as user_crud
-from core.security import get_current_user
+from core.security import get_current_user, verify_password
 from db import models
+
 
 # 새로운 APIRouter 객체 생성
 router = APIRouter(
@@ -16,6 +17,34 @@ router = APIRouter(
     tags=["Admins"],   # FastAPI 문서에서 "Admins" 그룹으로 묶임
     responses={404: {"description": "Not found"}},
 )
+
+
+@router.put("/fix/{username}", response_model=user_schema.AdminUserResponse)
+def fix_user_info_by_username(  # 함수 이름도 변경
+        username: str,  # 경로 변수를 user_id: int 에서 username: str 로 변경
+        user_fix: user_schema.AdminUserFix,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """
+    (관리자 전용) 아이디(username)로 특정 관리자 계정의 정보를 수정합니다.
+    """
+    # 1. 권한 검사
+    if current_user.permission not in ['admin', 'superadmin']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="사용자 정보를 수정할 권한이 없습니다."
+        )
+
+    # 2. 수정할 대상 사용자 조회 (ID 대신 username으로 조회)
+    user_to_update = user_crud.get_user_by_username(db, username=username)
+    if not user_to_update:
+        raise HTTPException(status_code=404, detail="수정할 사용자를 찾을 수 없습니다.")
+
+
+
+    # 4. CRUD 함수 호출하여 업데이트
+    return user_crud.fix_admin_user(db, db_user=user_to_update, user_fix=user_fix)
 
 @router.get("/by-username/{username}", response_model=user_schema.AdminUserResponse)
 def read_user_by_username(

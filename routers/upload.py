@@ -1,16 +1,44 @@
 # routers/upload.py
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query
 from sqlalchemy.orm import Session
-
+from typing import List, Optional
+import math
 from db.database import get_db
 # 수정/검색을 위한 스키마 및 CRUD 함수 임포트
-from schemas.image import ImageResponse
+from schemas.image import ImageResponse, PaginatedImageResponse
 from crud import image as image_crud  # image_crud로 임포트
 from services.storage_service import storage_service
 from db import models
 
 router = APIRouter(prefix="/images", tags=["Images"])  # prefix를 /images로 변경하는 것이 더 명확
 
+
+@router.get("/list", response_model=PaginatedImageResponse)
+def list_all_images(
+        page: int = Query(1, ge=1, description="페이지 번호"),
+        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+        category: Optional[str] = Query(None, description="이미지 종류(category)로 필터링"),
+        db: Session = Depends(get_db)
+        # 인증이 필요하다면 , current_user: models.AdminUser = Depends(get_current_user) 추가
+):
+    """
+    이미지 목록을 페이지네이션하여 조회합니다.
+    'category' 파라미터로 특정 종류의 이미지만 필터링할 수 있습니다.
+    """
+    paginated_data = image_crud.get_images_paginated(
+        db, page=page, size=size, category=category
+    )
+
+    total_count = paginated_data["total_count"]
+    total_pages = math.ceil(total_count / size) if total_count > 0 else 1
+
+    return {
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "page": page,
+        "size": size,
+        "items": paginated_data["items"],
+    }
 
 # 기존 업로드 API (prefix 변경에 따라 경로도 변경됨)
 @router.post("/upload", response_model=ImageResponse)
@@ -64,63 +92,56 @@ def search_image_by_display_name(category: str, display_name: str, db: Session =
     return db_image
 
 
-@router.put("/update-info/{image_id}", response_model=ImageResponse)
-def update_image_info(
+@router.put("/fix/{image_id}", response_model=ImageResponse)
+def update_image_details(
         image_id: int,
-        new_display_name: str = Form(..., min_length=1),
+        # 폼 데이터로 이름과 파일을 받습니다.
+        display_name: str = Form(..., min_length=1),
+        file: Optional[UploadFile] = File(None),  # 파일은 선택사항
         db: Session = Depends(get_db)
 ):
+    """
+    ID로 특정 이미지의 정보를 수정합니다.
+    - 이름은 항상 전송해야 합니다.
+    - 파일을 함께 보내면 이미지 파일도 교체됩니다.
+    """
+    # 1. 수정할 이미지 조회
     db_image = db.query(models.Image).filter(models.Image.id == image_id).first()
     if not db_image:
-        raise HTTPException(...)
+        raise HTTPException(status_code=404, detail="수정할 이미지를 찾을 수 없습니다.")
 
-    # 수정하려는 새 이름이 "같은 카테고리 내에서" 이미 사용 중인지 확인
+    # 2. 이름 중복 검사 (수정하려는 이름이 다른 이미지에 사용 중인지)
     existing_image = image_crud.get_image_by_display_name(
         db,
-        category=db_image.category,  # <-- 기존 이미지의 카테고리를 사용
-        display_name=new_display_name
+        category=db_image.category,  # 기존 이미지와 같은 카테고리 내에서
+        display_name=display_name
     )
     if existing_image and existing_image.id != image_id:
         raise HTTPException(status_code=409, detail="해당 종류에 이미 사용 중인 표시 이름입니다.")
 
-    db_image.display_name = new_display_name
-    db.commit()
-    db.refresh(db_image)
-    return db_image
+    # 3. 파일 처리 로직
+    new_object_name = None
+    new_public_url = None
 
+    if file:  # 만약 새로운 파일이 함께 전송되었다면
+        # 3-1. 기존 파일 삭제
+        if db_image.object_name:
+            storage_service.delete_file(db_image.object_name)
 
-@router.put("/update-file/{image_id}", response_model=ImageResponse)
-def update_image_file(
-        image_id: int,
-        file: UploadFile = File(...),
-        db: Session = Depends(get_db)
-):
-    """
-    이미지 파일 자체를 교체하고, 기존의 원본 파일은 삭제합니다.
-    """
-    db_image = db.query(models.Image).filter(models.Image.id == image_id).first()
-    if not db_image:
-        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
+        # 3-2. 새 파일 업로드
+        upload_result = storage_service.upload_file(file)
+        if not upload_result:
+            raise HTTPException(status_code=500, detail="새 이미지 업로드에 실패했습니다.")
 
-    # 1. 삭제할 기존 파일의 object_name을 변수에 저장해 둡니다.
-    old_object_name = db_image.object_name
+        # 3-3. 새 파일 정보를 변수에 할당
+        new_object_name = upload_result["object_name"]
+        new_public_url = upload_result["public_url"]
 
-    # 2. 새로운 파일을 먼저 업로드합니다.
-    upload_result = storage_service.upload_file(file)
-    if not upload_result:
-        raise HTTPException(status_code=500, detail="새 파일 업로드에 실패했습니다.")
-
-    # ▼▼▼▼▼ 이 부분이 핵심입니다 ▼▼▼▼▼
-    # 3. 새 파일 업로드가 성공하면, 기존 파일을 MinIO에서 삭제합니다.
-    if old_object_name:  # 기존 파일 이름이 DB에 있는 경우에만 삭제 시도
-        storage_service.delete_file(old_object_name)
-    # ▲▲▲▲▲ 여기까지 ▲▲▲▲▲
-
-    # 4. DB 정보를 새로운 파일 정보로 업데이트합니다.
-    #    (이전 답변에서 이 로직을 CRUD 함수로 분리했었다면 해당 함수를 호출)
-    db_image.object_name = upload_result["object_name"]
-    db_image.public_url = upload_result["public_url"]
-    db.commit()
-    db.refresh(db_image)
-
-    return db_image
+    # 4. CRUD 함수를 호출하여 DB 업데이트
+    return image_crud.update_image(
+        db=db,
+        db_image=db_image,
+        display_name=display_name,
+        new_object_name=new_object_name,
+        new_public_url=new_public_url
+    )

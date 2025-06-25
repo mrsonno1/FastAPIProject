@@ -51,9 +51,11 @@ def register_user(user: user_schema.AdminUserCreate, db: Session = Depends(get_d
     if db_user_by_name:
         raise HTTPException(status_code=400, detail="이미 등록된 아이디입니다.")
 
-    db_user_by_email = user_crud.get_user_by_email(db, email=user.email)
-    if db_user_by_email:
-        raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
+    # ▼▼▼ 이메일 중복 검사 로직 수정 ▼▼▼
+    if user.email:  # 이메일이 입력된 경우에만 검사
+        db_user_by_email = user_crud.get_user_by_email(db, email=user.email)
+        if db_user_by_email:
+            raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
 
     return user_crud.create_user(db=db, user=user)
 

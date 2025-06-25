@@ -4,25 +4,46 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from zoneinfo import ZoneInfo # zoneinfo 임포트
 
+
+class AdminUserFix(BaseModel):
+    # 일반 정보 필드 (모두 선택사항)
+    company_name: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+    # 비밀번호 필드 (선택사항)
+    new_password: Optional[str] = None
+
+
+
 # 회원가입(관리자 생성) 시 받을 데이터
 class AdminUserCreate(BaseModel):
     username: str
     password: str
-    email: EmailStr
     permission: str
-    account_code: Optional[str] = None
-    company_name: Optional[str] = None
+    account_code: str
+    company_name: str
+    email: Optional[EmailStr] = None
     contact_name: Optional[str] = None
     contact_phone: Optional[str] = None
+
+    @field_validator('email', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        # 입력값이 빈 문자열이면 None으로 변환
+        if v == "":
+            return None
+        return v
 
 # 응답으로 보낼 유저 정보 (비밀번호 제외)
 class AdminUserResponse(BaseModel):
     id: int
     username: str
-    email: EmailStr
     permission: str
-    account_code: Optional[str] = None
-    company_name: Optional[str] = None
+    account_code: str
+    company_name: str
+    email: Optional[EmailStr] = None
     contact_name: Optional[str] = None
     contact_phone: Optional[str] = None
     created_at: datetime
@@ -30,6 +51,7 @@ class AdminUserResponse(BaseModel):
 
     class Config:
         from_attributes = True # SQLAlchemy 모델과 매핑
+
 
 class PaginatedAdminUserResponse(BaseModel):
     total_count: int

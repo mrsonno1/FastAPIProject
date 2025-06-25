@@ -1,6 +1,7 @@
 # schemas/image.py
 from pydantic import BaseModel, Field # Field 임포트
 from datetime import datetime
+from typing import List
 
 class ImageResponse(BaseModel):
     id: int
@@ -12,3 +13,11 @@ class ImageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PaginatedImageResponse(BaseModel):
+    total_count: int
+    total_pages: int
+    page: int
+    size: int
+    items: List[ImageResponse]

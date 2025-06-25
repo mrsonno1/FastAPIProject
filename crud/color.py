@@ -3,9 +3,11 @@ from sqlalchemy.orm import Session
 from db import models
 from schemas import color as color_schema
 
+
 def get_color_by_name(db: Session, color_name: str):
     """color_name으로 컬러 정보 조회"""
     return db.query(models.Color).filter(models.Color.color_name == color_name).first()
+
 
 def create_color(db: Session, color: color_schema.ColorCreate):
     """새로운 컬러 생성"""
@@ -19,6 +21,7 @@ def create_color(db: Session, color: color_schema.ColorCreate):
     db.refresh(db_color)
     return db_color
 
+
 def update_color(db: Session, db_color: models.Color, color_update: color_schema.ColorUpdate):
     """컬러 값 업데이트"""
     db_color.color_values = color_update.color_values
@@ -26,3 +29,13 @@ def update_color(db: Session, db_color: models.Color, color_update: color_schema
     db.commit()
     db.refresh(db_color)
     return db_color
+
+
+def get_colors_paginated(db: Session, page: int, size: int):
+    """
+    모든 컬러 목록을 페이지네이션하여 가져옵니다.
+    """
+    offset = (page - 1) * size
+    total_count = db.query(models.Color).count()
+    items = db.query(models.Color).order_by(models.Color.id.desc()).offset(offset).limit(size).all()
+    return {"items": items, "total_count": total_count}

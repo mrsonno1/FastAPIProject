@@ -44,6 +44,29 @@ def create_user(db: Session, user: user_schema.AdminUserCreate):
     return db_user
 
 
+def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema.AdminUserFix):
+    """
+    관리자 계정의 정보를 선택적으로 업데이트합니다. (단순화된 버전)
+    """
+    # 1. Pydantic 모델에서 사용자가 보낸 값들만 딕셔너리로 추출합니다.
+    update_data = user_fix.model_dump(exclude_unset=True)
+
+    # 2. 비밀번호가 있다면, 해싱하여 딕셔너리 값을 교체합니다.
+    if "new_password" in update_data and update_data["new_password"]:
+        # 'new_password' 키를 DB 모델의 속성명인 'password'로 바꾸고, 값을 해싱합니다.
+        update_data["password"] = get_password_hash(update_data.pop("new_password"))
+
+    # 3. 딕셔너리의 각 키-값 쌍에 대해 DB 모델 객체의 속성을 업데이트합니다.
+    #    이제 모든 키 이름이 모델 속성 이름과 일치하므로 분기문이 필요 없습니다.
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+
 
 def update_last_login(db: Session, username: str):
     """ 마지막 접속 시간 업데이트 (안정적인 UTC 기반 방식으로 최종 수정)"""
