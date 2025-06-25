@@ -7,6 +7,7 @@ from db.database import get_db
 from schemas import color as color_schema
 from crud import color as color_crud
 from schemas.color import ColorResponse, PaginatedColorResponse
+from typing import Optional
 
 router = APIRouter(prefix="/colors", tags=["Colors"])
 
@@ -14,12 +15,17 @@ router = APIRouter(prefix="/colors", tags=["Colors"])
 def list_all_colors(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'color_name asc')"),
+        searchText: Optional[str] = Query(None, description="통합 검색어"),
         db: Session = Depends(get_db)
 ):
     """
     모든 컬러 목록을 페이지네이션하여 조회합니다.
     """
-    paginated_data = color_crud.get_colors_paginated(db, page=page, size=size)
+    paginated_data = color_crud.get_colors_paginated(
+        db, page=page, size=size,
+        orderBy=orderBy, searchText=searchText  # <-- CRUD 함수에 전달
+    )
 
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1

@@ -18,6 +18,8 @@ def list_all_images(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
         category: Optional[str] = Query(None, description="이미지 종류(category)로 필터링"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'rank asc', 'id desc')"),
+        searchText: Optional[str] = Query(None, description="통합 검색어"),
         db: Session = Depends(get_db)
         # 인증이 필요하다면 , current_user: models.AdminUser = Depends(get_current_user) 추가
 ):
@@ -26,7 +28,8 @@ def list_all_images(
     'category' 파라미터로 특정 종류의 이미지만 필터링할 수 있습니다.
     """
     paginated_data = image_crud.get_images_paginated(
-        db, page=page, size=size, category=category
+        db, page=page, size=size, category=category,
+        orderBy=orderBy, searchText=searchText  # <-- CRUD 함수에 전달
     )
 
     total_count = paginated_data["total_count"]

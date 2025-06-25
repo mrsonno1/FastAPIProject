@@ -44,26 +44,46 @@ def update_image_file(db: Session, db_image: models.Image, new_object_name: str,
 
 
 def get_images_paginated(
-    db: Session,
-    page: int,
-    size: int,
-    category: Optional[str] = None
+        db: Session,
+        page: int,
+        size: int,
+        category: Optional[str] = None,
+        orderBy: Optional[str] = None,
+        searchText: Optional[str] = None
 ):
-    """
-    이미지 목록을 검색 조건(category)과 함께 페이지네이션하여 가져옵니다.
-    """
-    # 1. 기본 쿼리 시작
     query = db.query(models.Image)
 
-    # 2. category 파라미터가 제공되면, 필터링 조건 추가
+    # 1. 카테고리 필터링
     if category:
         query = query.filter(models.Image.category == category)
 
-    # 3. 필터링된 쿼리에서 전체 항목 수 계산
-    total_count = query.count()
+    # 2. 다중 컬럼 텍스트 검색 (searchText)
+    if searchText:
+        search_pattern = f"%{searchText}%"
+        query = query.filter(
+            or_(
+                models.Image.display_name.like(search_pattern),
+                models.Image.category.like(search_pattern)
+                # 추가하고 싶은 다른 검색 대상 컬럼을 여기에 or_()로 추가
+            )
+        )
 
-    # 4. 순서 정렬 및 페이지네이션 적용하여 데이터 가져오기
+    # 3. 동적 정렬 (orderBy)
+    if orderBy:
+        # 예: "rank asc", "id desc"
+        order_column_name, order_direction = orderBy.split()
+        if hasattr(models.Image, order_column_name):
+            order_column = getattr(models.Image, order_column_name)
+            if order_direction.lower() == 'desc':
+                query = query.order_by(order_column.desc())
+            else:
+                query = query.order_by(order_column.asc())
+    else:
+        # 기본 정렬
+        query = query.order_by(models.Image.id.desc())
+
+    total_count = query.count()
     offset = (page - 1) * size
-    items = query.order_by(models.Image.id.desc()).offset(offset).limit(size).all()
+    items = query.offset(offset).limit(size).all()
 
     return {"items": items, "total_count": total_count}
