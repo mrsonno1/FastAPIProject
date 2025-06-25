@@ -15,7 +15,16 @@ class AdminUserFix(BaseModel):
     # 비밀번호 필드 (선택사항)
     new_password: Optional[str] = None
 
-
+    @field_validator('email', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v: Optional[str]) -> Optional[str]:
+        """
+        email 필드에 빈 문자열("")이 들어오면 None으로 변환합니다.
+        """
+        # 입력값이 정확히 빈 문자열일 경우에만 None으로 바꿉니다.
+        if v == "":
+            return None
+        return v
 
 # 회원가입(관리자 생성) 시 받을 데이터
 class AdminUserCreate(BaseModel):
