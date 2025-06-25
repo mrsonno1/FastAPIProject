@@ -81,12 +81,20 @@ def upload_image(
     return new_image
 
 
-@router.get("/search/{category}/{display_name}", response_model=ImageResponse)
-def search_image_by_display_name(category: str, display_name: str, db: Session = Depends(get_db)):
+@router.get("/search", response_model=ImageResponse)
+def search_image_by_display_name(
+    # 경로 변수 대신 쿼리 파라미터로 받습니다.
+    category: str = Query(..., description="검색할 이미지의 종류"),
+    display_name: str = Query(..., description="검색할 이미지의 정확한 표시 이름"),
+    db: Session = Depends(get_db)
+):
     """
     종류(category)와 표시 이름(display_name)으로 이미지를 검색합니다.
+    (한글 이름 검색을 위해 쿼리 파라미터 사용)
     """
-    db_image = image_crud.get_image_by_display_name(db, category=category, display_name=display_name)
+    db_image = image_crud.get_image_by_display_name(
+        db, category=category, display_name=display_name
+    )
     if db_image is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
