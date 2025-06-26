@@ -1,5 +1,5 @@
 # main.py
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, admin, upload, color, raw_sql, brand, country
 from db.database import engine, Base
@@ -44,14 +44,23 @@ app.add_middleware(
 )
 
 
+api_router = APIRouter(prefix="/api")
 
-app.include_router(auth.router)
-app.include_router(admin.router)
-app.include_router(upload.router) # upload 라우터 등록
-app.include_router(color.router)
-app.include_router(raw_sql.router)
-app.include_router(brand.router)
-app.include_router(country.router)
+api_router.include_router(auth.router)
+api_router.include_router(admin.router)
+api_router.include_router(upload.router)
+api_router.include_router(color.router)
+api_router.include_router(raw_sql.router)
+api_router.include_router(brand.router)
+api_router.include_router(country.router)
+
+
+# 앱에 api_router를 포함시킵니다.
+app.include_router(api_router)
+
+
+
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the FastAPI Token Auth System"}
