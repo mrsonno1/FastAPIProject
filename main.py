@@ -7,7 +7,12 @@ from db.database import engine, Base
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="LensGrapick")
+# docs_url과 redoc_url을 /api 하위 경로로 지정합니다.
+app = FastAPI(
+    title="LensGrapick",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
+)
 
 
 # 허용할 출처(origin) 목록을 정의합니다.
