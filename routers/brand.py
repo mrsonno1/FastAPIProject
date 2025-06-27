@@ -7,11 +7,10 @@ from db.database import get_db
 from schemas import brand as brand_schema
 from crud import brand as brand_crud
 from db import models
-from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
-# 인증이 필요하다면 추가
-# from core.security import get_current_user
-# from db import models
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile, Query, Response
 from services.storage_service import storage_service # S3/MinIO 서비스 임포트
+from schemas.brand import PaginatedBrandResponse
+import math
 
 router = APIRouter(prefix="/brands", tags=["Brands"])
 
@@ -39,10 +38,32 @@ def create_new_brand(
         brand_image_url=upload_result["public_url"],
         object_name = upload_result["object_name"]
     )
-@router.get("/", response_model=List[brand_schema.BrandResponse])
-def get_all_brands(db: Session = Depends(get_db)):
-    """모든 브랜드를 순위 순으로 조회합니다."""
-    return brand_crud.get_all_brands_ordered(db)
+
+
+@router.get("/list", response_model=PaginatedBrandResponse)
+def list_all_brands(
+        page: int = Query(1, ge=1),
+        size: int = Query(10, ge=1, le=100),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'rank asc')"),
+        searchText: Optional[str] = Query(None, description="통합 검색어"),
+        db: Session = Depends(get_db)
+):
+    """모든 브랜드를 검색 및 정렬 조건과 함께 페이지네이션하여 조회합니다."""
+    # 페이지네이션 기능이 포함된 CRUD 함수를 호출해야 합니다.
+    paginated_data = brand_crud.get_brands_paginated(
+        db, page=page, size=size, orderBy=orderBy, searchText=searchText
+    )
+
+    total_count = paginated_data["total_count"]
+    total_pages = math.ceil(total_count / size) if total_count > 0 else 1
+
+    return {
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "page": page,
+        "size": size,
+        "items": paginated_data["items"],
+    }
 
 
 @router.put("/{brand_id}", response_model=brand_schema.BrandResponse)
@@ -103,3 +124,14 @@ def update_rank(
     if updated_brands is None:
         raise HTTPException(status_code=404, detail="브랜드를 찾을 수 없습니다.")
     return updated_brands
+
+@router.put("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
+def update_ranks_in_bulk(
+    rank_update: brand_schema.RankUpdateBulk,
+    db: Session = Depends(get_db)
+):
+    """
+    전체 브랜드 순서 목록을 한 번에 업데이트합니다.
+    """
+    brand_crud.update_brand_ranks_bulk(db, ranks=rank_update.ranks)
+    return

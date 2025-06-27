@@ -22,3 +22,10 @@ class CountryResponse(BaseModel):
 # 순위 변경을 위한 스키마 (브랜드와 동일)
 class RankUpdate(BaseModel):
     action: str = Field(..., description="순위 변경 동작 (up, down, top, bottom)")
+
+class RankItem(BaseModel):
+    id: int
+    rank: int
+
+class RankUpdateBulk(BaseModel):
+    ranks: List[RankItem]

@@ -7,6 +7,7 @@ from db.database import get_db
 from schemas import country as country_schema
 from crud import country as country_crud
 from db import models
+from schemas.brand import RankUpdateBulk as BrandRankUpdateBulk
 
 router = APIRouter(prefix="/countries", tags=["Countries"])
 
@@ -53,3 +54,16 @@ def update_rank(
     if updated_countries is None:
         raise HTTPException(status_code=404, detail="국가를 찾을 수 없습니다.")
     return updated_countries
+
+
+@router.put("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
+def update_ranks_in_bulk(
+    # 스키마 이름을 명확히 하기 위해 BrandRankUpdateBulk 사용
+    rank_update: BrandRankUpdateBulk,
+    db: Session = Depends(get_db)
+):
+    """
+    전체 국가 순서 목록을 한 번에 업데이트합니다.
+    """
+    country_crud.update_country_ranks_bulk(db, ranks=rank_update.ranks)
+    return # 성공 시 204 응답

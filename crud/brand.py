@@ -4,10 +4,59 @@ from sqlalchemy import func, case
 from db import models
 from typing import Optional
 from schemas import brand as brand_schema
+from typing import List
+from sqlalchemy import or_
 
+def update_brand_ranks_bulk(db: Session, ranks: List[brand_schema.RankItem]):
+    # 여러 브랜드의 순위를 한 번에 업데이트합니다.
+    # case 문을 사용하여 ID별로 다른 rank 값을 부여하는 UPDATE 쿼리를 생성합니다.
+    # 이는 여러 개의 UPDATE 문을 실행하는 것보다 훨씬 효율적입니다.
+    db.query(models.Brand).update(
+        {
+            models.Brand.rank: case(
+                {brand.id: brand.rank for brand in ranks},
+                value=models.Brand.id
+            )
+        },
+        synchronize_session=False
+    )
+    db.commit()
 
 def get_brand_by_name(db: Session, brand_name: str):
     return db.query(models.Brand).filter(models.Brand.brand_name == brand_name).first()
+
+
+def get_brands_paginated(
+        db: Session,
+        page: int,
+        size: int,
+        orderBy: Optional[str] = None,
+        searchText: Optional[str] = None
+):
+    query = db.query(models.Brand)
+    if searchText:
+        search_pattern = f"%{searchText}%"
+        query = query.filter(or_(models.Brand.brand_name.like(search_pattern)))
+    if orderBy:
+        try:
+            order_column_name, order_direction = orderBy.split()
+            if hasattr(models.Brand, order_column_name):
+                order_column = getattr(models.Brand, order_column_name)
+                if order_direction.lower() == 'desc':
+                    query = query.order_by(order_column.desc())
+                else:
+                    query = query.order_by(order_column.asc())
+        except:
+            # orderBy 형식이 잘못된 경우 기본 정렬 적용
+            query = query.order_by(models.Brand.rank.asc())
+    else:
+        query = query.order_by(models.Brand.rank.asc())  # 기본 정렬은 rank 순
+
+    total_count = query.count()
+    offset = (page - 1) * size
+    items = query.offset(offset).limit(size).all()
+
+    return {"items": items, "total_count": total_count}
 
 
 def get_all_brands_ordered(db: Session):
