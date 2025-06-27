@@ -39,11 +39,18 @@ def create_new_brand(
         object_name = upload_result["object_name"]
     )
 
+@router.get("/", response_model=List[brand_schema.BrandResponse])
+def get_all_countries(db: Session = Depends(get_db)):
+    """모든 국가를 순위 순으로 조회합니다."""
+    return brand_schema.get_all_brands_ordered(db)
+
+
+
 
 @router.get("/list", response_model=PaginatedBrandResponse)
 def list_all_brands(
         page: int = Query(1, ge=1),
-        size: int = Query(10, ge=1, le=100),
+        size: int = Query(999, ge=1, le=1000),
         orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'rank asc')"),
         searchText: Optional[str] = Query(None, description="통합 검색어"),
         db: Session = Depends(get_db)
