@@ -1,10 +1,9 @@
 # routers/admin.py
 import math # 총 페이지 계산을 위해 math 라이브러리 임포트
 
-import query
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
-from typing import List # List 타입을 임포트합니다.
+
 from typing import List, Optional
 from db.database import get_db
 from schemas import user as user_schema
