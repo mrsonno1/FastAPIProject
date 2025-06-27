@@ -14,7 +14,9 @@ class ColorCreate(ColorBase):
 
 # 수정을 위한 스키마
 class ColorUpdate(ColorBase):
-    pass
+    color_values: str = Field(...)
+    monochrome_type: str = Field(...)
+
 
 # API 응답을 위한 스키마
 class ColorResponse(ColorBase):

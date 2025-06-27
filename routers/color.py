@@ -87,3 +87,31 @@ def search_single_color(
     if db_color is None:
         raise HTTPException(status_code=404, detail="해당 이름의 컬러를 찾을 수 없습니다.")
     return db_color
+
+
+@router.put("/fix/{color_id}", response_model=color_schema.ColorResponse)
+def fix_color_by_id(
+    # 경로 변수로 숫자 ID를 받습니다.
+    color_id: int,
+    # 요청 본문은 그대로 Pydantic 스키마를 사용합니다.
+    color_update: color_schema.ColorUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    ID로 특정 컬러를 찾아, 이름과 값을 수정합니다.
+    """
+    # 1. ID로 수정할 컬러 조회
+    db_color = color_crud.get_color_by_id(db, color_id=color_id)
+    if db_color is None:
+        raise HTTPException(status_code=404, detail="수정할 컬러를 찾을 수 없습니다.")
+
+    # 2. (선택사항) 컬러 이름은 Pydantic 스키마에 없지만, 만약 함께 수정한다면
+    #    아래와 같이 중복 검사 로직을 추가할 수 있습니다.
+    #    (현재 ColorUpdate 스키마에는 color_name이 없으므로 이 부분은 참고용입니다.)
+    # if color_update.color_name:
+    #     existing_color = color_crud.get_color_by_name(db, color_name=color_update.color_name)
+    #     if existing_color and existing_color.id != color_id:
+    #         raise HTTPException(status_code=409, detail="이미 사용 중인 컬러 이름입니다.")
+
+    # 3. CRUD 함수를 호출하여 업데이트
+    return color_crud.update_color(db=db, db_color=db_color, color_update=color_update)

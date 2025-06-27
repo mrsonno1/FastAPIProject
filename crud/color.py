@@ -9,6 +9,9 @@ def get_color_by_name(db: Session, color_name: str):
     """color_name으로 컬러 정보 조회"""
     return db.query(models.Color).filter(models.Color.color_name == color_name).first()
 
+def get_color_by_id(db: Session, color_id: int):
+    """ID로 컬러 정보 조회"""
+    return db.query(models.Color).filter(models.Color.id == color_id).first()
 
 def create_color(db: Session, color: color_schema.ColorCreate):
     """새로운 컬러 생성"""
