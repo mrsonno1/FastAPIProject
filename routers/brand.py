@@ -110,21 +110,6 @@ def update_brand_details(
         object_name=new_object_name
     )
 
-@router.patch("/rank/{brand_id}", response_model=List[brand_schema.BrandResponse])
-def update_rank(
-        brand_id: int,
-        rank_update: brand_schema.RankUpdate,
-        db: Session = Depends(get_db)
-):
-    """
-    브랜드의 순위를 변경합니다. (up, down, top, bottom)
-    성공 시, 변경된 전체 브랜드 목록을 반환합니다.
-    """
-    updated_brands = brand_crud.update_brand_rank(db, brand_id=brand_id, action=rank_update.action)
-    if updated_brands is None:
-        raise HTTPException(status_code=404, detail="브랜드를 찾을 수 없습니다.")
-    return updated_brands
-
 @router.put("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
 def update_ranks_in_bulk(
     rank_update: brand_schema.RankUpdateBulk,

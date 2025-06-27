@@ -43,19 +43,6 @@ def update_country_details(
     return country_crud.update_country_info(db, db_country=db_country, country_update=country_update)
 
 
-@router.patch("/rank/{country_id}", response_model=List[country_schema.CountryResponse])
-def update_rank(
-        country_id: int,
-        rank_update: country_schema.RankUpdate,
-        db: Session = Depends(get_db)
-):
-    """국가의 순위를 변경합니다. (up, down, top, bottom)"""
-    updated_countries = country_crud.update_country_rank(db, country_id=country_id, action=rank_update.action)
-    if updated_countries is None:
-        raise HTTPException(status_code=404, detail="국가를 찾을 수 없습니다.")
-    return updated_countries
-
-
 @router.put("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
 def update_ranks_in_bulk(
     # 스키마 이름을 명확히 하기 위해 BrandRankUpdateBulk 사용
