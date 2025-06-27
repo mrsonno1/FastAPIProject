@@ -13,7 +13,6 @@ def get_country_by_name(db: Session, country_name: str):
 def get_all_countries_ordered(db: Session):
     return db.query(models.Country).order_by(models.Country.rank).all()
 
-
 def create_country(db: Session, country: country_schema.CountryCreate):
     """새로운 국가를 가장 낮은 순위로 생성합니다."""
     max_rank = db.query(func.max(models.Country.rank)).scalar() or 0

@@ -22,6 +22,11 @@ def update_brand_ranks_bulk(db: Session, ranks: List[brand_schema.RankItem]):
     )
     db.commit()
 
+
+def get_all_brands_ordered(db: Session):
+    return db.query(models.Brand).order_by(models.Brand.rank).all()
+
+
 def get_brand_by_name(db: Session, brand_name: str):
     return db.query(models.Brand).filter(models.Brand.brand_name == brand_name).first()
 
@@ -59,9 +64,6 @@ def get_brands_paginated(
     return {"items": items, "total_count": total_count}
 
 
-def get_all_brands_ordered(db: Session):
-    """모든 브랜드를 순위(rank) 순으로 정렬하여 가져옵니다."""
-    return db.query(models.Brand).order_by(models.Brand.rank).all()
 
 
 def create_brand(db: Session, brand_name: str, brand_image_url: str, object_name: str):

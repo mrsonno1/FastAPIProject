@@ -9,8 +9,9 @@ from crud import brand as brand_crud
 from db import models
 from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile, Query, Response
 from services.storage_service import storage_service # S3/MinIO 서비스 임포트
-from schemas.brand import PaginatedBrandResponse
+from schemas.brand import PaginatedBrandResponse, RankUpdateBulk as BrandRankUpdateBulk
 import math
+
 
 router = APIRouter(prefix="/brands", tags=["Brands"])
 
@@ -40,37 +41,10 @@ def create_new_brand(
     )
 
 @router.get("/", response_model=List[brand_schema.BrandResponse])
-def get_all_countries(db: Session = Depends(get_db)):
+def get_all_brands(db: Session = Depends(get_db)):
     """모든 국가를 순위 순으로 조회합니다."""
-    return brand_schema.get_all_brands_ordered(db)
+    return brand_crud.get_all_brands_ordered(db)
 
-
-
-
-@router.get("/list", response_model=PaginatedBrandResponse)
-def list_all_brands(
-        page: int = Query(1, ge=1),
-        size: int = Query(999, ge=1, le=1000),
-        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'rank asc')"),
-        searchText: Optional[str] = Query(None, description="통합 검색어"),
-        db: Session = Depends(get_db)
-):
-    """모든 브랜드를 검색 및 정렬 조건과 함께 페이지네이션하여 조회합니다."""
-    # 페이지네이션 기능이 포함된 CRUD 함수를 호출해야 합니다.
-    paginated_data = brand_crud.get_brands_paginated(
-        db, page=page, size=size, orderBy=orderBy, searchText=searchText
-    )
-
-    total_count = paginated_data["total_count"]
-    total_pages = math.ceil(total_count / size) if total_count > 0 else 1
-
-    return {
-        "total_count": total_count,
-        "total_pages": total_pages,
-        "page": page,
-        "size": size,
-        "items": paginated_data["items"],
-    }
 
 
 @router.put("/{brand_id}", response_model=brand_schema.BrandResponse)

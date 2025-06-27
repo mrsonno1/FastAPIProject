@@ -34,3 +34,4 @@ class PaginatedBrandResponse(BaseModel):
     page: int
     size: int
     items: List[BrandResponse]  # BrandResponse 객체들의 리스트
+
