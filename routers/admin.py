@@ -1,5 +1,7 @@
 # routers/admin.py
 import math # 총 페이지 계산을 위해 math 라이브러리 임포트
+
+import query
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
 from typing import List # List 타입을 임포트합니다.
@@ -54,8 +56,9 @@ def list_all_admin_users(
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
 
         # ▼▼▼▼▼ 선택적 검색 파라미터 추가 ▼▼▼▼▼
+        id: Optional[str] = Query(None, description="아이디로 검색"),
         permission: Optional[str] = Query(None, description="권한으로 검색"),
-        username: Optional[str] = Query(None, min_length=1, description="아이디로 검색"),
+        username: Optional[str] = Query(None, min_length=1, description="이름으 검색"),
         company_name: Optional[str] = Query(None, min_length=1, description="소속사업자명으로 검색"),
         contact_name: Optional[str] = Query(None, min_length=1, description="담당자명으로 검색"),
         contact_phone: Optional[str] = Query(None, min_length=1, description="담당자연락처로 검색"),
@@ -78,6 +81,7 @@ def list_all_admin_users(
         db,
         page=page,
         size=size,
+        id=id,  # <-- 추가
         permission=permission,
         username=username,
         company_name=company_name,
@@ -90,7 +94,7 @@ def list_all_admin_users(
 
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
-    # PaginatedAdminUserResponse 스키마를 사용한다고 가정합니다.
+
     return {
         "total_count": total_count,
         "total_pages": total_pages,

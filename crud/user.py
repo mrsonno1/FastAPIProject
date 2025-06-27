@@ -93,6 +93,7 @@ def get_admin_users_paginated(
         db: Session,
         page: int,
         size: int,
+        id: Optional[int] = None,
         permission: Optional[str] = None,
         username: Optional[str] = None,
         company_name: Optional[str] = None,
@@ -104,6 +105,8 @@ def get_admin_users_paginated(
     """
     query = db.query(models.AdminUser)
 
+    if id is not None:
+        query = query.filter(models.AdminUser.id == id)
     if permission:
         query = query.filter(models.AdminUser.permission == permission)
     if username:
