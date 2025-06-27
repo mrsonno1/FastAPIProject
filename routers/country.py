@@ -43,7 +43,7 @@ def update_country_details(
     return country_crud.update_country_info(db, db_country=db_country, country_update=country_update)
 
 
-@router.put("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
 def update_ranks_in_bulk(
     # 스키마 이름을 명확히 하기 위해 BrandRankUpdateBulk 사용
     rank_update: BrandRankUpdateBulk,

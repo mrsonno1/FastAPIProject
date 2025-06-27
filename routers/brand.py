@@ -110,7 +110,7 @@ def update_brand_details(
         object_name=new_object_name
     )
 
-@router.put("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
 def update_ranks_in_bulk(
     rank_update: brand_schema.RankUpdateBulk,
     db: Session = Depends(get_db)
