@@ -44,6 +44,18 @@ def create_user(db: Session, user: user_schema.AdminUserCreate):
     return db_user
 
 
+def delete_admin_user_by_id(db: Session, user_id: int) -> bool:
+    """
+    ID로 관리자 계정을 찾아 삭제합니다.
+    :return: 삭제 성공 시 True, 해당 객체가 없을 시 False
+    """
+    db_user = db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+    if db_user:
+        db.delete(db_user)
+        db.commit()
+        return True
+    return False
+
 def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema.AdminUserFix):
     """
     관리자 계정의 정보를 선택적으로 업데이트합니다. (단순화된 버전)

@@ -20,6 +20,52 @@ router = APIRouter(
 )
 
 
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_admin_user(
+        user_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """
+    (superadmin 전용) ID로 특정 관리자 계정을 삭제합니다.
+    자기 자신은 삭제할 수 없습니다.
+    """
+    # 1. 최상위 관리자 권한 확인
+    if current_user.permission != 'superadmin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="사용자를 삭제할 권한이 없습니다."
+        )
+
+    # 2. 자기 자신 삭제 시도 방지
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="자기 자신의 계정은 삭제할 수 없습니다."
+        )
+
+    # 3. 삭제할 대상 사용자 조회
+    user_to_delete = user_crud.get_user_by_id(db, user_id=user_id)
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="삭제할 사용자를 찾을 수 없습니다.")
+
+    # (선택사항) 삭제 대상이 superadmin인 경우 방지
+    if user_to_delete.permission == 'superadmin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="superadmin 계정은 삭제할 수 없습니다."
+        )
+
+    # 4. CRUD 함수 호출하여 삭제
+    was_deleted = user_crud.delete_admin_user_by_id(db, user_id=user_id)
+
+    # 이 부분은 이론적으로 위에서 이미 확인했으므로 도달하기 어렵지만, 안전장치로 둡니다.
+    if not was_deleted:
+        raise HTTPException(status_code=404, detail="삭제 중 오류가 발생했습니다.")
+
+    # 5. 성공 시 204 응답
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 @router.put("/fix/{username}", response_model=user_schema.AdminUserResponse)
 def fix_user_info_by_username(  # 함수 이름도 변경
         username: str,  # 경로 변수를 user_id: int 에서 username: str 로 변경
