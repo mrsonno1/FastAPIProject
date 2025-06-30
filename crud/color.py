@@ -30,6 +30,7 @@ def update_color(db: Session, db_color: models.Color, color_update: color_schema
     """컬러 값 업데이트"""
     db_color.color_values = color_update.color_values
     db_color.monochrome_type = color_update.monochrome_type
+    db_color.color_name = color_update.color_name
     db.commit()
     db.refresh(db_color)
     return db_color

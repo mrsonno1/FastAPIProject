@@ -1,7 +1,8 @@
 # db/models.py
-from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint
+from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text
 from sqlalchemy.sql import func
 from .database import Base
+from sqlalchemy.types import JSON
 
 class AdminUser(Base):
     __tablename__ = "관리자계정"
@@ -67,3 +68,33 @@ class Color(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+
+    class CustomDesign(Base):
+        __tablename__ = "custom_designs"
+
+        id = Column(Integer, primary_key=True, index=True)
+
+        # --- 기본 정보 (섹션 1) ---
+        user_id = Column(String, index=True, nullable=False)
+        code_name = Column(String(50), unique=True, nullable=False)
+        status = Column(String(20), default="검토중")
+        request_message = Column(Text, nullable=True)
+        created_at = Column(DateTime(timezone=True), server_default=func.now())
+        updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+        # --- 디자인 정보 (섹션 2) ---
+        main_image_url = Column(String, nullable=True)
+
+        # ▼▼▼▼▼ 컬럼 타입을 JSONB에서 JSON으로 변경합니다 ▼▼▼▼▼
+        # 각 디자인 요소를 JSON 타입으로 저장
+        design_line = Column(JSON, nullable=True)  # 라인
+        design_base1 = Column(JSON, nullable=True)  # 바탕1
+        design_base2 = Column(JSON, nullable=True)  # 바탕2
+        design_pupil = Column(JSON, nullable=True)  # 동공
+
+        graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
+        optic_zone = Column(String(20), nullable=True)  # 옵틱존
+
+
+
+

@@ -1,7 +1,7 @@
 # main.py
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, admin, upload, color, raw_sql, brand, country
+from routers import auth, admin, upload, color, raw_sql, brand, country, custom_design
 from db.database import engine, Base
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
@@ -72,6 +72,7 @@ api_router.include_router(color.router)
 api_router.include_router(raw_sql.router)
 api_router.include_router(brand.router)
 api_router.include_router(country.router)
+app.include_router(custom_design.router)
 
 
 # 앱에 api_router를 포함시킵니다.

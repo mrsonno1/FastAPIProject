@@ -9,6 +9,7 @@ from schemas.image import ImageResponse, PaginatedImageResponse
 from crud import image as image_crud  # image_crud로 임포트
 from services.storage_service import storage_service
 from db import models
+from schemas.color import NameCheckResponse
 
 router = APIRouter(prefix="/images", tags=["Images"])  # prefix를 /images로 변경하는 것이 더 명확
 
@@ -102,6 +103,21 @@ def search_image_by_display_name(
         )
     return db_image
 
+@router.get("/check/display-name", response_model=NameCheckResponse, tags=["Images", "Validation"])
+def check_display_name_duplicate(
+    category: str = Query(..., description="중복을 확인할 이미지 종류"),
+    display_name: str = Query(..., description="중복을 확인할 표시 이름"),
+    db: Session = Depends(get_db)
+):
+    """
+    특정 카테고리 내에서 display_name이 이미 존재하는지 확인합니다.
+    - 존재하면 {"exists": true}
+    - 존재하지 않으면 {"exists": false}
+    """
+    image = image_crud.get_image_by_display_name(
+        db, category=category, display_name=display_name
+    )
+    return {"exists": image is not None}
 
 @router.put("/fix/{image_id}", response_model=ImageResponse)
 def update_image_details(

@@ -16,6 +16,7 @@ class ColorCreate(ColorBase):
 class ColorUpdate(ColorBase):
     color_values: str = Field(...)
     monochrome_type: str = Field(...)
+    color_name: str = Field(...)
 
 
 # API 응답을 위한 스키마
