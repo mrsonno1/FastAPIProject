@@ -40,6 +40,27 @@ def create_new_brand(
         object_name = upload_result["object_name"]
     )
 
+
+@router.delete("/{brand_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_single_brand(
+        brand_id: int,
+        db: Session = Depends(get_db)
+        # 필요 시, 인증/권한 검사 추가
+):
+    """ID로 특정 브랜드를 삭제합니다. (S3 이미지 포함)"""
+    # 1. DB에서 브랜드 삭제 시도 및 삭제된 객체 정보 가져오기
+    deleted_brand = brand_crud.delete_brand_by_id(db, brand_id=brand_id)
+
+    if not deleted_brand:
+        raise HTTPException(status_code=404, detail="해당 ID의 브랜드를 찾을 수 없습니다.")
+
+    # 2. DB 삭제가 성공하면, S3/MinIO에서 관련 이미지 파일 삭제
+    if deleted_brand.object_name:
+        storage_service.delete_file(deleted_brand.object_name)
+
+    return
+
+
 @router.get("/", response_model=List[brand_schema.BrandResponse])
 def get_all_brands(db: Session = Depends(get_db)):
     """모든 국가를 순위 순으로 조회합니다."""

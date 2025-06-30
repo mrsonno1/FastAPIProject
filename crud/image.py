@@ -25,6 +25,14 @@ def update_image(
     db.refresh(db_image)
     return db_image
 
+def delete_image_by_id(db: Session, image_id: int) -> models.Image:
+    """ID로 이미지를 찾아 삭제하고, 삭제된 객체를 반환합니다."""
+    db_image = db.query(models.Image).filter(models.Image.id == image_id).first()
+    if db_image:
+        db.delete(db_image)
+        db.commit()
+        return db_image
+    return None
 
 def get_image_by_display_name(db: Session, category: str, display_name: str):
     """category와 display_name의 조합으로 이미지 정보 조회"""

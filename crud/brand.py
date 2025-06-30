@@ -23,6 +23,15 @@ def update_brand_ranks_bulk(db: Session, ranks: List[brand_schema.RankItem]):
     db.commit()
 
 
+def delete_brand_by_id(db: Session, brand_id: int) -> models.Brand:
+    """ID로 브랜드를 찾아 삭제하고, 삭제된 객체를 반환합니다."""
+    db_brand = db.query(models.Brand).filter(models.Brand.id == brand_id).first()
+    if db_brand:
+        db.delete(db_brand)
+        db.commit()
+        return db_brand # 삭제된 객체 정보를 반환하여 object_name을 사용할 수 있게 함
+    return None
+
 def get_all_brands_ordered(db: Session):
     return db.query(models.Brand).order_by(models.Brand.rank).all()
 

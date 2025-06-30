@@ -44,6 +44,25 @@ def list_all_images(
         "items": paginated_data["items"],
     }
 
+
+@router.delete("/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_single_image(
+        image_id: int,
+        db: Session = Depends(get_db)
+        # 필요 시, 인증/권한 검사 추가
+):
+    """ID로 특정 이미지를 삭제합니다. (S3 파일 포함)"""
+    deleted_image = image_crud.delete_image_by_id(db, image_id=image_id)
+
+    if not deleted_image:
+        raise HTTPException(status_code=404, detail="해당 ID의 이미지를 찾을 수 없습니다.")
+
+    if deleted_image.object_name:
+        storage_service.delete_file(deleted_image.object_name)
+
+    return
+
+
 # 기존 업로드 API (prefix 변경에 따라 경로도 변경됨)
 @router.post("/upload", response_model=ImageResponse)
 def upload_image(

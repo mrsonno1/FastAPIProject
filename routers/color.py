@@ -48,6 +48,21 @@ def create_new_color(color: color_schema.ColorCreate, db: Session = Depends(get_
         raise HTTPException(status_code=409, detail="이미 사용 중인 컬러 이름입니다.")
     return color_crud.create_color(db=db, color=color)
 
+
+@router.delete("/{color_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_single_color(
+    color_id: int,
+    db: Session = Depends(get_db)
+    # 필요 시, 인증/권한 검사 추가
+    # current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 특정 컬러 데이터를 삭제합니다."""
+    was_deleted = color_crud.delete_color_by_id(db, color_id=color_id)
+    if not was_deleted:
+        raise HTTPException(status_code=404, detail="해당 ID의 컬러를 찾을 수 없습니다.")
+    return
+
+
 @router.get("/check/{color_name}", response_model=color_schema.NameCheckResponse)
 def check_color_name(color_name: str, db: Session = Depends(get_db)):
     """

@@ -25,6 +25,14 @@ def create_color(db: Session, color: color_schema.ColorCreate):
     db.refresh(db_color)
     return db_color
 
+def delete_color_by_id(db: Session, color_id: int) -> bool:
+    """ID로 컬러 정보를 찾아 삭제합니다."""
+    db_color = db.query(models.Color).filter(models.Color.id == color_id).first()
+    if db_color:
+        db.delete(db_color)
+        db.commit()
+        return True
+    return False
 
 def update_color(db: Session, db_color: models.Color, color_update: color_schema.ColorUpdate):
     """컬러 값 업데이트"""
