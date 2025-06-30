@@ -30,8 +30,8 @@ def delete_admin_user(
     (superadmin 전용) ID로 특정 관리자 계정을 삭제합니다.
     자기 자신은 삭제할 수 없습니다.
     """
-    # 1. 최상위 관리자 권한 확인
-    if current_user.permission != 'superadmin':
+    # 1. 관리자 권한 확인
+    if current_user.permission not in ['admin', 'superadmin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="사용자를 삭제할 권한이 없습니다."
