@@ -25,6 +25,18 @@ def create_country(db: Session, country: country_schema.CountryCreate):
     db.refresh(db_country)
     return db_country
 
+def delete_country_by_id(db: Session, country_id: int) -> bool:
+    """
+    ID로 국가 정보를 찾아 삭제합니다.
+    :return: 삭제 성공 시 True, 해당 객체가 없을 시 False
+    """
+    db_country = db.query(models.Country).filter(models.Country.id == country_id).first()
+    if db_country:
+        db.delete(db_country)
+        db.commit()
+        return True
+    return False
+
 
 def update_country_info(db: Session, db_country: models.Country, country_update: country_schema.CountryUpdate):
     """국가 이름을 수정합니다."""
