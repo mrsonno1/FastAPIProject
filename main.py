@@ -77,7 +77,7 @@ api_router.include_router(raw_sql.router)
 api_router.include_router(brand.router)
 api_router.include_router(country.router)
 api_router.include_router(custom_design.router)
-api_router.include_router(portfolio.router)
+#api_router.include_router(portfolio.router)
 # 앱에 api_router를 포함시킵니다.
 app.include_router(api_router)
 
