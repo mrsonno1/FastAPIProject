@@ -1,7 +1,7 @@
 # main.py
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, admin, upload, color, raw_sql, brand, country, custom_design
+from routers import auth, admin, upload, color, raw_sql, brand, country, custom_design, portfolio
 from db.database import engine, Base
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
@@ -48,6 +48,10 @@ origins = [
     "http://10.10.100.85:3000",
     "https://10.10.100.85:3000",
 
+    "http://10.10.101.39:3000",
+    "http://10.10.101.39:3000",
+
+
     "null"  # 로컬 파일(file://)에서의 요청을 허용하기 위해 추가
 
     # "https://your-frontend-domain.com",
@@ -72,9 +76,8 @@ api_router.include_router(color.router)
 api_router.include_router(raw_sql.router)
 api_router.include_router(brand.router)
 api_router.include_router(country.router)
-app.include_router(custom_design.router)
-
-
+api_router.include_router(custom_design.router)
+api_router.include_router(portfolio.router)
 # 앱에 api_router를 포함시킵니다.
 app.include_router(api_router)
 
