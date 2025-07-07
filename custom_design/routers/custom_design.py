@@ -20,8 +20,8 @@ def create_new_custom_design(
 ):
     """새로운 커스텀 디자인 요청을 생성합니다."""
     # 코드명 중복 검사
-    if db.query(models.CustomDesign).filter(models.CustomDesign.code_name == design.code_name).first():
-        raise HTTPException(status_code=409, detail="이미 사용 중인 코드명입니다.")
+    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == design.item_name).first():
+        raise HTTPException(status_code=409, detail="이미 사용 중인 아이템명입니다.")
 
     #데이터 베이스 적용
     created_customdesign = custom_design_CRUD.create_design(
@@ -44,17 +44,18 @@ def create_new_custom_design(
     #return custom_design_CRUD.create_design(db=db, design=design, user_id=current_user.id)
 
 
-@router.get("/", response_model=custom_design_schema.PaginatedCustomDesignResponse)
+@router.get("/list", response_model=custom_design_schema.PaginatedCustomDesignResponse)
 def read_all_custom_designs(
         # 페이지네이션 파라미터
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
 
         # 검색 필터 파라미터
-        code_name: Optional[str] = Query(None, description="디자인명(코드명)으로 검색"),
-        status: Optional[str] = Query(None, description="컬러명으로 검색"),
+        item_name: Optional[str] = Query(None, description="디자인명(코드명)으로 검색"),
+        status: Optional[str] = Query(None, description="상태 검색"),
         start_date: Optional[date] = Query(None, description="검색 시작일 (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="검색 종료일 (YYYY-MM-DD)"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'user_name asc', 'code_name desc')"),
 
         db: Session = Depends(get_db)
 ):
@@ -65,10 +66,11 @@ def read_all_custom_designs(
         db,
         page=page,
         size=size,
-        code_name=code_name,
+        item_name=item_name,
         status=status,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        orderBy=orderBy
     )
 
     total_count = paginated_data["total_count"]

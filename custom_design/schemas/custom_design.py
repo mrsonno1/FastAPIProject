@@ -13,7 +13,7 @@ class DesignElement(BaseModel):
     opacity: int = Field(None, ge=0, le=100)
 
 class CustomDesignCreate(BaseModel):
-    code_name: str
+    item_name: str
     request_message: Optional[str] = None
     main_image_url: Optional[str] = None
 
@@ -27,7 +27,7 @@ class CustomDesignCreate(BaseModel):
 
 # 상태(status) 수정을 위한 스키마
 class CustomDesignStatusUpdate(BaseModel):
-    s: str
+    status: str
 
 # API 응답을 위한 스키마
 class CustomDesignResponse(CustomDesignCreate):
@@ -66,6 +66,3 @@ class PaginatedCustomDesignResponse(BaseModel):
     page: int
     size: int
     items: List[CustomDesignResponse2]
-
-
-

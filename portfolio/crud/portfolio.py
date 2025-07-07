@@ -7,7 +7,7 @@ from sqlalchemy import or_
 
 def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, user_id: int):
     db_portfolio = models.Portfolio(
-        design_name=portfolio.design_name,
+        item_name=portfolio.item_name,
         color_name=portfolio.color_name,
         exposed_countries=portfolio.exposed_countries,
         is_fixed_axis=portfolio.is_fixed_axis,
@@ -27,8 +27,8 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
 
 
 # 아이디 중복 체크
-def get_portfolio_by_design_name(db: Session, design_name: str):
-    return db.query(models.Portfolio).filter(models.Portfolio.design_name == design_name).first()
+def get_portfolio_by_design_name(db: Session, item_name: str):
+    return db.query(models.Portfolio).filter(models.Portfolio.item_name == item_name).first()
 
 
 def get_all_portfolio(db: Session, skip: int = 0, limit: int = 100):
@@ -53,15 +53,16 @@ def get_portfolios_paginated(
         db: Session,
         page: int,
         size: int,
-        design_name: Optional[str] = None,
+        item_name: Optional[str] = None,
         color_name: Optional[str] = None,
         exposed_countries: Optional[List[str]] = None,
         is_fixed_axis: Optional[bool] = None,
+        orderBy: Optional[str] = None,
 ):
     query = db.query(models.Portfolio)
 
-    if design_name:
-        query = query.filter(models.Portfolio.design_name.ilike(f"%{design_name}%"))
+    if item_name:
+        query = query.filter(models.Portfolio.item_name.ilike(f"%{item_name}%"))
 
     if color_name:
         query = query.filter(models.Portfolio.color_name.ilike(f"%{color_name}%"))
@@ -72,9 +73,32 @@ def get_portfolios_paginated(
     if is_fixed_axis is not None:
         query = query.filter(models.Portfolio.is_fixed_axis == is_fixed_axis)
 
+    if orderBy:
+        try:
+            order_column, order_direction = orderBy.split()
+            if order_column == "user_name":
+                query = query.outerjoin(models.AdminUser, models.Portfolio.user_id == models.AdminUser.id)
+                if order_direction.lower() == "asc":
+                    query = query.order_by(models.AdminUser.username.asc())
+                else:
+                    query = query.order_by(models.AdminUser.username.desc())
+            elif order_column == "design_name": # design_name 대신 item_name 사용
+                if order_direction.lower() == "asc":
+                    query = query.order_by(models.Portfolio.item_name.asc())
+                else:
+                    query = query.order_by(models.Portfolio.item_name.desc())
+            else:
+                # Default sort if orderBy is not recognized
+                query = query.order_by(models.Portfolio.id.desc())
+        except ValueError:
+            # Handle cases where orderBy is not in 'column direction' format
+            query = query.order_by(models.Portfolio.id.desc())
+    else:
+        query = query.order_by(models.Portfolio.id.desc())
+
     total_count = query.count()
     offset = (page - 1) * size
-    items = query.order_by(models.Portfolio.id.desc()).offset(offset).limit(size).all()
+    items = query.offset(offset).limit(size).all()
 
     return {"items": items, "total_count": total_count}
 

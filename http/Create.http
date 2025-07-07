@@ -156,7 +156,7 @@ Content-Disposition: form-data; name="portfolio"
 Content-Type: application/json
 
 {
-  "design_name": "SIMPLE_BLUE_V113",
+  "item_name": "SIMPLE_BLUE_V113",
   "color_name": "심플 블루 테마 버전2",
   "exposed_countries":  {
     "대한민국": true,
@@ -235,8 +235,7 @@ Content-Type: application/json
 Authorization: {{superadmin_token}}
 
 {
-  "code_name": "SIMPLE_BLUE_V21",
-  "design_name": "심플 블루 테마 버전2",
+  "item_name": "SIMPLE_BLUE_V21",
   "request_message": "코가 편안한 파란색으로 만들어주세요.",
 
   "design_line": {

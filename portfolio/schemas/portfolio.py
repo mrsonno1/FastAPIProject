@@ -5,7 +5,7 @@ from custom_design.schemas.custom_design import DesignElement
 
 # 포트폴리오 생성을 위한 스키마
 class PortfolioCreate(BaseModel):
-    design_name: str
+    item_name: str
     color_name: str
     exposed_countries:  Dict[str, Any] = {}  # 국가 이름 리스트로 받음
     is_fixed_axis: bool = False

@@ -43,7 +43,7 @@ def create_new_portfolio(
     except Exception as e:  # Pydantic 유효성 검사 실패 시
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    if portfolio_CRUD.get_portfolio_by_design_name(db, design_name=portfolio_data.design_name):
+    if portfolio_CRUD.get_portfolio_by_design_name(db, item_name=portfolio_data.item_name):
         raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     #이미지 업로드
@@ -76,10 +76,11 @@ def create_new_portfolio(
 def list_all_portfolios(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
-        design_name: Optional[str] = Query(None, description="디자인명으로 검색"),
+        item_name: Optional[str] = Query(None, description="디자인명으로 검색"),
         color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
         exposed_countries: Optional[List[str]] = Query(None, description="노출 국가로 검색"),
         is_fixed_axis: Optional[bool] = Query(None, description="고정 축 여부로 검색"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'user_name asc', 'design_name desc')"),
         db: Session = Depends(get_db)
 ):
     """
@@ -89,10 +90,11 @@ def list_all_portfolios(
         db,
         page=page,
         size=size,
-        design_name=design_name,
+        item_name=item_name,
         color_name=color_name,
         exposed_countries=exposed_countries,
-        is_fixed_axis=is_fixed_axis
+        is_fixed_axis=is_fixed_axis,
+        orderBy=orderBy
     )
 
     items = paginated_data["items"]
@@ -108,12 +110,12 @@ def list_all_portfolios(
         "items": items,
     }
 
-@router.get("/{design_name}", response_model=portfolio_schema.PortfolioResponse)
+@router.get("/{item_name}", response_model=portfolio_schema.PortfolioResponse)
 def read_single_portfolio(
-        design_name: str,
+        item_name: str,
         db: Session = Depends(get_db)
 ):
-    db_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, design_name=design_name)
+    db_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, item_name=item_name)
     if db_portfolio is None:
         raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
     return db_portfolio

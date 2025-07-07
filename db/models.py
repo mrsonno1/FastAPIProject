@@ -66,8 +66,8 @@ class CustomDesign(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True, nullable=False)
-    code_name = Column(String(50), unique=True, nullable=False)
-    status = Column(String(20), default="검토중") # 기본값을 셋팅
+    item_name = Column(String(50), unique=True, nullable=False)
+    status = Column(String(20), default="대기") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=True)
 
@@ -88,10 +88,12 @@ class Portfolio(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True, nullable=False)
-    design_name = Column(String(50), unique=True, nullable=False, index=True)
+    item_name = Column(String(50), unique=True, nullable=False, index=True)
+    status = Column(String(20), default="대기") # 기본값을 셋팅
     color_name = Column(String(50), nullable=False)
     exposed_countries = Column(JSON, nullable=True)
     is_fixed_axis = Column(Boolean, default=False)  # 축고정
+    request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=False)
 
     design_line = Column(JSON, nullable=True)  # 라인
@@ -102,6 +104,7 @@ class Portfolio(Base):
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
 
+    views = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -113,6 +116,7 @@ class Releasedproduct(Base):
     design_name = Column(String(50), unique=True, nullable=False, index=True)
     color_name = Column(String(50), nullable=False)
     brand = Column(JSON, nullable=False)
+    request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=False)
 
     color_line = Column(JSON, nullable=True)  # 라인
@@ -124,5 +128,12 @@ class Releasedproduct(Base):
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
     base_curve = Column(String(20), nullable=True)  # 베이스커브
 
+    views = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class Progressstatus(Base):
+    __tablename__ = "progressstatus"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=False)

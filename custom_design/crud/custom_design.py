@@ -7,7 +7,7 @@ from datetime import date, timedelta # date, timedelta 임포트
 
 def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: int):
     db_design = models.CustomDesign(
-        code_name=design.code_name,
+        item_name=design.item_name,
         request_message=design.request_message,
         main_image_url=design.main_image_url,
         design_line=design.design_line.model_dump() if design.design_line else None,
@@ -54,16 +54,17 @@ def get_designs_paginated(
         db: Session,
         page: int,
         size: int,
-        code_name: Optional[str] = None,
+        item_name: Optional[str] = None,
         status: Optional[str] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        orderBy: Optional[str] = None,
 ):
     query = db.query(models.CustomDesign)
 
     # 1. 디자인명(code_name) 검색 (부분 일치, 대소문자 무시)
-    if code_name:
-        query = query.filter(models.CustomDesign.code_name.ilike(f"%{code_name}%"))
+    if item_name:
+        query = query.filter(models.CustomDesign.item_name.ilike(f"%{item_name}%"))
 
     # 2. 등록일자(created_at) 기간 검색
     if start_date:
@@ -76,11 +77,34 @@ def get_designs_paginated(
     if status:
         query = query.filter(models.CustomDesign.status.ilike(f"%{status}%"))
 
+    if orderBy:
+        try:
+            order_column, order_direction = orderBy.split()
+            if order_column == "user_name":
+                query = query.outerjoin(models.AdminUser, models.CustomDesign.user_id == models.AdminUser.id)
+                if order_direction.lower() == "asc":
+                    query = query.order_by(models.AdminUser.username.asc())
+                else:
+                    query = query.order_by(models.AdminUser.username.desc())
+            elif order_column == "item_name":
+                if order_direction.lower() == "asc":
+                    query = query.order_by(models.CustomDesign.item_name.asc())
+                else:
+                    query = query.order_by(models.CustomDesign.item_name.desc())
+            else:
+                # Default sort if orderBy is not recognized
+                query = query.order_by(models.CustomDesign.id.desc())
+        except Exception: # Catch all exceptions for robustness
+            # Default sort if orderBy is not in 'column direction' format or other error occurs
+            query = query.order_by(models.CustomDesign.id.desc())
+    else:
+        query = query.order_by(models.CustomDesign.id.desc())
+
     # 검색 조건에 맞는 총 개수 계산
     total_count = query.count()
 
     # 페이지네이션 적용
     offset = (page - 1) * size
-    items = query.order_by(models.CustomDesign.id.desc()).offset(offset).limit(size).all()
+    items = query.offset(offset).limit(size).all()
 
     return {"items": items, "total_count": total_count}
