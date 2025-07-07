@@ -14,7 +14,7 @@ router = APIRouter(prefix="/colors", tags=["Colors"])
 @router.get("/list", response_model=PaginatedColorResponse)
 def list_all_colors(
         page: int = Query(1, ge=1, description="페이지 번호"),
-        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+        size: int = Query(10, ge=1, le=10000, description="페이지 당 항목 수"),
         orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'color_name asc')"),
         searchText: Optional[str] = Query(None, description="통합 검색어"),
         db: Session = Depends(get_db)

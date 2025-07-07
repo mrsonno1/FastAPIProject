@@ -8,6 +8,7 @@ from custom_design.schemas import custom_design as custom_design_schema
 from db import models
 from core.security import get_current_user # 인증 의존성 임포트
 from typing import Optional # Optional 임포트
+from portfolio.schemas import portfolio as portfolio_schema
 
 router = APIRouter(prefix="/custom-designs", tags=["Custom Designs"])
 
@@ -21,13 +22,21 @@ def create_new_custom_design(
     """새로운 커스텀 디자인 요청을 생성합니다."""
     # 코드명 중복 검사
     if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == design.item_name).first():
-        raise HTTPException(status_code=409, detail="이미 사용 중인 아이템명입니다.")
+        raise HTTPException(status_code=409, detail="이미 사용 중인 코드명입니다.")
+
+    last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
+    if last is None:
+        raise HTTPException(status_code=404, detail="No records found")
+
+
+    formatted = str(last.id).zfill(4)
 
     #데이터 베이스 적용
     created_customdesign = custom_design_CRUD.create_design(
         db=db,
         design=design,
-        user_id=current_user.id
+        user_id=current_user.id,
+        code= current_user.account_code + f"-{formatted}",
     )
 
     #리스폰 모델로 변환
@@ -51,14 +60,15 @@ def read_all_custom_designs(
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
 
         # 검색 필터 파라미터
-        item_name: Optional[str] = Query(None, description="디자인명(코드명)으로 검색"),
+        code_name: Optional[str] = Query(None, description="디자인명(코드명)으로 검색"),
         status: Optional[str] = Query(None, description="상태 검색"),
         start_date: Optional[date] = Query(None, description="검색 시작일 (YYYY-MM-DD)"),
         end_date: Optional[date] = Query(None, description="검색 종료일 (YYYY-MM-DD)"),
-        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'user_name asc', 'code_name desc')"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'user_name asc', 'item_name desc')"),
 
         db: Session = Depends(get_db)
 ):
+
     """
     모든 커스텀 디자인 목록을 검색 조건과 함께 페이지네이션하여 조회합니다.
     """
@@ -66,7 +76,7 @@ def read_all_custom_designs(
         db,
         page=page,
         size=size,
-        item_name=item_name,
+        code_name=code_name,
         status=status,
         start_date=start_date,
         end_date=end_date,
@@ -84,6 +94,23 @@ def read_all_custom_designs(
         "items": paginated_data["items"],
     }
 
+
+@router.delete("/{design_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
+def delete_single_custom_design(
+    design_id: int,
+    db: Session = Depends(get_db)
+):
+    """ID로 특정 커스텀 디자인을 삭제합니다."""
+    try:
+        was_deleted = custom_design_CRUD.delete_custom_design_by_id(db, design_id=design_id)
+        if not was_deleted:
+            raise HTTPException(status_code=404, detail="해당 ID의 커스텀 디자인을 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
+
+    return portfolio_schema.StatusResponse(status="success", message="커스텀 디자인이 성공적으로 삭제되었습니다.")
 
 
 @router.get("/{design_id}", response_model=custom_design_schema.CustomDesignResponse)

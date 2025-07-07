@@ -4,10 +4,13 @@
 DELETE {{host}}{{api_prefix}}/countries/15
 
 ### 국가 목록
-GET {{host}}{{api_prefix}}/countries/
+GET {{host}}{{api_prefix}}/countries/listall
 
 ### 콤바인 목록
 GET {{host}}{{api_prefix}}/combined-data/
+
+### 브랜드 목록
+GET {{host}}{{api_prefix}}/brands/listall
 
 ### 브랜드 삭제
 DELETE {{host}}{{api_prefix}}/brands/4

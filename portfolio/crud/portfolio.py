@@ -3,7 +3,7 @@ from db import models
 from portfolio.schemas import portfolio as portfolio_schema
 from typing import Optional, List
 from sqlalchemy import or_
-
+from fastapi import HTTPException
 
 def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, user_id: int):
     db_portfolio = models.Portfolio(
@@ -29,6 +29,20 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
 # 아이디 중복 체크
 def get_portfolio_by_design_name(db: Session, item_name: str):
     return db.query(models.Portfolio).filter(models.Portfolio.item_name == item_name).first()
+
+
+def delete_portfolio_by_id(db: Session, portfolio_id: int) -> bool:
+    db_portfolio = db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).first()
+    if not db_portfolio:
+        return False
+
+    # Check if the main_image_url is referenced in the Image model
+    if db_portfolio.main_image_url and db.query(models.Image).filter(models.Image.public_url == db_portfolio.main_image_url).first():
+        raise HTTPException(status_code=400, detail=f"Portfolio '{db_portfolio.item_name}' cannot be deleted as its main image is referenced elsewhere.")
+
+    db.delete(db_portfolio)
+    db.commit()
+    return True
 
 
 def get_all_portfolio(db: Session, skip: int = 0, limit: int = 100):

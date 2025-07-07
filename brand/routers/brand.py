@@ -64,9 +64,9 @@ def delete_single_brand(
     return
 
 
-@router.get("/", response_model=List[brand_schema.BrandResponse])
+@router.get("/listall", response_model=List[brand_schema.BrandResponse])
 def get_all_brands(db: Session = Depends(get_db)):
-    """모든 국가를 순위 순으로 조회합니다."""
+    """모든 브랜드를 순위 순으로 조회합니다."""
     return brand_crud.get_all_brands_ordered(db)
 
 

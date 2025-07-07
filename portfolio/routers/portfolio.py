@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import json
-import math
 from portfolio.schemas import portfolio as portfolio_schema
+from portfolio.crud import portfolio as portfolio_CRUD
 from db import models
 from db.database import get_db
-from portfolio.crud import portfolio as portfolio_CRUD
+from core.security import get_current_user
+import json
+import math
 from services.storage_service import storage_service
-from core.security import get_current_user # 인증 의존성 임포트
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -72,6 +72,24 @@ def create_new_portfolio(
         data=response_data
     )
 
+@router.delete("/{portfolio_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
+def delete_single_portfolio(
+    portfolio_id: int,
+    db: Session = Depends(get_db)
+):
+    """ID로 특정 포트폴리오를 삭제합니다."""
+    try:
+        was_deleted = portfolio_CRUD.delete_portfolio_by_id(db, portfolio_id=portfolio_id)
+        if not was_deleted:
+            raise HTTPException(status_code=404, detail="해당 ID의 포트폴리오를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
+
+    return portfolio_schema.StatusResponse(status="success", message="포트폴리오가 성공적으로 삭제되었습니다.")
+
+
 @router.get("/list", response_model=portfolio_schema.PaginatedPortfolioResponse)
 def list_all_portfolios(
         page: int = Query(1, ge=1, description="페이지 번호"),
@@ -119,4 +137,59 @@ def read_single_portfolio(
     if db_portfolio is None:
         raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
     return db_portfolio
+
+
+
+
+@router.patch("/{portfolio_id}", response_model=portfolio_schema.PortfolioApiResponse)
+def update_portfolio_details(
+    portfolio_id: int,
+    portfolio_str: str = Form(..., alias="portfolio"),
+    file: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
+):
+    """포트폴리오 정보를 업데이트합니다."""
+    db_portfolio = db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).first()
+    if not db_portfolio:
+        raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
+
+    try:
+        portfolio_dict = json.loads(portfolio_str)
+        portfolio_update_data = portfolio_schema.PortfolioCreate(**portfolio_dict)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="전송된 'portfolio' 데이터의 JSON 형식이 잘못되었습니다.")
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
+
+    # 아이템명 중복 검사 (자신을 제외하고)
+    existing_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, item_name=portfolio_update_data.item_name)
+    if existing_portfolio and existing_portfolio.id != portfolio_id:
+        raise HTTPException(status_code=409, detail="이미 사용 중인 아이템명입니다.")
+
+    # 이미지 파일 처리
+    if file:
+        # 기존 이미지 삭제 (선택 사항, 필요에 따라 구현)
+        if db_portfolio.main_image_url:
+            # storage_service.delete_file(db_portfolio.object_name) # object_name이 필요
+            pass # 현재 object_name이 없으므로 삭제 로직은 생략
+
+        upload_result = storage_service.upload_file(file)
+        if not upload_result:
+            raise HTTPException(status_code=500, detail="새 이미지 업로드에 실패했습니다.")
+        portfolio_update_data.main_image_url = upload_result["public_url"]
+
+    updated_portfolio = portfolio_CRUD.update_portfolio(
+        db=db,
+        db_portfolio=db_portfolio,
+        portfolio_update=portfolio_update_data
+    )
+
+    response_data = portfolio_schema.PortfolioResponse.model_validate(updated_portfolio)
+
+    return portfolio_schema.PortfolioApiResponse(
+        success=True,
+        message="포트폴리오가 성공적으로 업데이트되었습니다.",
+        data=response_data
+    )
 

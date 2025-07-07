@@ -17,7 +17,7 @@ router = APIRouter(prefix="/images", tags=["Images"])  # prefix를 /images로 �
 @router.get("/list", response_model=PaginatedImageResponse)
 def list_all_images(
         page: int = Query(1, ge=1, description="페이지 번호"),
-        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+        size: int = Query(10, ge=1, le=10000, description="페이지 당 항목 수"),
         category: Optional[str] = Query(None, description="이미지 종류(category)로 필터링"),
         orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'rank asc', 'id desc')"),
         searchText: Optional[str] = Query(None, description="통합 검색어"),

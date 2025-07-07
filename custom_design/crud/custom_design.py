@@ -3,11 +3,11 @@ from custom_design.schemas import custom_design as custom_design_schema
 from db import models
 from typing import Optional # Optional 임포트
 from datetime import date, timedelta # date, timedelta 임포트
+from fastapi import HTTPException
 
-
-def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: int):
+def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: int, code: str):
     db_design = models.CustomDesign(
-        item_name=design.item_name,
+        item_name=code,
         request_message=design.request_message,
         main_image_url=design.main_image_url,
         design_line=design.design_line.model_dump() if design.design_line else None,
@@ -28,6 +28,20 @@ def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, 
 def get_design_by_id(db: Session, design_id: int):
     return db.query(models.CustomDesign).filter(models.CustomDesign.id == design_id).first()
 
+
+
+def delete_custom_design_by_id(db: Session, design_id: int) -> bool:
+    db_design = db.query(models.CustomDesign).filter(models.CustomDesign.id == design_id).first()
+    if not db_design:
+        return False
+
+    # Check if the main_image_url is referenced in the Image model
+    if db_design.main_image_url and db.query(models.Image).filter(models.Image.public_url == db_design.main_image_url).first():
+        raise HTTPException(status_code=400, detail=f"Custom Design '{db_design.item_name}' cannot be deleted as its main image is referenced elsewhere.")
+
+    db.delete(db_design)
+    db.commit()
+    return True
 
 
 def get_all_designs(db: Session, skip: int = 0, limit: int = 100):

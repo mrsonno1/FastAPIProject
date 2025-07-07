@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from db import models
 from released_product.schemas import released_product as released_product_schema
 from typing import Optional
+from fastapi import HTTPException
 
 
 def create_released_product(db: Session, released_product: released_product_schema.ReleasedProductCreate, user_id: int):
@@ -27,6 +28,36 @@ def create_released_product(db: Session, released_product: released_product_sche
 
 def get_released_product_by_design_name(db: Session, design_name: str):
     return db.query(models.Releasedproduct).filter(models.Releasedproduct.design_name == design_name).first()
+
+def delete_released_product_by_id(db: Session, product_id: int) -> bool:
+    db_product = db.query(models.Releasedproduct).filter(models.Releasedproduct.id == product_id).first()
+    if not db_product:
+        return False
+
+    # Check if the main_image_url is referenced in the Image model
+    if db_product.main_image_url and db.query(models.Image).filter(models.Image.public_url == db_product.main_image_url).first():
+        raise HTTPException(status_code=400, detail=f"Released Product '{db_product.design_name}' cannot be deleted as its main image is referenced elsewhere.")
+
+    db.delete(db_product)
+    db.commit()
+    return True
+
+def update_released_product(
+        db: Session,
+        db_released_product: models.Releasedproduct,
+        released_product_update: released_product_schema.ReleasedProductCreate
+):
+    update_data = released_product_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        # JSON 필드는 model_dump()를 통해 딕셔너리로 변환하여 저장
+        if key in ["color_line", "color_base1", "color_base2", "color_pupil"] and value is not None:
+            setattr(db_released_product, key, value.model_dump())
+        else:
+            setattr(db_released_product, key, value)
+    db.commit()
+    db.refresh(db_released_product)
+    return db_released_product
+
 
 def get_released_products_paginated(
         db: Session,

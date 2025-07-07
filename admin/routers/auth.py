@@ -76,14 +76,15 @@ def login_for_access_token(db: Session = Depends(get_db), form_data: OAuth2Passw
     # 로그인 성공 시, 마지막 접속 시간 업데이트
     user_crud.update_last_login(db, username=user.username)
 
+
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(data={"sub": user.username})
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return user_schema.Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        account_code=user.account_code
+    )
 
 
 @router.get("/me", response_model=user_schema.AdminUserResponse)

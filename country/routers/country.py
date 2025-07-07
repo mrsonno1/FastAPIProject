@@ -21,7 +21,7 @@ def create_new_country(country: country_schema.CountryCreate, db: Session = Depe
     return country_crud.create_country(db=db, country=country)
 
 
-@router.get("/", response_model=List[country_schema.CountryResponse])
+@router.get("/listall", response_model=List[country_schema.CountryResponse])
 def get_all_countries(db: Session = Depends(get_db)):
     """모든 국가를 순위 순으로 조회합니다."""
     return country_crud.get_all_countries_ordered(db)

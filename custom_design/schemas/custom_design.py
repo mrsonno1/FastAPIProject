@@ -13,7 +13,7 @@ class DesignElement(BaseModel):
     opacity: int = Field(None, ge=0, le=100)
 
 class CustomDesignCreate(BaseModel):
-    item_name: str
+    item_name: Optional[str] = None
     request_message: Optional[str] = None
     main_image_url: Optional[str] = None
 

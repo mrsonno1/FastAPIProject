@@ -7,7 +7,7 @@ username=sontest&password=1234567
 
 > {%
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
-    client.global.set("customer_id", "admin03");
+    client.global.set("code", response.body.account_code + "-");
 %}
 
 
@@ -228,15 +228,30 @@ Content-Type: image/png
 
 
 
-
-### 1-1. 첫 번째 디자인 생성
-POST {{host}}{{api_prefix}}/custom-designs/
-Content-Type: application/json
+### 1. 포트폴리오 업데이트 (JSON + 파일 동시 전송)
+PATCH {{host}}{{api_prefix}}/portfolio/1
+Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
+--boundary
+Content-Disposition: form-data; name="portfolio"
+Content-Type: application/json
+
 {
-  "item_name": "SIMPLE_BLUE_V21",
-  "request_message": "코가 편안한 파란색으로 만들어주세요.",
+  "item_name": "SIMPLE_BLUE_V112",
+  "color_name": "심플 블루 테마 버전2",
+  "exposed_countries":  {
+    "대한민국": true,
+    "미국": true,
+    "중국": true,
+    "호주": true,
+    "캐나다": true,
+    "인도": true,
+    "베트남": true,
+    "러시아": true
+  },
+  "is_fixed_axis": true,
+  "main_image_url": "public_url",
 
   "design_line": {
     "image_id": "1",
@@ -255,7 +270,7 @@ Authorization: {{superadmin_token}}
     "image_name": "L-1000",
     "RGB_id": "10",
     "RGB_color": "00ff00",
-    "RGB_name": "연두13",
+    "RGB_name": "C-1000",
     "size": 100,
     "opacity": 100
   },
@@ -282,6 +297,67 @@ Authorization: {{superadmin_token}}
     "opacity": 50
   },
 
+  "graphic_diameter": "13.2mm",
+  "optic_zone": "10mm"
+}
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="summer_sea.png"
+Content-Type: image/png
+
+< G:/image.png
+--boundary--
+
+
+
+### 1-1. 첫 번째 디자인 생성
+POST {{host}}{{api_prefix}}/custom-designs/
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "request_message": "코가 편안한 파란색으로 만들어주세요.",
+
+  "design_line": {
+    "image_id": "1",
+    "image_url": "dsaklfjdslakjfalksdjfksa",
+    "image_name": "L-1000",
+    "RGB_id": "10",
+    "RGB_color": "00ff00",
+    "RGB_name": "C-1000",
+    "size": 100,
+    "opacity": 100
+  },
+  "design_base1": {
+    "image_id": "1",
+    "image_url": "dsaklfjdslakjfalksdjfksa",
+    "image_name": "L-1000",
+    "RGB_id": "10",
+    "RGB_color": "00ff00",
+    "RGB_name": "연두13",
+    "size": 100,
+    "opacity": 100
+  },
+  "design_base2": {
+    "image_id": "1",
+    "image_url": "dsaklfjdslakjfalksdjfksa",
+    "image_name": "L-1000",
+    "RGB_id": "10",
+    "RGB_color": "00ff00",
+    "RGB_name": "C-1000",
+    "size": 100,
+    "opacity": 100
+  },
+  "design_pupil": {
+    "image_id": "1",
+    "image_url": "dsaklfjdslakjfalksdjfksa",
+    "image_name": "L-1000",
+    "RGB_id": "10",
+    "RGB_color": "00ff00",
+    "RGB_name": "C-1000",
+    "size": 100,
+    "opacity": 50
+  },
   "graphic_diameter": "13.2mm",
   "optic_zone": "10mm"
 }
