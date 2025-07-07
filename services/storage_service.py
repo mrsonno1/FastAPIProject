@@ -69,5 +69,4 @@ class StorageService:
             print(f"Error deleting file: {e}")
             return False
 
-
 storage_service = StorageService()

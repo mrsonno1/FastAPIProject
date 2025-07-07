@@ -1,15 +1,15 @@
 # routers/upload.py
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 import math
 from db.database import get_db
 # 수정/검색을 위한 스키마 및 CRUD 함수 임포트
-from schemas.image import ImageResponse, PaginatedImageResponse
-from crud import image as image_crud  # image_crud로 임포트
+from image.schemas.image import ImageResponse, PaginatedImageResponse
+from image.crud import image as image_crud
 from services.storage_service import storage_service
 from db import models
-from schemas.color import NameCheckResponse
+from color.schemas.color import NameCheckResponse
 
 router = APIRouter(prefix="/images", tags=["Images"])  # prefix를 /images로 변경하는 것이 더 명확
 

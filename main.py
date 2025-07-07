@@ -1,7 +1,14 @@
 # main.py
-from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, admin, upload, color, raw_sql, brand, country, custom_design, portfolio
+from released_product.routers import released_product
+from portfolio.routers import portfolio
+from image.routers import upload
+from custom_design.routers import custom_design
+from country.routers import country
+from color.routers import color
+from brand.routers import brand
+from admin.routers import admin, auth
 from db.database import engine, Base
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
@@ -10,6 +17,8 @@ Base.metadata.create_all(bind=engine)
 # docs_url과 redoc_url을 /api 하위 경로로 지정합니다.
 app = FastAPI(
     title="LensGrapick",
+    version="0.5.0",
+    description="LensGrapick API 설명입니다.<br>업데이트 : 2025 07 07 14 00",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
@@ -73,11 +82,12 @@ api_router.include_router(auth.router)
 api_router.include_router(admin.router)
 api_router.include_router(upload.router)
 api_router.include_router(color.router)
-api_router.include_router(raw_sql.router)
+
 api_router.include_router(brand.router)
 api_router.include_router(country.router)
 api_router.include_router(custom_design.router)
-#api_router.include_router(portfolio.router)
+api_router.include_router(portfolio.router)
+api_router.include_router(released_product.router)
 # 앱에 api_router를 포함시킵니다.
 app.include_router(api_router)
 

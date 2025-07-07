@@ -1,8 +1,8 @@
-# crud/image.py
 from sqlalchemy.orm import Session
 from db import models
 from typing import Optional
 from sqlalchemy import or_, cast, Integer, func
+from fastapi import HTTPException
 
 def update_image(
         db: Session,
@@ -28,11 +28,30 @@ def update_image(
 def delete_image_by_id(db: Session, image_id: int) -> models.Image:
     """ID로 이미지를 찾아 삭제하고, 삭제된 객체를 반환합니다."""
     db_image = db.query(models.Image).filter(models.Image.id == image_id).first()
-    if db_image:
-        db.delete(db_image)
-        db.commit()
-        return db_image
-    return None
+    if not db_image:
+        return None
+
+    image_public_url = db_image.public_url
+
+    # Check if the image is used in Brand
+    if db.query(models.Brand).filter(models.Brand.brand_image_url == image_public_url).first():
+        raise HTTPException(status_code=400, detail=f"Image '{image_public_url}' cannot be deleted as it is referenced in a brand.")
+
+    # Check if the image is used in CustomDesign
+    if db.query(models.CustomDesign).filter(models.CustomDesign.main_image_url == image_public_url).first():
+        raise HTTPException(status_code=400, detail=f"Image '{image_public_url}' cannot be deleted as it is referenced in a custom design.")
+
+    # Check if the image is used in Portfolio
+    if db.query(models.Portfolio).filter(models.Portfolio.main_image_url == image_public_url).first():
+        raise HTTPException(status_code=400, detail=f"Image '{image_public_url}' cannot be deleted as it is referenced in a portfolio.")
+
+    # Check if the image is used in Releasedproduct
+    if db.query(models.Releasedproduct).filter(models.Releasedproduct.main_image_url == image_public_url).first():
+        raise HTTPException(status_code=400, detail=f"Image '{image_public_url}' cannot be deleted as it is referenced in a released product.")
+
+    db.delete(db_image)
+    db.commit()
+    return db_image
 
 def get_image_by_display_name(db: Session, category: str, display_name: str):
     """category와 display_name의 조합으로 이미지 정보 조회"""

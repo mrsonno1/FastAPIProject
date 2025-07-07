@@ -4,8 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from schemas import user as user_schema
-from crud import user as user_crud
+from admin.schemas import user as user_schema
+from admin.crud import user as user_crud
 from core.security import create_access_token, create_refresh_token, get_current_user, verify_password
 from db import models
 from pydantic import BaseModel # BaseModel 임포트

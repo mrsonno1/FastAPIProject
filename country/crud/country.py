@@ -1,13 +1,18 @@
 # crud/country.py
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
+
 from db import models
-from schemas import country as country_schema
+from country.schemas import country as country_schema
 from typing import List
+from fastapi import HTTPException
 
 
 def get_country_by_name(db: Session, country_name: str):
     return db.query(models.Country).filter(models.Country.country_name == country_name).first()
+
+def get_country_by_id(db: Session, country_id: int):
+    return db.query(models.Country).filter(models.Country.id == country_id).first()
 
 
 def get_all_countries_ordered(db: Session):
@@ -25,17 +30,24 @@ def create_country(db: Session, country: country_schema.CountryCreate):
     db.refresh(db_country)
     return db_country
 
-def delete_country_by_id(db: Session, country_id: int) -> bool:
+def delete_country_by_id(db: Session, country_id: int) -> models.Country:
     """
-    ID로 국가 정보를 찾아 삭제합니다.
-    :return: 삭제 성공 시 True, 해당 객체가 없을 시 False
+    ID로 국가 정보를 찾아 반환합니다.
     """
     db_country = db.query(models.Country).filter(models.Country.id == country_id).first()
-    if db_country:
-        db.delete(db_country)
-        db.commit()
-        return True
-    return False
+    if not db_country:
+        raise HTTPException(status_code=404,detail="국가를 찾을 수 없습니다.")
+
+    country_name = db_country.country_name
+
+    if db.query(models.Portfolio).filter(
+            models.Portfolio.exposed_countries.op('->')(country_name).isnot(None)
+    ).first():
+        raise HTTPException(status_code=400, detail=f"Country '{country_name}' cannot be deleted as it is referenced in a portfolio.")
+
+    db.delete(db_country)
+    db.commit()
+    return db_country
 
 
 def update_country_info(db: Session, db_country: models.Country, country_update: country_schema.CountryUpdate):

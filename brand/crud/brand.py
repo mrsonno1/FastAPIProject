@@ -1,16 +1,14 @@
 # crud/brand.py
 from sqlalchemy.orm import Session
-from sqlalchemy import func, case
+from sqlalchemy import func, case, cast, Integer
 from db import models
 from typing import Optional
-from schemas import brand as brand_schema
+from brand.schemas import brand as brand_schema
 from typing import List
 from sqlalchemy import or_
+from fastapi import HTTPException
 
 def update_brand_ranks_bulk(db: Session, ranks: List[brand_schema.RankItem]):
-    # 여러 브랜드의 순위를 한 번에 업데이트합니다.
-    # case 문을 사용하여 ID별로 다른 rank 값을 부여하는 UPDATE 쿼리를 생성합니다.
-    # 이는 여러 개의 UPDATE 문을 실행하는 것보다 훨씬 효율적입니다.
     db.query(models.Brand).update(
         {
             models.Brand.rank: case(
@@ -24,13 +22,21 @@ def update_brand_ranks_bulk(db: Session, ranks: List[brand_schema.RankItem]):
 
 
 def delete_brand_by_id(db: Session, brand_id: int) -> models.Brand:
-    """ID로 브랜드를 찾아 삭제하고, 삭제된 객체를 반환합니다."""
     db_brand = db.query(models.Brand).filter(models.Brand.id == brand_id).first()
-    if db_brand:
-        db.delete(db_brand)
-        db.commit()
-        return db_brand # 삭제된 객체 정보를 반환하여 object_name을 사용할 수 있게 함
-    return None
+    if not db_brand:
+        return None
+
+    brand_name = db_brand.brand_name
+
+    # Check if the brand is used in Releasedproduct's brand JSON field
+    if db.query(models.Releasedproduct).filter(
+        cast(models.Releasedproduct.brand.op('->>')('id'), Integer) == brand_id
+    ).first():
+        raise HTTPException(status_code=400, detail=f"Brand '{brand_name}' cannot be deleted as it is referenced in a released product.")
+
+    db.delete(db_brand)
+    db.commit()
+    return db_brand
 
 def get_all_brands_ordered(db: Session):
     return db.query(models.Brand).order_by(models.Brand.rank).all()
@@ -61,7 +67,6 @@ def get_brands_paginated(
                 else:
                     query = query.order_by(order_column.asc())
         except:
-            # orderBy 형식이 잘못된 경우 기본 정렬 적용
             query = query.order_by(models.Brand.rank.asc())
     else:
         query = query.order_by(models.Brand.rank.asc())  # 기본 정렬은 rank 순

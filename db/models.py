@@ -1,27 +1,24 @@
 # db/models.py
-from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text, Boolean
 from sqlalchemy.sql import func
 from .database import Base
 from sqlalchemy.types import JSON
 
 class AdminUser(Base):
-    __tablename__ = "관리자계정"
+    __tablename__ = "account"
 
     # Python 변수명 = Column("DB 컬럼명", 타입, 제약조건)
-    id = Column("index", Integer, primary_key=True)
-    permission = Column("권한", String(50), nullable=False)
-    # '계정코드' 필드 추가
-    account_code = Column("계정코드", String(10), unique=True, nullable=True)  # nullable=True로 설정
-    username = Column("아이디", String(50), unique=True, nullable=False, index=True)
-    hashed_password = Column("비밀번호", String(100), nullable=False)
-    company_name = Column("소속사업자명", String(20), nullable=False)
-    contact_name = Column("담당자명", String(100))
-    contact_phone = Column("담당자연락처", String(50))
-    email = Column("이메일", String(100), unique=True, nullable=True, index=True)
-    created_at = Column("생성시간", TIMESTAMP(timezone=True), server_default=func.now())
-    # '접속시간'은 로그인 시마다 업데이트해야 하므로, Python 코드에서 처리합니다.
-    # DB 기본값으로 CURRENT_TIMESTAMP를 사용하면 생성 시에만 적용됩니다.
-    last_login_at = Column("접속시간", TIMESTAMP(timezone=True), server_default=func.now())
+    id = Column(Integer, primary_key=True)
+    permission = Column(String(50), nullable=False)
+    account_code = Column(String(10), unique=True, nullable=True)  # nullable=True로 설정
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(100), nullable=False)
+    company_name = Column(String(20), nullable=False)
+    contact_name = Column(String(100))
+    contact_phone = Column(String(50))
+    email = Column(String(100), unique=True, nullable=True, index=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    last_login_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
 class Brand(Base):
     __tablename__ = "brands"
@@ -30,7 +27,6 @@ class Brand(Base):
     brand_name = Column(String, unique=True, index=True, nullable=False)
     brand_image_url = Column(String)
     object_name = Column(String, nullable=True)
-    # 순위를 나타내는 정수형 컬럼. 값이 작을수록 순위가 높음.
     rank = Column(Integer, nullable=False, index=True)
 
 class Country(Base):
@@ -38,7 +34,6 @@ class Country(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     country_name = Column(String, unique=True, index=True, nullable=False)
-    # 순위를 나타내는 정수형 컬럼. 값이 작을수록 순위가 높음.
     rank = Column(Integer, nullable=False, index=True)
 
 class Image(Base):
@@ -48,11 +43,8 @@ class Image(Base):
     )
     id = Column(Integer, primary_key=True, index=True)
     category = Column(String, nullable=False, index=True)
-    # 사용자가 지정하는 파일 이름 (예: '내 고양이 사진')
     display_name = Column(String, index=True, nullable=False)
-    # S3/MinIO에 저장된 객체 이름 (예: uuid.jpg)
     object_name = Column(String, index=True)
-    # 외부에서 접근 가능한 전체 URL
     public_url = Column(String, unique=True)
     uploaded_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
@@ -69,32 +61,68 @@ class Color(Base):
         onupdate=func.now()
     )
 
-    class CustomDesign(Base):
-        __tablename__ = "custom_designs"
+class CustomDesign(Base):
+    __tablename__ = "custom_designs"
 
-        id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=False)
+    code_name = Column(String(50), unique=True, nullable=False)
+    status = Column(String(20), default="검토중") # 기본값을 셋팅
+    request_message = Column(Text, nullable=True)
+    main_image_url = Column(String, nullable=True)
 
-        # --- 기본 정보 (섹션 1) ---
-        user_id = Column(String, index=True, nullable=False)
-        code_name = Column(String(50), unique=True, nullable=False)
-        status = Column(String(20), default="검토중")
-        request_message = Column(Text, nullable=True)
-        created_at = Column(DateTime(timezone=True), server_default=func.now())
-        updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    design_line = Column(JSON, nullable=True)  # 라인
+    design_base1 = Column(JSON, nullable=True)  # 바탕1
+    design_base2 = Column(JSON, nullable=True)  # 바탕2
+    design_pupil = Column(JSON, nullable=True)  # 동공
 
-        # --- 디자인 정보 (섹션 2) ---
-        main_image_url = Column(String, nullable=True)
+    graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
+    optic_zone = Column(String(20), nullable=True)  # 옵틱존
 
-        # ▼▼▼▼▼ 컬럼 타입을 JSONB에서 JSON으로 변경합니다 ▼▼▼▼▼
-        # 각 디자인 요소를 JSON 타입으로 저장
-        design_line = Column(JSON, nullable=True)  # 라인
-        design_base1 = Column(JSON, nullable=True)  # 바탕1
-        design_base2 = Column(JSON, nullable=True)  # 바탕2
-        design_pupil = Column(JSON, nullable=True)  # 동공
-
-        graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
-        optic_zone = Column(String(20), nullable=True)  # 옵틱존
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
 
+class Portfolio(Base):
+    __tablename__ = "portfolios"
 
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=False)
+    design_name = Column(String(50), unique=True, nullable=False, index=True)
+    color_name = Column(String(50), nullable=False)
+    exposed_countries = Column(JSON, nullable=True)
+    is_fixed_axis = Column(Boolean, default=False)  # 축고정
+    main_image_url = Column(String, nullable=False)
 
+    design_line = Column(JSON, nullable=True)  # 라인
+    design_base1 = Column(JSON, nullable=True)  # 바탕1
+    design_base2 = Column(JSON, nullable=True)  # 바탕2
+    design_pupil = Column(JSON, nullable=True)  # 동공
+
+    graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
+    optic_zone = Column(String(20), nullable=True)  # 옵틱존
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class Releasedproduct(Base):
+    __tablename__ = "releasedproducts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=False)
+    design_name = Column(String(50), unique=True, nullable=False, index=True)
+    color_name = Column(String(50), nullable=False)
+    brand = Column(JSON, nullable=False)
+    main_image_url = Column(String, nullable=False)
+
+    color_line = Column(JSON, nullable=True)  # 라인
+    color_base1 = Column(JSON, nullable=True)  # 바탕1
+    color_base2 = Column(JSON, nullable=True)  # 바탕2
+    color_pupil = Column(JSON, nullable=True)  # 동공
+
+    graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
+    optic_zone = Column(String(20), nullable=True)  # 옵틱존
+    base_curve = Column(String(20), nullable=True)  # 베이스커브
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

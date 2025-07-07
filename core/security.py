@@ -1,6 +1,5 @@
 # core/security.py
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -10,9 +9,9 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from db.database import get_db
-from crud import user as user_crud
+from admin.crud import user as user_crud
 from db import models
-from schemas.user import TokenData
+from admin.schemas.user import TokenData
 
 # 비밀번호 해싱 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

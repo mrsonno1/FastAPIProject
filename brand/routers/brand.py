@@ -1,17 +1,14 @@
 # routers/brand.py
-from typing import List, Optional
+from typing import Optional
 from sqlalchemy.orm import Session
 from typing import List
 
 from db.database import get_db
-from schemas import brand as brand_schema
-from crud import brand as brand_crud
+from brand.schemas import brand as brand_schema
+from brand.crud import brand as brand_crud
 from db import models
-from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from services.storage_service import storage_service # S3/MinIO 서비스 임포트
-from schemas.brand import PaginatedBrandResponse, RankUpdateBulk as BrandRankUpdateBulk
-import math
-
 
 router = APIRouter(prefix="/brands", tags=["Brands"])
 
@@ -48,15 +45,21 @@ def delete_single_brand(
         # 필요 시, 인증/권한 검사 추가
 ):
     """ID로 특정 브랜드를 삭제합니다. (S3 이미지 포함)"""
-    # 1. DB에서 브랜드 삭제 시도 및 삭제된 객체 정보 가져오기
-    deleted_brand = brand_crud.delete_brand_by_id(db, brand_id=brand_id)
+    try:
+        # 1. DB에서 브랜드 삭제 시도 및 삭제된 객체 정보 가져오기
+        deleted_brand = brand_crud.delete_brand_by_id(db, brand_id=brand_id)
 
-    if not deleted_brand:
-        raise HTTPException(status_code=404, detail="해당 ID의 브랜드를 찾을 수 없습니다.")
+        if not deleted_brand:
+            raise HTTPException(status_code=404, detail="해당 ID의 브랜드를 찾을 수 없습니다.")
 
-    # 2. DB 삭제가 성공하면, S3/MinIO에서 관련 이미지 파일 삭제
-    if deleted_brand.object_name:
-        storage_service.delete_file(deleted_brand.object_name)
+        # 2. DB 삭제가 성공하면, S3/MinIO에서 관련 이미지 파일 삭제
+        if deleted_brand.object_name:
+            storage_service.delete_file(deleted_brand.object_name)
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
 
     return
 

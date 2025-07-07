@@ -4,11 +4,11 @@ import math # 총 페이지 계산을 위해 math 라이브러리 임포트
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
 
-from typing import List, Optional
+from typing import Optional
 from db.database import get_db
-from schemas import user as user_schema
-from crud import user as user_crud
-from core.security import get_current_user, verify_password
+from admin.schemas import user as user_schema
+from admin.crud import user as user_crud
+from core.security import get_current_user
 from db import models
 
 
@@ -89,7 +89,6 @@ def fix_user_info_by_username(  # 함수 이름도 변경
         raise HTTPException(status_code=404, detail="수정할 사용자를 찾을 수 없습니다.")
 
 
-
     # 4. CRUD 함수 호출하여 업데이트
     return user_crud.fix_admin_user(db, db_user=user_to_update, user_fix=user_fix)
 
@@ -101,7 +100,7 @@ def list_all_admin_users(
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
 
         # ▼▼▼▼▼ 선택적 검색 파라미터 추가 ▼▼▼▼▼
-        id: Optional[str] = Query(None, description="아이디로 검색"),
+        id: Optional[int] = Query(None, description="아이디로 검색"),
         permission: Optional[str] = Query(None, description="권한으로 검색"),
         username: Optional[str] = Query(None, min_length=1, description="이름으 검색"),
         company_name: Optional[str] = Query(None, min_length=1, description="소속사업자명으로 검색"),

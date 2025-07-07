@@ -1,13 +1,13 @@
 # routers/color.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
 import math
 from db.database import get_db
-from schemas import color as color_schema
-from crud import color as color_crud
-from schemas.color import ColorResponse, PaginatedColorResponse
+from color.schemas import color as color_schema
+from color.crud import color as color_crud
+from color.schemas.color import PaginatedColorResponse
 from typing import Optional
+from portfolio.schemas import portfolio as portfolio_schema
 
 router = APIRouter(prefix="/colors", tags=["Colors"])
 
@@ -49,18 +49,26 @@ def create_new_color(color: color_schema.ColorCreate, db: Session = Depends(get_
     return color_crud.create_color(db=db, color=color)
 
 
-@router.delete("/{color_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{color_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
 def delete_single_color(
     color_id: int,
     db: Session = Depends(get_db)
     # 필요 시, 인증/권한 검사 추가
     # current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """ID로 특정 컬러 데이터를 삭제합니다."""
-    was_deleted = color_crud.delete_color_by_id(db, color_id=color_id)
-    if not was_deleted:
-        raise HTTPException(status_code=404, detail="해당 ID의 컬러를 찾을 수 없습니다.")
-    return
+    """
+    ID로 특정 컬러 데이터를 삭제합니다.
+    """
+    try:
+        was_deleted = color_crud.delete_color_by_id(db, color_id=color_id)
+        if not was_deleted:
+            raise HTTPException(status_code=404, detail="해당 ID의 컬러를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
+
+    return portfolio_schema.StatusResponse(status="success", message="컬러가 성공적으로 삭제되었습니다.")
 
 
 @router.get("/check/{color_name}", response_model=color_schema.NameCheckResponse)
@@ -96,7 +104,6 @@ def search_single_color(
 ):
     """
     컬러 이름으로 특정 컬러의 상세 정보를 조회합니다.
-    (한글 이름 검색을 위해 쿼리 파라미터 사용)
     """
     db_color = color_crud.get_color_by_name(db, color_name=name)
     if db_color is None:

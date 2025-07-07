@@ -1,0 +1,38 @@
+#Api함수 제작
+
+### 국가 삭제
+DELETE {{host}}{{api_prefix}}/countries/15
+
+### 국가 목록
+GET {{host}}{{api_prefix}}/countries/
+
+
+### 브랜드 삭제
+DELETE {{host}}{{api_prefix}}/brands/4
+
+### 컬러 삭제
+DELETE {{host}}{{api_prefix}}/colors/11
+
+### 포트폴리오 이름 확인
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=5&design_name=v
+
+### 포트폴리오 이름 확인
+GET {{host}}{{api_prefix}}/released-product/list?page=1&size=5&design_name=v
+
+### 포트폴리오 이름 확인
+GET {{host}}{{api_prefix}}/portfolio/SIMPLE_BLUE_V188
+
+### 디자인 전부 출력
+GET {{host}}{{api_prefix}}/custom-designs/?code_name=V21
+
+### 디자인 전부 출력
+GET {{host}}{{api_prefix}}/custom-designs/?status=Brown
+
+### 디자인 전부 출력
+GET {{host}}{{api_prefix}}/custom-designs/?clo=Brown
+
+### 디자인 전부 출력
+GET {{host}}{{api_prefix}}/custom-designs/?start_date=2023-10-01&end_date=2023-10-31
+
+### 디자인 전부 출력
+GET {{host}}{{api_prefix}}/custom-designs/?page=2&size=20&status=A&color_name=Red&start_date=2023-01-01

@@ -1,18 +1,17 @@
 # crud/user.py
 from sqlalchemy.orm import Session
-from datetime import datetime
 from datetime import datetime, timezone # timezone을 임포트합니다.
-from zoneinfo import ZoneInfo # zoneinfo 임포트
 from db import models
 from sqlalchemy import func
-from schemas import user as user_schema
-from core.security import get_password_hash
+from admin.schemas import user as user_schema
+
 from typing import Optional
 
 
 def get_user_by_username(db: Session, username: str):
     """아이디로 사용자 정보 조회"""
     return db.query(models.AdminUser).filter(models.AdminUser.username == username).first()
+
 
 def get_user_by_account_code(db: Session, account_code: str):
     """계정코드로 사용자 정보 조회"""
@@ -21,12 +20,15 @@ def get_user_by_account_code(db: Session, account_code: str):
         return None
     return db.query(models.AdminUser).filter(models.AdminUser.account_code == account_code).first()
 
+
 def get_user_by_email(db: Session, email: str):
     """이메일로 사용자 정보 조회"""
     return db.query(models.AdminUser).filter(models.AdminUser.email == email).first()
 
+
 def create_user(db: Session, user: user_schema.AdminUserCreate):
     """새로운 관리자 사용자 생성"""
+    from core.security import get_password_hash
     hashed_password = get_password_hash(user.password)
     db_user = models.AdminUser(
         username=user.username,
@@ -56,6 +58,7 @@ def delete_admin_user_by_id(db: Session, user_id: int) -> bool:
         return True
     return False
 
+
 def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema.AdminUserFix):
     """
     관리자 계정의 정보를 선택적으로 업데이트합니다. (단순화된 버전)
@@ -63,6 +66,7 @@ def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema
     # 1. Pydantic 모델에서 사용자가 보낸 값들만 딕셔너리로 추출합니다.
     update_data = user_fix.model_dump(exclude_unset=True)
 
+    from core.security import get_password_hash
     # 2. 비밀번호가 있다면, 해싱하여 딕셔너리 값을 교체합니다.
     if "new_password" in update_data and update_data["new_password"]:
         # 'new_password' 키를 DB 모델의 속성명인 'password'로 바꾸고, 값을 해싱합니다.
@@ -78,8 +82,6 @@ def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema
     return db_user
 
 
-
-
 def update_last_login(db: Session, username: str):
     """ 마지막 접속 시간 업데이트 (안정적인 UTC 기반 방식으로 최종 수정)"""
     utc_now = datetime.now(timezone.utc)
@@ -89,9 +91,11 @@ def update_last_login(db: Session, username: str):
     )
     db.commit()
 
+
 def get_user_by_id(db: Session, user_id: int):
     """사용자 PK(index)로 사용자 정보 조회"""
     return db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+
 
 def get_users_by_contact_name(db: Session, name: str):
     """
@@ -140,7 +144,6 @@ def get_admin_users_paginated(
             #    그 결과와 search_digits를 LIKE로 비교합니다.
             db_phone_digits = func.regexp_replace(models.AdminUser.contact_phone, r'[^0-9]', '', 'g')
             query = query.filter(db_phone_digits.like(f"%{search_digits}%"))
-    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     total_count = query.count()
     offset = (page - 1) * size
