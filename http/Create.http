@@ -3,7 +3,7 @@
 POST {{host}}{{api_prefix}}/auth/login
 Content-Type: application/x-www-form-urlencoded
 
-username=sontest&password=1234567
+username=dabanbus&password=123456
 
 > {%
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
@@ -18,14 +18,14 @@ POST {{host}}{{api_prefix}}/auth/register
 Content-Type: application/json
 
 {
-    "permission": "admin",
-    "username": "dabanbus22",
+    "permission": "superadmin",
+    "username": "admin",
     "password": "123456",
-    "email": "",
+    "email": "bba@gmail.com",
     "company_name": "넷스트림",
-    "contact_name": "",
-    "contact_phone": "",
-    "account_code": ""
+    "contact_name": "홍길동",
+    "contact_phone": "01022334455",
+    "account_code": "DA"
 }
 
 

@@ -80,9 +80,10 @@ def get_designs_paginated(
     if item_name:
         query = query.filter(models.CustomDesign.item_name.ilike(f"%{item_name}%"))
 
-    # 2. 등록일자(created_at) 기간 검색
+
     if start_date:
         query = query.filter(models.CustomDesign.created_at >= start_date)
+
     if end_date:
         # end_date의 자정까지 포함하기 위해 날짜에 1을 더해 그 이전까지로 설정
         query = query.filter(models.CustomDesign.created_at < end_date + timedelta(days=1))
