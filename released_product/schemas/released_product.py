@@ -3,26 +3,17 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-class DesignElement(BaseModel):
-    image_id: str
-    image_url: str
-    image_name: str
-    RGB_id: str
-    RGB_color: str
-    RGB_name: str
-    size: int = Field(None, ge=0, le=200)
-    opacity: int = Field(None, ge=0, le=100)
+
 
 class ReleasedProductCreate(BaseModel):
     design_name: str
     color_name: str
     main_image_url: Optional[str] = None
-    brand: Dict[str, Any] = {}
-    color_line: Optional[DesignElement] = None
-    color_base1: Optional[DesignElement] = None
-    color_base2: Optional[DesignElement] = None
-    color_pupil: Optional[DesignElement] = None
-
+    brand_id: int
+    color_line_color_id: Optional[str] = None
+    color_base1_color_id: Optional[str] = None
+    color_base2_color_id: Optional[str] = None
+    color_pupil_color_id: Optional[str] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
     base_curve: Optional[str] = None
@@ -51,3 +42,35 @@ class PaginatedReleasedProductResponse(BaseModel):
 class StatusResponse(BaseModel):
     status: str
     message: str
+
+class ReleasedProductDetailResponse(BaseModel):
+    id: int
+    brandname: str
+    brandimage: Optional[str] = None
+    designName: str
+    colorName: str
+    image: str
+    dkColor: List[str] = Field(default_factory=list)
+    dkrgb: List[str] = Field(default_factory=list)
+    G_DIA: Optional[str] = None
+    Optic: Optional[str] = None
+    baseCurve: Optional[str] = None
+
+class ReleasedProductListItem(BaseModel):
+    no: int
+    brandname: str
+    image: str
+    designName: str
+    colorName: str
+    dkColor: List[str] = Field(default_factory=list)
+    dkrgb: List[str] = Field(default_factory=list)
+    diameter: dict = Field(default_factory=dict)
+    viewCount: int = 0
+    registerDate: str
+
+class ReleasedProductListResponse(BaseModel):
+    total_count: int
+    total_pages: int
+    page: int
+    size: int
+    items: List[ReleasedProductListItem]

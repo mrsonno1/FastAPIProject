@@ -1,5 +1,20 @@
 #Api함수 제작
 
+### 랭킹 목록
+GET {{host}}{{api_prefix}}/v1/rank/
+
+### 목록
+GET {{host}}{{api_prefix}}/released-product/info/1
+###
+GET {{host}}{{api_prefix}}/released-product/list
+
+
+
+### 목록
+GET {{host}}{{api_prefix}}/portfolio/info/1
+###
+GET {{host}}{{api_prefix}}/portfolio/list
+
 ### 국가 삭제
 DELETE {{host}}{{api_prefix}}/countries/15
 
@@ -18,14 +33,62 @@ DELETE {{host}}{{api_prefix}}/brands/4
 ### 컬러 삭제
 DELETE {{host}}{{api_prefix}}/colors/11
 
+### 컬러 생성
+POST {{host}}{{api_prefix}}/colors/
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "color_name": "12349",
+  "monochrome_type": "1",
+  "color_values": "255,0,0,0,100,100,0"
+}
 
 
+###
+POST {{host}}{{api_prefix}}/released-product/
+Content-Type: multipart/form-data; boundary=boundary
+Authorization: {{superadmin_token}}
+
+--boundary
+Content-Disposition: form-data; name="released_product"
+
+{
+  "design_name": "새로운 겨울 디자인10",
+  "color_name": "스노우 화이트",
+  "brand_id": 3,
+  "color_line_color_id": "1",
+  "color_base1_color_id": "2",
+  "color_base2_color_id": "3",
+  "color_pupil_color_id": "4",
+  "graphic_diameter": "13.8mm",
+  "optic_zone": "8.1mm",
+  "base_curve": "8.8"
+}
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="summer_sea.png"
+Content-Type: image/png
+
+< G:/image.png
+--boundary--
+
+
+
+### 국가입력
+POST {{host}}{{api_prefix}}/countries/
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "country_name": "미국"
+}
 
 ### 포트폴리오 리스트
 GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=5
 
 ### 디자인 전부 출력
-GET {{host}}{{api_prefix}}/custom-designs/list
+GET {{host}}{{api_prefix}}/custom-designs/list?item_name=S
 
 ### 디자인 전부 출력
 PATCH {{host}}{{api_prefix}}/custom-designs/status/1

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, File, Form, Uploa
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from portfolio.schemas import portfolio as portfolio_schema
+from portfolio.schemas import portfolio_format as portfolio_format_schema
 from portfolio.crud import portfolio as portfolio_CRUD
 from db import models
 from db.database import get_db
@@ -22,20 +23,23 @@ def create_new_portfolio(
     current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
-     "exposed_countries":  {
-        "대한민국": true,
-        "미국": true,
-        "중국": true,
-        "호주": true,
-        "캐나다": true,
-        "인도": true,
-        "베트남": true,
-        "러시아": true
-      },
+    새로운 포트폴리오를 생성합니다.
+    exposed_countries는 콤마로 구분된 국가 ID 문자열입니다 (예: "1,2,3,4")
+    is_fixed_axis는 'Y' 또는 'N'입니다.
     """
 
     try:
         portfolio_dict = json.loads(portfolio_str)
+
+        # exposed_countries 처리 - JSON 객체에서 문자열로 변환
+        if "exposed_countries" in portfolio_dict and isinstance(portfolio_dict["exposed_countries"], dict):
+            countries = [str(key) for key, value in portfolio_dict["exposed_countries"].items() if value]
+            portfolio_dict["exposed_countries"] = ",".join(countries)
+
+        # is_fixed_axis 처리 - Boolean에서 Y/N으로 변환
+        if "is_fixed_axis" in portfolio_dict:
+            portfolio_dict["is_fixed_axis"] = "Y" if portfolio_dict["is_fixed_axis"] else "N"
+
         portfolio_data = portfolio_schema.PortfolioCreate(**portfolio_dict)
 
     except json.JSONDecodeError:
@@ -43,29 +47,28 @@ def create_new_portfolio(
     except Exception as e:  # Pydantic 유효성 검사 실패 시
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    if portfolio_CRUD.get_portfolio_by_design_name(db, item_name=portfolio_data.item_name):
+    if portfolio_CRUD.get_portfolio_by_design_name(db, design_name=portfolio_data.design_name):
         raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
-    #이미지 업로드
+    # 이미지 업로드
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="메인 이미지 업로드에 실패했습니다.")
 
-    #이미지 업로드 url적용
+    # 이미지 업로드 url 적용
     portfolio_data.main_image_url = upload_result["public_url"]
 
-    #데이터 베이스 적용
+    # 데이터베이스 적용
     created_portfolio = portfolio_CRUD.create_portfolio(
         db=db,
         portfolio=portfolio_data,
-        user_id=current_user.id
+        user_id=0  # 사용자 ID 필드 제거됨
     )
 
-    #리스폰 모델로 변환
+    # 응답 모델로 변환
     response_data = portfolio_schema.PortfolioResponse.model_validate(created_portfolio)
 
-
-    #반환값 생성
+    # 반환값 생성
     return portfolio_schema.PortfolioApiResponse(
         success=True,
         message="포트폴리오가 성공적으로 생성되었습니다.",
@@ -94,21 +97,25 @@ def delete_single_portfolio(
 def list_all_portfolios(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
-        item_name: Optional[str] = Query(None, description="디자인명으로 검색"),
+        design_name: Optional[str] = Query(None, description="디자인명으로 검색"),
         color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
-        exposed_countries: Optional[List[str]] = Query(None, description="노출 국가로 검색"),
-        is_fixed_axis: Optional[bool] = Query(None, description="고정 축 여부로 검색"),
-        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'user_name asc', 'design_name desc')"),
+        exposed_countries: Optional[List[str]] = Query(None, description="노출 국가 ID로 검색"),
+        is_fixed_axis: Optional[str] = Query(None, description="고정 축 여부로 검색 (Y/N)"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'design_name asc', 'color_name desc')"),
         db: Session = Depends(get_db)
 ):
     """
     모든 포트폴리오 목록을 검색 조건과 함께 페이지네이션하여 조회합니다.
     """
+    # is_fixed_axis 검증
+    if is_fixed_axis and is_fixed_axis not in ['Y', 'N']:
+        raise HTTPException(status_code=400, detail="is_fixed_axis는 'Y' 또는 'N'이어야 합니다")
+
     paginated_data = portfolio_CRUD.get_portfolios_paginated(
         db,
         page=page,
         size=size,
-        item_name=item_name,
+        design_name=design_name,
         color_name=color_name,
         exposed_countries=exposed_countries,
         is_fixed_axis=is_fixed_axis,
@@ -128,12 +135,82 @@ def list_all_portfolios(
         "items": items,
     }
 
-@router.get("/{item_name}", response_model=portfolio_schema.PortfolioResponse)
-def read_single_portfolio(
-        item_name: str,
+
+@router.get("/info/{portfolio_id}", response_model=portfolio_format_schema.PortfolioDetailResponse)
+def get_portfolio_detail(
+    portfolio_id: int,
+    db: Session = Depends(get_db)
+    ):
+
+    """
+    단일 포트폴리오 상세 정보를 조회합니다.<br>
+    ID로 특정 포트폴리오를 찾아 상세 정보를 반환합니다.
+    """
+
+    detail = portfolio_format_CRUD.get_portfolio_detail(db, portfolio_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="해당 ID의 포트폴리오를 찾을 수 없습니다.")
+
+    return portfolio_format_schema.PortfolioDetailResponse(
+        success=True,
+        message="포트폴리오 정보를 성공적으로 조회했습니다.",
+        data=detail
+    )
+
+# 새로운 형식의 포트폴리오 관련 API
+from portfolio.crud import portfolio_format as portfolio_format_CRUD
+from portfolio.schemas import portfolio_format as portfolio_format_schema
+
+@router.get("/list/format", response_model=portfolio_format_schema.PaginatedPortfolioFormatResponse)
+def list_portfolios_formatted(
+        page: int = Query(1, ge=1, description="페이지 번호"),
+        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+        design_name: Optional[str] = Query(None, description="디자인명으로 검색"),
+        color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
+        exposed_countries: Optional[List[str]] = Query(None, description="노출 국가 ID로 검색"),
+        is_fixed_axis: Optional[str] = Query(None, description="고정 축 여부로 검색 (Y/N)"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'design_name asc', 'color_name desc')"),
         db: Session = Depends(get_db)
 ):
-    db_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, item_name=item_name)
+    """
+    포트폴리오 목록을 프론트데이터로 전달합니다.<br>
+    이미지 이름, 컬러 이름, RGB 값 등이 변환된 형태로 제공됩니다.
+    """
+    # is_fixed_axis 검증
+    if is_fixed_axis and is_fixed_axis not in ['Y', 'N']:
+        raise HTTPException(status_code=400, detail="is_fixed_axis는 'Y' 또는 'N'이어야 합니다")
+
+    # 포맷팅된 데이터 조회
+    formatted_data = portfolio_format_CRUD.get_portfolios_formatted(
+        db,
+        page=page,
+        size=size,
+        design_name=design_name,
+        color_name=color_name,
+        exposed_countries=exposed_countries,
+        is_fixed_axis=is_fixed_axis,
+        orderBy=orderBy
+    )
+
+    items = formatted_data["items"]
+    total_count = formatted_data["total_count"]
+
+    total_pages = math.ceil(total_count / size) if total_count > 0 else 1
+
+    return {
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "page": page,
+        "size": size,
+        "items": items,
+    }
+
+@router.get("/{design_name}", response_model=portfolio_schema.PortfolioResponse)
+def read_single_portfolio(
+        design_name: str,
+        db: Session = Depends(get_db)
+):
+    db_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, design_name=design_name)
     if db_portfolio is None:
         raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
     return db_portfolio
@@ -156,16 +233,26 @@ def update_portfolio_details(
 
     try:
         portfolio_dict = json.loads(portfolio_str)
+
+        # exposed_countries 처리 - JSON 객체에서 문자열로 변환
+        if "exposed_countries" in portfolio_dict and isinstance(portfolio_dict["exposed_countries"], dict):
+            countries = [str(key) for key, value in portfolio_dict["exposed_countries"].items() if value]
+            portfolio_dict["exposed_countries"] = ",".join(countries)
+
+        # is_fixed_axis 처리 - Boolean에서 Y/N으로 변환
+        if "is_fixed_axis" in portfolio_dict:
+            portfolio_dict["is_fixed_axis"] = "Y" if portfolio_dict["is_fixed_axis"] else "N"
+
         portfolio_update_data = portfolio_schema.PortfolioCreate(**portfolio_dict)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="전송된 'portfolio' 데이터의 JSON 형식이 잘못되었습니다.")
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    # 아이템명 중복 검사 (자신을 제외하고)
-    existing_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, item_name=portfolio_update_data.item_name)
+    # 디자인명 중복 검사 (자신을 제외하고)
+    existing_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, design_name=portfolio_update_data.design_name)
     if existing_portfolio and existing_portfolio.id != portfolio_id:
-        raise HTTPException(status_code=409, detail="이미 사용 중인 아이템명입니다.")
+        raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     # 이미지 파일 처리
     if file:

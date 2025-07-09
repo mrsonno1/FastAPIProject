@@ -1,20 +1,26 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from custom_design.schemas.custom_design import DesignElement
 
 # 포트폴리오 생성을 위한 스키마
 class PortfolioCreate(BaseModel):
-    item_name: str
+    design_name: str
     color_name: str
-    exposed_countries:  Dict[str, Any] = {}  # 국가 이름 리스트로 받음
-    is_fixed_axis: bool = False
+    exposed_countries: str = ""  # 콤마로 구분된 국가 ID들 (예: "1,2,3,4")
+    is_fixed_axis: str = "N"  # Y 또는 N
     main_image_url: Optional[str] = None
 
-    design_line: Optional[DesignElement] = None
-    design_base1: Optional[DesignElement] = None
-    design_base2: Optional[DesignElement] = None
-    design_pupil: Optional[DesignElement] = None
+    design_line_image_id: Optional[str] = None
+    design_line_color_id: Optional[str] = None
+
+    design_base1_image_id: Optional[str] = None
+    design_base1_color_id: Optional[str] = None
+
+    design_base2_image_id: Optional[str] = None
+    design_base2_color_id: Optional[str] = None
+
+    design_pupil_image_id: Optional[str] = None
+    design_pupil_color_id: Optional[str] = None
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None

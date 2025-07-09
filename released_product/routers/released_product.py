@@ -26,25 +26,24 @@ def create_new_released_product(
 
     try:
         released_product_dict = json.loads(released_product_str)
-        released_product_data = released_product_schema.ReleasedProductCreate(**released_product_dict)
 
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="전송된 'released_product' 데이터의 JSON 형식이 잘못되었습니다.")
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    if released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_data.design_name):
+    if released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_dict['design_name']):
         raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="메인 이미지 업로드에 실패했습니다.")
 
-    released_product_data.main_image_url = upload_result["public_url"]
+    released_product_dict['main_image_url'] = upload_result["public_url"]
 
     created_released_product = released_product_CRUD.create_released_product(
         db=db,
-        released_product=released_product_data,
+        released_product=released_product_dict,
         user_id=current_user.id
     )
 
@@ -168,3 +167,24 @@ def read_single_released_product(
     if db_released_product is None:
         raise HTTPException(status_code=404, detail="출시 제품을 찾을 수 없습니다.")
     return db_released_product
+
+@router.get("/info/{id}", response_model=released_product_schema.ReleasedProductDetailResponse)
+def get_released_product_detail(
+        id: int,
+        db: Session = Depends(get_db)
+):
+    """
+    ID로 특정 출시 제품의 상세 정보를 조회합니다.
+    디자인, 컬러, 이미지 등의 세부 정보가 포함됩니다.
+    """
+    # 먼저 제품이 존재하는지 확인
+    product = released_product_CRUD.get_released_product_by_id(db, product_id=id)
+    if not product:
+        raise HTTPException(status_code=404, detail="해당 ID의 출시 제품을 찾을 수 없습니다.")
+
+    # 상세 정보 조회
+    result = released_product_CRUD.get_released_product_detail(db, product_id=id)
+    if not result:
+        raise HTTPException(status_code=500, detail="출시 제품 상세 정보 조회 중 오류가 발생했습니다.")
+
+    return result

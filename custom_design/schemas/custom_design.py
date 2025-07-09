@@ -2,26 +2,18 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
-class DesignElement(BaseModel):
-    image_id: str
-    image_url: str
-    image_name: str
-    RGB_id: str
-    RGB_color: str
-    RGB_name: str
-    size: int = Field(None, ge=0, le=200)
-    opacity: int = Field(None, ge=0, le=100)
-
 class CustomDesignCreate(BaseModel):
     item_name: Optional[str] = None
     request_message: Optional[str] = None
     main_image_url: Optional[str] = None
-
-    design_line: Optional[DesignElement] = None
-    design_base1: Optional[DesignElement] = None
-    design_base2: Optional[DesignElement] = None
-    design_pupil: Optional[DesignElement] = None
-
+    design_line_image_id: Optional[str] = None
+    design_line_color_id: Optional[str] = None
+    design_base1_image_id: Optional[str] = None
+    design_base1_color_id: Optional[str] = None
+    design_base2_image_id: Optional[str] = None
+    design_base2_color_id: Optional[str] = None
+    design_pupil_image_id: Optional[str] = None
+    design_pupil_color_id: Optional[str] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
 
@@ -35,12 +27,9 @@ class CustomDesignResponse(CustomDesignCreate):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-#    user_id: int
-#    status: str
 
     class Config:
         from_attributes = True
-
 
 class CustomDesignApiResponse(BaseModel):
     success: bool
@@ -66,3 +55,6 @@ class PaginatedCustomDesignResponse(BaseModel):
     page: int
     size: int
     items: List[CustomDesignResponse2]
+
+    class Config:
+        from_attributes = True

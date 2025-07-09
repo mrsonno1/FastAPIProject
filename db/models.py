@@ -65,16 +65,23 @@ class CustomDesign(Base):
     __tablename__ = "custom_designs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True, nullable=False)
+    user_id = Column(String(20), nullable=False)
     item_name = Column(String(50), unique=True, nullable=False)
     status = Column(String(20), default="대기") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=True)
 
-    design_line = Column(JSON, nullable=True)  # 라인
-    design_base1 = Column(JSON, nullable=True)  # 바탕1
-    design_base2 = Column(JSON, nullable=True)  # 바탕2
-    design_pupil = Column(JSON, nullable=True)  # 동공
+    design_line_image_id = Column(String(6), nullable=True)  # 라인 테이블의 id (FK키)
+    design_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+
+    design_base1_image_id = Column(String(6), nullable=True)  # 바탕1 테이블의 id (FK키)
+    design_base1_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+
+    design_base2_image_id = Column(String(6), nullable=True)  # 바탕2 테이블의 id (FK키)
+    design_base2_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+
+    design_pupil_image_id = Column(String(6), nullable=True)  # 동공 테이블의 id (FK키)
+    design_pupil_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
 
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
@@ -87,24 +94,28 @@ class Portfolio(Base):
     __tablename__ = "portfolios"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True, nullable=False)
-    item_name = Column(String(50), unique=True, nullable=False, index=True)
-    status = Column(String(20), default="대기") # 기본값을 셋팅
-    color_name = Column(String(50), nullable=False)
-    exposed_countries = Column(JSON, nullable=True)
-    is_fixed_axis = Column(Boolean, default=False)  # 축고정
-    request_message = Column(Text, nullable=True)
-    main_image_url = Column(String, nullable=False)
+    design_name = Column(String(100), nullable=True)
+    color_name = Column(String(100), nullable=True)
+    exposed_countries = Column(String(100), nullable=True)  # 노출국가 (국가 id , 기준 ex-> 1,2,3,4)
+    is_fixed_axis = Column(String(1), nullable=False, default='N')  # 축고정 (Y/N)
+    main_image_url = Column(String(100), nullable=True)
 
-    design_line = Column(JSON, nullable=True)  # 라인
-    design_base1 = Column(JSON, nullable=True)  # 바탕1
-    design_base2 = Column(JSON, nullable=True)  # 바탕2
-    design_pupil = Column(JSON, nullable=True)  # 동공
+    design_line_image_id = Column(String(6), nullable=True)  # 라인 테이블의 id (FK키)
+    design_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
 
-    graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
-    optic_zone = Column(String(20), nullable=True)  # 옵틱존
+    design_base1_image_id = Column(String(6), nullable=True)  # 바탕1 테이블의 id (FK키)
+    design_base1_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
 
-    views = Column(Integer, default=0)
+    design_base2_image_id = Column(String(6), nullable=True)  # 바탕2 테이블의 id (FK키)
+    design_base2_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+
+    design_pupil_image_id = Column(String(6), nullable=True)  # 동공 테이블의 id (FK키)
+    design_pupil_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+
+    graphic_diameter = Column(String(100), nullable=True)  # 그래픽직경
+    optic_zone = Column(String(100), nullable=True)  # 옵틱존
+
+    views = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -113,16 +124,16 @@ class Releasedproduct(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True, nullable=False)
-    design_name = Column(String(50), unique=True, nullable=False, index=True)
+    design_name = Column(String(50), nullable=False, index=True)
     color_name = Column(String(50), nullable=False)
-    brand = Column(JSON, nullable=False)
+    brand_id = Column(Integer, nullable=False)
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=False)
 
-    color_line = Column(JSON, nullable=True)  # 라인
-    color_base1 = Column(JSON, nullable=True)  # 바탕1
-    color_base2 = Column(JSON, nullable=True)  # 바탕2
-    color_pupil = Column(JSON, nullable=True)  # 동공
+    color_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+    color_base1_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+    color_base2_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+    color_pupil_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
 
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존

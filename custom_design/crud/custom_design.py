@@ -5,15 +5,24 @@ from typing import Optional # Optional 임포트
 from datetime import date, timedelta # date, timedelta 임포트
 from fastapi import HTTPException
 
-def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: int, code: str):
+def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: str, code: str):
     db_design = models.CustomDesign(
         item_name=code,
         request_message=design.request_message,
         main_image_url=design.main_image_url,
-        design_line=design.design_line.model_dump() if design.design_line else None,
-        design_base1=design.design_base1.model_dump() if design.design_base1 else None,
-        design_base2=design.design_base2.model_dump() if design.design_base2 else None,
-        design_pupil=design.design_pupil.model_dump() if design.design_pupil else None,
+
+        design_line_image_id=design.design_line_image_id,
+        design_line_color_id=design.design_line_color_id,
+
+        design_base1_image_id=design.design_base1_image_id,
+        design_base1_color_id=design.design_base1_color_id,
+
+        design_base2_image_id=design.design_base2_image_id,
+        design_base2_color_id=design.design_base2_color_id,
+
+        design_pupil_image_id=design.design_pupil_image_id,
+        design_pupil_color_id=design.design_pupil_color_id,
+
         graphic_diameter=design.graphic_diameter,
         optic_zone=design.optic_zone,
         user_id=user_id
@@ -69,50 +78,48 @@ def get_designs_paginated(
         page: int,
         size: int,
         item_name: Optional[str] = None,
+        user_name: Optional[str] = None,
         status: Optional[str] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        orderBy: Optional[str] = None,
+        orderBy: Optional[str] = None
 ):
     query = db.query(models.CustomDesign)
 
-    # 1. 디자인명(code_name) 검색 (부분 일치, 대소문자 무시)
     if item_name:
         query = query.filter(models.CustomDesign.item_name.ilike(f"%{item_name}%"))
 
+    if user_name:
+        query = query.filter(models.CustomDesign.user_id.ilike(f"%{user_name}%"))
 
-    if start_date:
-        query = query.filter(models.CustomDesign.created_at >= start_date)
-
-    if end_date:
-        # end_date의 자정까지 포함하기 위해 날짜에 1을 더해 그 이전까지로 설정
-        query = query.filter(models.CustomDesign.created_at < end_date + timedelta(days=1))
-
-    # 3. 컬러명(color_name) 검색 (JSON 필드 내부 검색)
     if status:
         query = query.filter(models.CustomDesign.status.ilike(f"%{status}%"))
 
+    # 정렬 옵션 적용
     if orderBy:
         try:
             order_column, order_direction = orderBy.split()
-            if order_column == "user_name":
-                query = query.outerjoin(models.AdminUser, models.CustomDesign.user_id == models.AdminUser.id)
-                if order_direction.lower() == "asc":
-                    query = query.order_by(models.AdminUser.username.asc())
-                else:
-                    query = query.order_by(models.AdminUser.username.desc())
-            elif order_column == "item_name":
+            if order_column == "item_name":
                 if order_direction.lower() == "asc":
                     query = query.order_by(models.CustomDesign.item_name.asc())
                 else:
                     query = query.order_by(models.CustomDesign.item_name.desc())
+            elif order_column == "status":
+                if order_direction.lower() == "asc":
+                    query = query.order_by(models.CustomDesign.status.asc())
+                else:
+                    query = query.order_by(models.CustomDesign.status.desc())
+            elif order_column == "created_at":
+                if order_direction.lower() == "asc":
+                    query = query.order_by(models.CustomDesign.created_at.asc())
+                else:
+                    query = query.order_by(models.CustomDesign.created_at.desc())
             else:
-                # Default sort if orderBy is not recognized
+                # 기본 정렬
                 query = query.order_by(models.CustomDesign.id.desc())
-        except Exception: # Catch all exceptions for robustness
-            # Default sort if orderBy is not in 'column direction' format or other error occurs
+        except ValueError:
+            # 형식이 잘못된 경우 기본 정렬
             query = query.order_by(models.CustomDesign.id.desc())
     else:
+        # orderBy 미지정시 기본 정렬
         query = query.order_by(models.CustomDesign.id.desc())
 
     # 검색 조건에 맞는 총 개수 계산

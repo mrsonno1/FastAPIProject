@@ -9,6 +9,7 @@ from country.routers import country
 from color.routers import color
 from brand.routers import brand
 from admin.routers import admin, auth
+from rank.routers import rank as rank
 from db.database import engine, Base
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
@@ -88,6 +89,7 @@ api_router.include_router(country.router)
 api_router.include_router(custom_design.router)
 api_router.include_router(portfolio.router)
 api_router.include_router(released_product.router)
+api_router.include_router(rank.router)
 # 앱에 api_router를 포함시킵니다.
 app.include_router(api_router)
 

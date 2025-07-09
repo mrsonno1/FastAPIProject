@@ -26,16 +26,15 @@ def create_new_custom_design(
 
     last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
     if last is None:
-        raise HTTPException(status_code=404, detail="No records found")
-
-
-    formatted = str(last.id).zfill(4)
+        formatted = '0001'
+    else:
+        formatted = str(last.id).zfill(4)
 
     #데이터 베이스 적용
     created_customdesign = custom_design_CRUD.create_design(
         db=db,
         design=design,
-        user_id=current_user.id,
+        user_id=current_user.username,
         code= current_user.account_code + f"-{formatted}",
     )
 
@@ -60,11 +59,9 @@ def read_all_custom_designs(
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
 
         # 검색 필터 파라미터
-        code_name: Optional[str] = Query(None, description="디자인명(코드명)으로 검색"),
-        status: Optional[str] = Query(None, description="상태 검색"),
-        start_date: Optional[date] = Query(None, description="검색 시작일 (YYYY-MM-DD)"),
-        end_date: Optional[date] = Query(None, description="검색 종료일 (YYYY-MM-DD)"),
-        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'user_name asc', 'item_name desc')"),
+        item_name: Optional[str] = Query(None, description="코드명으로 검색"),
+        user_name: Optional[str] = Query(None, description="아이디로 검색"),
+        status: Optional[str] = Query(None, description="상태값"),
 
         db: Session = Depends(get_db)
 ):
@@ -76,11 +73,9 @@ def read_all_custom_designs(
         db,
         page=page,
         size=size,
-        code_name=code_name,
-        status=status,
-        start_date=start_date,
-        end_date=end_date,
-        orderBy=orderBy
+        item_name=item_name,
+        user_name=user_name,
+        status=status
     )
 
     total_count = paginated_data["total_count"]
