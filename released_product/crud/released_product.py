@@ -151,6 +151,7 @@ def get_released_products_paginated(
             "brand_image_url": brand.brand_image_url,
             "design_name": product.design_name,
             "color_name": product.color_name,
+            "image": product.main_image_url,  # 이 라인을 추가합니다.
             "dkColor": [
                 get_color_name(product.color_line_color_id) if get_color_name(product.color_line_color_id) else "",
                 get_color_name(product.color_base1_color_id) if get_color_name(product.color_base1_color_id) else "",
@@ -181,7 +182,6 @@ def get_released_product_by_id(db: Session, product_id: int):
 
 def get_released_product_detail(db: Session, product_id: int):
     """ID로 출시 제품의 상세 정보를 조회하고 포맷팅합니다."""
-    # 제품 기본 정보 조회
     product = get_released_product_by_id(db, product_id)
     if not product:
         return None
@@ -191,10 +191,7 @@ def get_released_product_detail(db: Session, product_id: int):
         synchronize_session=False
     )
 
-    # --- [DailyView 기록 로직 추가] ---
     today = date.today()
-
-    # PostgreSQL의 ON CONFLICT DO UPDATE (UPSERT) 문 실행
     stmt = insert(models.DailyView).values(
         view_date=today,
         content_type='released_product',
@@ -205,61 +202,36 @@ def get_released_product_detail(db: Session, product_id: int):
         set_={'view_count': models.DailyView.view_count + 1}
     )
     db.execute(stmt)
-    # ---------------------------
 
-
-
-
-    # 컬러 정보 조회
-    color_names = []
-    color_rgb_values = []
-
-    brand_image_url = None
-
-    # 라인 컬러 정보
-    if product.color_line_color_id:
-        line_color = db.query(models.Color).filter(models.Color.id == product.color_line_color_id).first()
-        if line_color:
-            color_names.append(line_color.color_name)
-            # 컬러 값에서 처음 3개 값만 가져옴
-            rgb_parts = line_color.color_values.split(',')[:3]
-            color_rgb_values.append(','.join(rgb_parts))
-
-    # 바탕1 컬러 정보
-    if product.color_base1_color_id:
-        base1_color = db.query(models.Color).filter(models.Color.id == product.color_base1_color_id).first()
-        if base1_color:
-            color_names.append(base1_color.color_name)
-            rgb_parts = base1_color.color_values.split(',')[:3]
-            color_rgb_values.append(','.join(rgb_parts))
-
-    # 바탕2 컬러 정보
-    if product.color_base2_color_id:
-        base2_color = db.query(models.Color).filter(models.Color.id == product.color_base2_color_id).first()
-        if base2_color:
-            color_names.append(base2_color.color_name)
-            rgb_parts = base2_color.color_values.split(',')[:3]
-            color_rgb_values.append(','.join(rgb_parts))
-
-    # 동공 컬러 정보
-    if product.color_pupil_color_id:
-        pupil_color = db.query(models.Color).filter(models.Color.id == product.color_pupil_color_id).first()
-        if pupil_color:
-            color_names.append(pupil_color.color_name)
-            rgb_parts = pupil_color.color_values.split(',')[:3]
-            color_rgb_values.append(','.join(rgb_parts))
+    # 색상 상세 정보를 가져오는 헬퍼 함수
+    def get_color_details(color_id: Optional[str]):
+        if not color_id:
+            return None
+        color = db.query(models.Color).filter(models.Color.id == color_id).first()
+        if not color:
+            return None
+        return {
+            "id": color.id,
+            "color_name": color.color_name,
+            "color_values": color.color_values,
+        }
 
     # 브랜드 정보 조회
     brand_name = ""
+    brand_image_url = None
     if product.brand_id:
         brand = db.query(models.Brand).filter(models.Brand.id == product.brand_id).first()
         if brand:
             brand_name = brand.brand_name
             brand_image_url = brand.brand_image_url
 
+    # 각 컴포넌트의 색상 정보 조회
+    color_line_details = get_color_details(product.color_line_color_id)
+    color_base1_details = get_color_details(product.color_base1_color_id)
+    color_base2_details = get_color_details(product.color_base2_color_id)
+    color_pupil_details = get_color_details(product.color_pupil_color_id)
 
-
-    # --- 반환 딕셔너리의 키를 snake_case로 통일 ---
+    # 최종 응답 데이터 구성
     response_data = {
         "id": product.id,
         "brand_name": brand_name,
@@ -267,15 +239,16 @@ def get_released_product_detail(db: Session, product_id: int):
         "design_name": product.design_name,
         "color_name": product.color_name,
         "image": product.main_image_url,
-        "dk_color": color_names,  # dkColor -> dk_color
-        "dk_rgb": color_rgb_values,  # dkrgb -> dk_rgb
-        "g_dia": product.graphic_diameter,  # G_DIA -> g_dia
-        "optic": product.optic_zone,  # Optic -> optic
-        "base_curve": product.base_curve  # baseCurve -> base_curve
+        "color_line_color": color_line_details,
+        "color_base1_color": color_base1_details,
+        "color_base2_color": color_base2_details,
+        "color_pupil_color": color_pupil_details,
+        "g_dia": product.graphic_diameter,
+        "optic": product.optic_zone,
+        "base_curve": product.base_curve
     }
 
-    db.commit()  # 모든 변경사항(views, daily_views)을 한 번에 커밋
-
+    db.commit()
     return response_data
 
 

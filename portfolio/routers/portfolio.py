@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, File, Form, Uploa
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from portfolio.schemas import portfolio as portfolio_schema
-from portfolio.schemas import portfolio_format as portfolio_format_schema
 from portfolio.crud import portfolio as portfolio_CRUD
 from db import models
 from db.database import get_db
@@ -11,8 +10,7 @@ import json
 import math
 from services.storage_service import storage_service
 # 새로운 형식의 포트폴리오 관련 API
-from portfolio.crud import portfolio_format as portfolio_format_CRUD
-from portfolio.schemas import portfolio_format as portfolio_format_schema
+
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -154,7 +152,7 @@ def list_all_portfolios(
     }
 
 
-@router.get("/info/{portfolio_id}", response_model=portfolio_format_schema.PortfolioDetailResponse)
+@router.get("/info/{portfolio_id}", response_model=portfolio_schema.PortfolioDetailApiResponse)
 def get_portfolio_detail(
     portfolio_id: int,
     db: Session = Depends(get_db)
@@ -165,15 +163,15 @@ def get_portfolio_detail(
     ID로 특정 포트폴리오를 찾아 상세 정보를 반환합니다.
     """
 
-    detail = portfolio_format_CRUD.get_portfolio_detail(db, portfolio_id)
-    if not detail:
+    detail_data  = portfolio_CRUD.get_portfolio_detail(db, portfolio_id)
+    if not detail_data :
         raise HTTPException(status_code=404, detail="해당 ID의 포트폴리오를 찾을 수 없습니다.")
 
-    return portfolio_format_schema.PortfolioDetailResponse(
-        success=True,
-        message="포트폴리오 정보를 성공적으로 조회했습니다.",
-        data=detail
-    )
+    # Pydantic 모델을 사용하여 데이터 유효성 검사 및 변환
+    validated_data = portfolio_schema.PortfolioDetailData.model_validate(detail_data)
+
+    return portfolio_schema.PortfolioDetailApiResponse(data=validated_data)
+
 
 @router.get("/{design_name}", response_model=portfolio_schema.PortfolioResponse)
 def read_single_portfolio(

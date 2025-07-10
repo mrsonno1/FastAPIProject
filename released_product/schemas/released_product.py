@@ -50,11 +50,24 @@ class ReleasedProductDetailResponse(BaseModel):
     design_name: str
     color_name: str
     image: str
-    dk_color: List[str] = Field(default_factory=list)
-    dk_rgb: List[str] = Field(default_factory=list)
-    g_dia: Optional[str] = None
-    optic: Optional[str] = None
+    dkcolor: List[str] = Field(default_factory=list)
+    dkrgb: List[str] = Field(default_factory=list)
+    G_DIA: Optional[str] = None
+    Optic: Optional[str] = None
     base_curve: Optional[str] = None
+
+
+
+
+class ColorComponentDetail(BaseModel):
+    id: int
+    color_name: str
+    color_values: str
+
+    class Config:
+        from_attributes = True
+
+
 
 class ReleasedProductListItem(BaseModel):
     id: int
@@ -62,17 +75,24 @@ class ReleasedProductListItem(BaseModel):
     brand_image_url: Optional[str] = None
     design_name: str
     color_name: str
-    dkColor: List[str] # dkColor -> dk_color
-    dkrgb: List[str]   # dkrgb -> dk_rgb
-    G_DIA: Optional[str] = None
-    Optic: Optional[str] = None
+    image: str
+    color_line_color: Optional[ColorComponentDetail] = None
+    color_base1_color: Optional[ColorComponentDetail] = None
+    color_base2_color: Optional[ColorComponentDetail] = None
+    color_pupil_color: Optional[ColorComponentDetail] = None
+    g_dia: Optional[str] = None
+    optic: Optional[str] = None
     base_curve: Optional[str] = None
-    view_count: int # viewCount -> view_count
+
+    view_count: int
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+
 
 class ReleasedProductListResponse(BaseModel):
     total_count: int

@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
 from db import models
 from portfolio.schemas import portfolio as portfolio_schema
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from sqlalchemy import or_
 from fastapi import HTTPException
+from datetime import date
+from sqlalchemy import insert
 
 def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, user_id: int):
     # is_fixed_axis 값 검증
@@ -142,23 +144,20 @@ def get_portfolios_paginated(
     # --- 5. 결과를 새로운 형식에 맞게 가공 ---
     formatted_items = []
 
+    # --- 결과를 새로운 형식에 맞게 가공 ---
     # 모든 필요한 ID를 먼저 수집 (N+1 문제 최적화)
     all_image_ids = set()
     all_color_ids = set()
     all_country_ids = set()
     for portfolio, user in results:
-        ids_to_add = [
+        all_image_ids.update(filter(None, [
             portfolio.design_line_image_id, portfolio.design_base1_image_id,
             portfolio.design_base2_image_id, portfolio.design_pupil_image_id
-        ]
-        all_image_ids.update(id for id in ids_to_add if id)
-
-        ids_to_add = [
+        ]))
+        all_color_ids.update(filter(None, [
             portfolio.design_line_color_id, portfolio.design_base1_color_id,
             portfolio.design_base2_color_id, portfolio.design_pupil_color_id
-        ]
-        all_color_ids.update(id for id in ids_to_add if id)
-
+        ]))
         if portfolio.exposed_countries:
             all_country_ids.update(id.strip() for id in portfolio.exposed_countries.split(',') if id.strip())
 
@@ -170,56 +169,102 @@ def get_portfolios_paginated(
     countries_map = {str(c.id): c.country_name for c in
                      db.query(models.Country).filter(models.Country.id.in_(list(all_country_ids))).all()}
 
-    # 헬퍼 함수 정의
-    def get_image_name(img_id):
-        return images_map.get(str(img_id)).display_name if str(img_id) in images_map else ""
-
-    def get_color_name(col_id):
-        return colors_map.get(str(col_id)).color_name if str(col_id) in colors_map else ""
-
-    def get_rgb(col_id):
-        if str(col_id) in colors_map:
-            return ",".join(colors_map[str(col_id)].color_values.split(',')[:3])
-        return ""
+    # 헬퍼 함수
+    def get_country_names(ids_str):
+        if not ids_str: return ""
+        names = [countries_map.get(id.strip()) for id in ids_str.split(',') if id.strip()]
+        return ", ".join(filter(None, names))
 
     for portfolio, user in results:
-        country_names = [countries_map.get(id.strip()) for id in portfolio.exposed_countries.split(',') if
-                         id.strip() and countries_map.get(id.strip())]
+        portfolio.user_name = user.contact_name or user.username
+        portfolio.country_name = get_country_names(portfolio.exposed_countries)
+        portfolio.view_count = portfolio.views  # *** 오류 수정 지점 ***
+        portfolio.design_line = images_map.get(portfolio.design_line_image_id)
+        portfolio.design_line_color = colors_map.get(portfolio.design_line_color_id)
+        portfolio.design_base1 = images_map.get(portfolio.design_base1_image_id)
+        portfolio.design_base1_color = colors_map.get(portfolio.design_base1_color_id)
+        portfolio.design_base2 = images_map.get(portfolio.design_base2_image_id)
+        portfolio.design_base2_color = colors_map.get(portfolio.design_base2_color_id)
+        portfolio.design_pupil = images_map.get(portfolio.design_pupil_image_id)
+        portfolio.design_pupil_color = colors_map.get(portfolio.design_pupil_color_id)
 
-        formatted_items.append({
-            "id": portfolio.id,
-            "user_name": user.contact_name or user.username,
-            "main_image_url": portfolio.main_image_url,
-            "design_name": portfolio.design_name,
-            "color_name": portfolio.color_name,
-            "design": {
-                "line": get_image_name(portfolio.design_line_image_id),
-                "base1": get_image_name(portfolio.design_base1_image_id),
-                "base2": get_image_name(portfolio.design_base2_image_id),
-                "pupil": get_image_name(portfolio.design_pupil_image_id),
-            },
-            "dkColor": {
-                "line": get_color_name(portfolio.design_line_color_id),
-                "base1": get_color_name(portfolio.design_base1_color_id),
-                "base2": get_color_name(portfolio.design_base2_color_id),
-                "pupil": get_color_name(portfolio.design_pupil_color_id),
-            },
-            "dkrgb": {
-                "line": get_rgb(portfolio.design_line_color_id),
-                "base1": get_rgb(portfolio.design_base1_color_id),
-                "base2": get_rgb(portfolio.design_base2_color_id),
-                "pupil": get_rgb(portfolio.design_pupil_color_id),
-            },
-            "diameter": {
-                "G_DIA": portfolio.graphic_diameter,
-                "Optic": portfolio.optic_zone,
-            },
-            "country_name": ','.join(country_names),
-            "is_fixed_axis": portfolio.is_fixed_axis,
-            "viewCount": portfolio.views,
-            "created_at": portfolio.created_at,
-        })
+    formatted_items = [p for p, u in results]
 
     return {"items": formatted_items, "total_count": total_count}
 
+# --- [새로운 상세 정보 조회 함수 추가] ---
+def get_portfolio_detail(db: Session, portfolio_id: int) -> Optional[Dict[str, Any]]:
+    """ID로 단일 포트폴리오의 상세 정보를 조회합니다."""
+    result = db.query(models.Portfolio, models.AdminUser).join(
+        models.AdminUser, models.Portfolio.user_id == models.AdminUser.id
+    ).filter(models.Portfolio.id == portfolio_id).first()
 
+    if not result:
+        return None
+
+    portfolio, user = result
+
+    # 조회수 증가 로직
+    db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).update(
+        {models.Portfolio.views: models.Portfolio.views + 1},
+        synchronize_session=False
+    )
+    # DailyView 기록 로직
+    today = date.today()
+
+    daily_view = db.query(models.DailyView).filter(
+        models.DailyView.view_date == today,
+        models.DailyView.content_type == 'portfolio',
+        models.DailyView.content_id == portfolio_id
+    ).first()
+
+    if daily_view:
+        # 데이터가 있으면 view_count를 1 증가
+        daily_view.view_count += 1
+    else:
+        # 데이터가 없으면 새로 생성
+        new_daily_view = models.DailyView(
+            view_date=today,
+            content_type='portfolio',
+            content_id=portfolio_id,
+            view_count=1
+        )
+        db.add(new_daily_view)
+
+    db.commit()
+    db.refresh(portfolio)
+
+    # 헬퍼 함수 정의
+    def get_image_details(image_id: Optional[str]):
+        if not image_id: return None
+        image = db.query(models.Image).filter(models.Image.id == image_id).first()
+        return image
+
+    def get_color_details(color_id: Optional[str]):
+        if not color_id: return None
+        color = db.query(models.Color).filter(models.Color.id == color_id).first()
+        return color
+
+    def get_country_names(country_ids_str: str):
+        if not country_ids_str: return ""
+        country_ids = [cid.strip() for cid in country_ids_str.split(',') if cid.strip()]
+        if not country_ids: return ""
+        countries = db.query(models.Country.country_name).filter(models.Country.id.in_(country_ids)).all()
+        return ", ".join([name for name, in countries])
+
+        # 관련 객체들을 portfolio 객체에 동적으로 추가
+
+    portfolio.user_name = user.contact_name or user.username
+    portfolio.country_name = get_country_names(portfolio.exposed_countries)
+    portfolio.view_count = portfolio.views  # 스키마 필드명에 맞게 값 할당
+    portfolio.design_line = get_image_details(portfolio.design_line_image_id)
+    portfolio.design_line_color = get_color_details(portfolio.design_line_color_id)
+    portfolio.design_base1 = get_image_details(portfolio.design_base1_image_id)
+    portfolio.design_base1_color = get_color_details(portfolio.design_base1_color_id)
+    portfolio.design_base2 = get_image_details(portfolio.design_base2_image_id)
+    portfolio.design_base2_color = get_color_details(portfolio.design_base2_color_id)
+    portfolio.design_pupil = get_image_details(portfolio.design_pupil_image_id)
+    portfolio.design_pupil_color = get_color_details(portfolio.design_pupil_color_id)
+
+
+    return portfolio
