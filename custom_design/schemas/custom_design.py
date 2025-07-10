@@ -40,7 +40,7 @@ class CustomDesignApiResponse(BaseModel):
 # ▼▼▼ CustomDesignResponse 수정 (user_id, status 추가) ▼▼▼
 class CustomDesignResponse2(CustomDesignCreate):
     id: int
-    user_id: int  # 필드 추가
+    user_id: str  # 필드 추가
     status: str  # 필드 추가
     created_at: datetime
     updated_at: Optional[datetime] = None

@@ -86,7 +86,7 @@ Authorization: {{superadmin_token}}
 
 
 
-### 1. 새로운 포트폴리오 생성 (JSON + 파일 동시 전송)
+### 1. 새로운 포트폴리오 생성
 POST {{host}}{{api_prefix}}/portfolio/
 Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
@@ -121,7 +121,7 @@ Content-Type: image/png
 
 
 
-### 1. 포트폴리오 업데이트 (JSON + 파일 동시 전송)
+### 1. 포트폴리오 업데이트
 PATCH {{host}}{{api_prefix}}/portfolio/1
 Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}

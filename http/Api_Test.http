@@ -8,6 +8,9 @@ GET {{host}}{{api_prefix}}/released-product/info/4
 ###
 GET {{host}}{{api_prefix}}/released-product/list
 
+###
+GET {{host}}{{api_prefix}}//custom-designs/list?page=1&size=10
+
 
 
 ### 목록
