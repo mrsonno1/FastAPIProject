@@ -10,6 +10,9 @@ from core.security import get_current_user
 import json
 import math
 from services.storage_service import storage_service
+# 새로운 형식의 포트폴리오 관련 API
+from portfolio.crud import portfolio_format as portfolio_format_CRUD
+from portfolio.schemas import portfolio_format as portfolio_format_schema
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -156,54 +159,6 @@ def get_portfolio_detail(
         message="포트폴리오 정보를 성공적으로 조회했습니다.",
         data=detail
     )
-
-# 새로운 형식의 포트폴리오 관련 API
-from portfolio.crud import portfolio_format as portfolio_format_CRUD
-from portfolio.schemas import portfolio_format as portfolio_format_schema
-
-@router.get("/list/format", response_model=portfolio_format_schema.PaginatedPortfolioFormatResponse)
-def list_portfolios_formatted(
-        page: int = Query(1, ge=1, description="페이지 번호"),
-        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
-        design_name: Optional[str] = Query(None, description="디자인명으로 검색"),
-        color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
-        exposed_countries: Optional[List[str]] = Query(None, description="노출 국가 ID로 검색"),
-        is_fixed_axis: Optional[str] = Query(None, description="고정 축 여부로 검색 (Y/N)"),
-        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'design_name asc', 'color_name desc')"),
-        db: Session = Depends(get_db)
-):
-    """
-    포트폴리오 목록을 프론트데이터로 전달합니다.<br>
-    이미지 이름, 컬러 이름, RGB 값 등이 변환된 형태로 제공됩니다.
-    """
-    # is_fixed_axis 검증
-    if is_fixed_axis and is_fixed_axis not in ['Y', 'N']:
-        raise HTTPException(status_code=400, detail="is_fixed_axis는 'Y' 또는 'N'이어야 합니다")
-
-    # 포맷팅된 데이터 조회
-    formatted_data = portfolio_format_CRUD.get_portfolios_formatted(
-        db,
-        page=page,
-        size=size,
-        design_name=design_name,
-        color_name=color_name,
-        exposed_countries=exposed_countries,
-        is_fixed_axis=is_fixed_axis,
-        orderBy=orderBy
-    )
-
-    items = formatted_data["items"]
-    total_count = formatted_data["total_count"]
-
-    total_pages = math.ceil(total_count / size) if total_count > 0 else 1
-
-    return {
-        "total_count": total_count,
-        "total_pages": total_pages,
-        "page": page,
-        "size": size,
-        "items": items,
-    }
 
 @router.get("/{design_name}", response_model=portfolio_schema.PortfolioResponse)
 def read_single_portfolio(
