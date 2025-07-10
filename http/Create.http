@@ -94,7 +94,7 @@ Authorization: {{superadmin_token}}
 --boundary
 Content-Disposition: form-data; name="design_name"
 
-SIMPLE_BLUE_111
+SIMPLE_BLUE_1292
 --boundary
 Content-Disposition: form-data; name="color_name"
 

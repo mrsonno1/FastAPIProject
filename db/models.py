@@ -67,25 +67,20 @@ class CustomDesign(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String(20), nullable=False)
     item_name = Column(String(50), unique=True, nullable=False)
-    status = Column(String(20), default="대기") # 기본값을 셋팅
+    status = Column(String(20), default="0") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=True)
 
     design_line_image_id = Column(String(6), nullable=True)  # 라인 테이블의 id (FK키)
     design_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
-
     design_base1_image_id = Column(String(6), nullable=True)  # 바탕1 테이블의 id (FK키)
     design_base1_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
-
     design_base2_image_id = Column(String(6), nullable=True)  # 바탕2 테이블의 id (FK키)
     design_base2_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
-
     design_pupil_image_id = Column(String(6), nullable=True)  # 동공 테이블의 id (FK키)
     design_pupil_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
-
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
