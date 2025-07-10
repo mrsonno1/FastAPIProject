@@ -111,7 +111,7 @@ def delete_single_portfolio(
     return portfolio_schema.StatusResponse(status="success", message="포트폴리오가 성공적으로 삭제되었습니다.")
 
 
-@router.get("/list", response_model=portfolio_schema.PaginatedPortfolioResponse)
+@router.get("/list", response_model=portfolio_schema.PaginatedPortfolioListResponse)
 def list_all_portfolios(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),

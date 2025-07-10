@@ -4,10 +4,10 @@ from datetime import datetime
 
 # 새로운 디자인 요소 포맷
 class DesignComponents(BaseModel):
-    라인: Optional[str] = None
-    바탕1: Optional[str] = None
-    바탕2: Optional[str] = None
-    동공: Optional[str] = None
+    line: Optional[str] = None
+    base1: Optional[str] = None
+    base2: Optional[str] = None
+    pupil: Optional[str] = None
 
 # 직경 정보 포맷
 class DiameterInfo(BaseModel):
@@ -22,9 +22,9 @@ class PortfolioDetailItem(BaseModel):
     fixed: Optional[str] = None
     image: Optional[str] = None
     design: Optional[DesignComponents] = None
-    designimage: Optional[List[str]] = None
-    dkColor: Optional[List[str]] = None
-    dkrgb: Optional[List[str]] = None
+    designimage: Optional[DesignComponents] = None
+    dkColor: Optional[DesignComponents] = None
+    dkrgb: Optional[DesignComponents] = None
     G_DIA: Optional[str] = None
     Optic: Optional[str] = None
 

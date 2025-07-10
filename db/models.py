@@ -79,6 +79,12 @@ class CustomDesign(Base):
     design_base2_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
     design_pupil_image_id = Column(String(6), nullable=True)  # 동공 테이블의 id (FK키)
     design_pupil_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
+
+    line_transparency = Column(String(6), nullable=True)  # 라인 투명도
+    base1_transparency = Column(String(6), nullable=True)  # 라인 투명도
+    base2_transparency = Column(String(6), nullable=True)  # 라인 투명도
+    pupil_transparency = Column(String(6), nullable=True)  # 라인 투명도
+
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
     created_at = Column(DateTime(timezone=True), server_default=func.now())

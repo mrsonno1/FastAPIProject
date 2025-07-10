@@ -162,7 +162,7 @@ def delete_single_released_product(
     return portfolio_schema.StatusResponse(status="success", message="출시 제품이 성공적으로 삭제되었습니다.")
 
 
-@router.get("/list", response_model=released_product_schema.PaginatedReleasedProductResponse)
+@router.get("/list", response_model=released_product_schema.ReleasedProductListResponse)
 def list_all_released_products(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
@@ -187,7 +187,6 @@ def list_all_released_products(
 
     items = paginated_data["items"]
     total_count = paginated_data["total_count"]
-
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
     return {

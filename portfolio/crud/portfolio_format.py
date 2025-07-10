@@ -154,16 +154,16 @@ def get_portfolios_formatted(
             designName=portfolio.design_name,
             colorName=portfolio.color_name,
             design=portfolio_format.DesignComponents(
-                라인=f"L-{line_image_name}" if line_image_name else "",
-                바탕1=f"B1-{base1_image_name}" if base1_image_name else "",
-                바탕2=f"B2-{base2_image_name}" if base2_image_name else "",
-                동공=f"H-{pupil_image_name}" if pupil_image_name else ""
+                라인='L-'+line_image_name,
+                바탕1='B1-'+base1_image_name,
+                바탕2='B2-'+base2_image_name,
+                동공='H-'+pupil_image_name
             ),
             dkColor=[
-                f"C-{line_color_name}" if line_color_name else "",
-                f"C-{base1_color_name}" if base1_color_name else "",
-                f"C-{base2_color_name}" if base2_color_name else "",
-                f"C-{pupil_color_name}" if pupil_color_name else ""
+                'C-'+line_color_name or "",
+                'C-'+base1_color_name or "",
+                'C-'+base2_color_name or "",
+                'C-'+pupil_color_name or ""
             ],
             dkrgb=[
                 line_rgb or "",
@@ -253,31 +253,31 @@ def get_portfolio_detail(db: Session, portfolio_id: int):
         fixed=portfolio.is_fixed_axis,
         image=portfolio.main_image_url,
         design=portfolio_format.DesignComponents(
-            라인=f"L-{line_image_name}" if line_image_name else "",
-            바탕1=f"B1-{base1_image_name}" if base1_image_name else "",
-            바탕2=f"B2-{base2_image_name}" if base2_image_name else "",
-            동공=f"H-{pupil_image_name}" if pupil_image_name else ""
+            line=line_image_name or "",
+            base1=base1_image_name or "",
+            base2=base2_image_name or "",
+            pupil=pupil_image_name or "",
         ),
-        designimage=[
-            line_image_url or "",
-            base1_image_url or "",
-            base2_image_url or "",
-            pupil_image_url or ""
-        ],
-        dkColor=[
-            f"C-{line_color_name}" if line_color_name else "",
-            f"C-{base1_color_name}" if base1_color_name else "",
-            f"C-{base2_color_name}" if base2_color_name else "",
-            f"C-{pupil_color_name}" if pupil_color_name else ""
-        ],
-        dkrgb=[
-            line_rgb or "",
-            base1_rgb or "",
-            base2_rgb or "",
-            pupil_rgb or ""
-        ],
+        designimage=portfolio_format.DesignComponents(
+            line=line_image_url or "",
+            base1=base1_image_url or "",
+            base2=base2_image_url or "",
+            pupil=pupil_image_url or ""
+        ),
+        dkColor=portfolio_format.DesignComponents(
+            line=line_color_name or "",
+            base1=base1_color_name or "",
+            base2=base2_color_name or "",
+            pupil=pupil_color_name or ""
+        ),
+        dkrgb=portfolio_format.DesignComponents(
+            line=line_rgb or "",
+            base1=base1_rgb or "",
+            base2=base2_rgb or "",
+            pupil=pupil_rgb or ""
+        ),
         G_DIA=portfolio.graphic_diameter,
-        Optic=portfolio.optic_zone
+        Optic=portfolio.optic_zone,
     )
 
     return detail_item

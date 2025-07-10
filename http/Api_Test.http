@@ -3,21 +3,29 @@
 ### 랭킹 목록
 GET {{host}}{{api_prefix}}/v1/rank/
 
-### 목록
-GET {{host}}{{api_prefix}}/released-product/info/4
+
+### 커스텀 디자인 목록
+GET {{host}}{{api_prefix}}//custom-designs/list?page=1&size=10
+###
+GET {{host}}{{api_prefix}}//custom-designs/1
+###
+GET {{host}}{{api_prefix}}//custom-designs/info/1
+
+
+### 출시제품 목록
+GET {{host}}{{api_prefix}}/released-product/info/2
 ###
 GET {{host}}{{api_prefix}}/released-product/list
 
-###
-GET {{host}}{{api_prefix}}//custom-designs/list?page=1&size=10
 
-###
-GET {{host}}{{api_prefix}}//custom-designs/1
-
-### 목록
+### 포트폴리오 목록
 GET {{host}}{{api_prefix}}/portfolio/info/2
 ###
 GET {{host}}{{api_prefix}}/portfolio/list
+
+
+
+
 
 ### 국가 삭제
 DELETE {{host}}{{api_prefix}}/countries/15
@@ -57,7 +65,7 @@ Authorization: {{superadmin_token}}
 --boundary
 Content-Disposition: form-data; name="design_name"
 
-새로운 겨울 디자인 2025
+새로운 겨울 디자인 20252
 --boundary
 Content-Disposition: form-data; name="color_name"
 

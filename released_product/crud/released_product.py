@@ -2,10 +2,10 @@
 from sqlalchemy.orm import Session
 from db import models
 from released_product.schemas import released_product as released_product_schema
-from typing import Optional
+from typing import Optional, List
 from fastapi import HTTPException
 from datetime import date
-from sqlalchemy.dialects.postgresql import insert # PostgreSQL의 UPSERT 기능 사용
+from sqlalchemy.dialects.postgresql import insert
 
 def create_released_product(db: Session, released_product: dict, user_id: int):
     db_released_product = models.Releasedproduct(
@@ -69,19 +69,24 @@ def get_released_products_paginated(
         brandname: Optional[str] = None,
         orderBy: Optional[str] = None,
 ):
-    query = db.query(models.Releasedproduct)
+    query = db.query(models.Releasedproduct, models.Brand).join(
+        models.Brand, models.Releasedproduct.brand_id == models.Brand.id
+    )
 
+    if brandname:
+        query = query.filter(models.Brand.brand_name.ilike(f"%{brandname}%"))
     if design_name:
         query = query.filter(models.Releasedproduct.design_name.ilike(f"%{design_name}%"))
-
     if color_name:
         query = query.filter(models.Releasedproduct.color_name.ilike(f"%{color_name}%"))
 
-    if brandname:
-        # Releasedproduct.brand_id와 Brand.id를 기준으로 JOIN
-        query = query.join(models.Brand, models.Releasedproduct.brand_id == models.Brand.id)
-        # JOIN된 Brand 테이블의 brand_name 컬럼으로 필터링
-        query = query.filter(models.Brand.brand_name.ilike(f"%{brandname}%"))
+    print("=" * 20)
+    print("Query after filtering:")
+    print(str(query.statement.compile(compile_kwargs={"literal_binds": True})))
+    print("=" * 20)
+
+    total_count = query.count()
+
 
     if orderBy:
         try:
@@ -111,11 +116,62 @@ def get_released_products_paginated(
         # orderBy 파라미터가 없으면 기본 정렬 (최신순)
         query = query.order_by(models.Releasedproduct.created_at.desc())
 
-    total_count = query.count()
-    offset = (page - 1) * size
-    items = query.order_by(models.Releasedproduct.id.desc()).offset(offset).limit(size).all()
 
-    return {"items": items, "total_count": total_count}
+    offset = (page - 1) * size
+    results = query.order_by(models.Releasedproduct.id.desc()).offset(offset).limit(size).all()
+
+
+    formatted_items = []
+
+    # N+1 문제 최적화를 위해 필요한 모든 color_id 수집
+    all_color_ids = set()
+    for product, brand in results:
+        ids_to_add = [
+            product.color_line_color_id, product.color_base1_color_id,
+            product.color_base2_color_id, product.color_pupil_color_id
+        ]
+        all_color_ids.update(id for id in ids_to_add if id)
+
+    # color_id로 color 정보 한 번에 조회
+    colors_map = {str(col.id): col for col in
+                  db.query(models.Color).filter(models.Color.id.in_(list(all_color_ids))).all()}
+
+    def get_color_name(col_id):
+        return colors_map.get(str(col_id)).color_name if str(col_id) in colors_map else ""
+
+    def get_rgb(col_id):
+        if str(col_id) in colors_map:
+            return ",".join(colors_map[str(col_id)].color_values.split(',')[:3])
+        return ""
+
+    for product, brand in results:
+        formatted_items.append({
+            "id": product.id,
+            "brand_name": brand.brand_name,
+            "brand_image_url": brand.brand_image_url,
+            "design_name": product.design_name,
+            "color_name": product.color_name,
+            "dkColor": [
+                get_color_name(product.color_line_color_id) if get_color_name(product.color_line_color_id) else "",
+                get_color_name(product.color_base1_color_id) if get_color_name(product.color_base1_color_id) else "",
+                get_color_name(product.color_base2_color_id) if get_color_name(product.color_base2_color_id) else "",
+                get_color_name(product.color_pupil_color_id) if get_color_name(product.color_pupil_color_id) else "",
+            ],
+            "dkrgb": [
+                get_rgb(product.color_line_color_id),
+                get_rgb(product.color_base1_color_id),
+                get_rgb(product.color_base2_color_id),
+                get_rgb(product.color_pupil_color_id),
+            ],
+            "G_DIA": product.graphic_diameter,
+            "Optic": product.optic_zone,
+            "base_curve": product.base_curve,
+            "view_count": product.views,
+            "created_at": product.created_at,
+            "updated_at": product.updated_at,
+        })
+
+    return {"items": formatted_items, "total_count": total_count}
 
 
 def get_released_product_by_id(db: Session, product_id: int):
@@ -151,7 +207,7 @@ def get_released_product_detail(db: Session, product_id: int):
     db.execute(stmt)
     # ---------------------------
 
-    db.commit()  # 모든 변경사항(views, daily_views)을 한 번에 커밋
+
 
 
     # 컬러 정보 조회
@@ -201,21 +257,26 @@ def get_released_product_detail(db: Session, product_id: int):
             brand_name = brand.brand_name
             brand_image_url = brand.brand_image_url
 
-    # 응답 데이터 구성
-    return {
-        "id": product.id,
-        "brandname": brand_name,
-        "brandimage": brand_image_url,
-        "designName": product.design_name,
-        "colorName": product.color_name,
-        "image": product.main_image_url,
 
-        "dkColor": color_names,
-        "dkrgb": color_rgb_values,
-        "G_DIA": product.graphic_diameter,
-        "Optic": product.optic_zone,
-        "baseCurve": product.base_curve
+
+    # --- 반환 딕셔너리의 키를 snake_case로 통일 ---
+    response_data = {
+        "id": product.id,
+        "brand_name": brand_name,
+        "brand_image_url": brand_image_url,
+        "design_name": product.design_name,
+        "color_name": product.color_name,
+        "image": product.main_image_url,
+        "dk_color": color_names,  # dkColor -> dk_color
+        "dk_rgb": color_rgb_values,  # dkrgb -> dk_rgb
+        "g_dia": product.graphic_diameter,  # G_DIA -> g_dia
+        "optic": product.optic_zone,  # Optic -> optic
+        "base_curve": product.base_curve  # baseCurve -> base_curve
     }
+
+    db.commit()  # 모든 변경사항(views, daily_views)을 한 번에 커밋
+
+    return response_data
 
 
 def get_formatted_released_products(db: Session, page: int, size: int, design_name: Optional[str] = None, color_name: Optional[str] = None):

@@ -201,24 +201,95 @@ Content-Type: image/jpeg
 
 
 
-### 1-1. 첫 번째 디자인 생성
+### 디자인 생성
 POST {{host}}{{api_prefix}}/custom-designs/
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
-{
-  "request_message": "코가 편안한 파란색으로 만들어주세요.",
-  "design_line_image_id": "1",
-  "design_line_color_id": "10",
-  "design_base1_image_id": "2",
-  "design_base1_color_id": "11",
-  "design_base2_image_id": "3",
-  "design_base2_color_id": "12",
-  "design_pupil_image_id": "4",
-  "design_pupil_color_id": "13",
-  "graphic_diameter": "13.2mm",
-  "optic_zone": "10mm"
-}
+--boundary
+Content-Disposition: form-data; name="request_message"
+
+코가 편안한 파란색으로 만들어주세요.
+--boundary
+Content-Disposition: form-data; name="design_line_image_id"
+
+1
+--boundary
+Content-Disposition: form-data; name="design_line_color_id"
+
+10
+--boundary
+Content-Disposition: form-data; name="design_base1_image_id"
+
+2
+--boundary
+Content-Disposition: form-data; name="design_base1_color_id"
+
+11
+--boundary
+Content-Disposition: form-data; name="design_base2_image_id"
+
+3
+--boundary
+Content-Disposition: form-data; name="design_base2_color_id"
+
+12
+--boundary
+Content-Disposition: form-data; name="design_pupil_image_id"
+
+4
+--boundary
+Content-Disposition: form-data; name="design_pupil_color_id"
+
+13
+--boundary
+Content-Disposition: form-data; name="line_transparency"
+
+50
+--boundary
+Content-Disposition: form-data; name="base1_transparency"
+
+50
+--boundary
+Content-Disposition: form-data; name="base2_transparency"
+
+50
+--boundary
+Content-Disposition: form-data; name="pupil_transparency"
+
+50
+--boundary
+Content-Disposition: form-data; name="graphic_diameter"
+
+13.2mm
+--boundary
+Content-Disposition: form-data; name="optic_zone"
+
+10mm
+--boundary
+# 이미지를 변경하고 싶지 않으면 'file' 파트를 보내지 않으면 됩니다.
+# 이미지를 변경하려면 아래 파트를 추가합니다.
+Content-Disposition: form-data; name="file"; filename="new_image.jpg"
+Content-Type: image/jpeg
+
+< G:/image.png
+--boundary--
 
 
 
+
+
+###  디자인 패치
+PATCH {{host}}{{api_prefix}}/custom-designs/info/15
+Content-Type: multipart/form-data; boundary=boundary
+Authorization: {{superadmin_token}}
+
+--boundary
+Content-Disposition: form-data; name="request_message"
+
+요청 메시지를 이걸로 수정합니다.
+--boundary
+Content-Disposition: form-data; name="graphic_diameter"
+
+14.2mm
+--boundary--

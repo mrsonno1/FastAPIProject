@@ -45,28 +45,34 @@ class StatusResponse(BaseModel):
 
 class ReleasedProductDetailResponse(BaseModel):
     id: int
-    brandname: str
-    brandimage: Optional[str] = None
-    designName: str
-    colorName: str
+    brand_name: str
+    brand_image_url: Optional[str] = None
+    design_name: str
+    color_name: str
     image: str
-    dkColor: List[str] = Field(default_factory=list)
-    dkrgb: List[str] = Field(default_factory=list)
-    G_DIA: Optional[str] = None
-    Optic: Optional[str] = None
-    baseCurve: Optional[str] = None
+    dk_color: List[str] = Field(default_factory=list)
+    dk_rgb: List[str] = Field(default_factory=list)
+    g_dia: Optional[str] = None
+    optic: Optional[str] = None
+    base_curve: Optional[str] = None
 
 class ReleasedProductListItem(BaseModel):
-    no: int
-    brandname: str
-    image: str
-    designName: str
-    colorName: str
-    dkColor: List[str] = Field(default_factory=list)
-    dkrgb: List[str] = Field(default_factory=list)
-    diameter: dict = Field(default_factory=dict)
-    viewCount: int = 0
-    registerDate: str
+    id: int
+    brand_name: str
+    brand_image_url: Optional[str] = None
+    design_name: str
+    color_name: str
+    dkColor: List[str] # dkColor -> dk_color
+    dkrgb: List[str]   # dkrgb -> dk_rgb
+    G_DIA: Optional[str] = None
+    Optic: Optional[str] = None
+    base_curve: Optional[str] = None
+    view_count: int # viewCount -> view_count
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 class ReleasedProductListResponse(BaseModel):
     total_count: int
