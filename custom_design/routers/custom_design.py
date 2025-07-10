@@ -19,23 +19,31 @@ def create_new_custom_design(
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """새로운 커스텀 디자인 요청을 생성합니다."""
-    # 코드명 중복 검사
-    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == design.item_name).first():
-        raise HTTPException(status_code=409, detail="이미 사용 중인 코드명입니다.")
-
+    # --- [수정] item_name 생성 로직 변경 ---
+    # DB에서 마지막 레코드를 가져옵니다.
     last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
-    if last is None:
-        formatted = '0001'
-    else:
-        formatted = str(last.id).zfill(4)
+
+    # 마지막 ID가 있으면 그 값에 1을 더하고, 없으면 1부터 시작합니다.
+    next_id = (last.id + 1) if last else 1
+
+    # 다음 ID를 4자리 문자열로 포맷팅합니다.
+    formatted_id = str(next_id).zfill(4)
+
+    # 새로운 코드 생성 (예: DA-0002)
+    new_code = f"{current_user.account_code}-{formatted_id}"
+
+    # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
+    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == new_code).first():
+        # 이 경우는 동시성 문제 등으로 발생할 수 있으며, 더 정교한 처리가 필요할 수 있습니다.
+        # 간단하게는 에러를 발생시킵니다.
+        raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
 
     #데이터 베이스 적용
     created_customdesign = custom_design_CRUD.create_design(
         db=db,
         design=design,
         user_id=current_user.username,
-        code= current_user.account_code + f"-{formatted}",
+        code=new_code,
     )
 
     #리스폰 모델로 변환
