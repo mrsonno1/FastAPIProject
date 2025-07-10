@@ -11,6 +11,18 @@ username=sontest&password=1234567
 %}
 
 
+### 0-1. 'superadmin' 권한을 가진 사용자 로그인
+POST {{host}}{{api_prefix}}/auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=123456
+
+> {%
+    client.global.set("superadmin_token", "Bearer " + response.body.access_token);
+    client.global.set("code", response.body.account_code + "-");
+%}
+
+
 
 
 ### 계정 등록
@@ -19,9 +31,9 @@ Content-Type: application/json
 
 {
     "permission": "superadmin",
-    "username": "admin",
-    "password": "123456",
-    "email": "bba@gmail.com",
+    "username": "sontest",
+    "password": "1234567",
+    "email": "bba1@gmail.com",
     "company_name": "넷스트림",
     "contact_name": "홍길동",
     "contact_phone": "01022334455",

@@ -18,8 +18,8 @@ Base.metadata.create_all(bind=engine)
 # docs_url과 redoc_url을 /api 하위 경로로 지정합니다.
 app = FastAPI(
     title="LensGrapick",
-    version="0.5.0",
-    description="LensGrapick API 설명입니다.<br>업데이트 : 2025 07 07 14 00",
+    version="0.6.0",
+    description="LensGrapick API 설명입니다.<br>업데이트 : 2025 07 10 15 00",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
@@ -60,6 +60,9 @@ origins = [
 
     "http://10.10.101.39:3000",
     "http://10.10.101.39:3000",
+
+    "http://10.10.101.197:3000",
+    "http://10.10.101.197:3000",
 
     "https://admin.lensgrapick.com",
     "null"  # 로컬 파일(file://)에서의 요청을 허용하기 위해 추가

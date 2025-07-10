@@ -99,7 +99,7 @@ class Portfolio(Base):
     color_name = Column(String(100), nullable=True)
     exposed_countries = Column(String(100), nullable=True)  # 노출국가 (국가 id , 기준 ex-> 1,2,3,4)
     is_fixed_axis = Column(String(1), nullable=False, default='N')  # 축고정 (Y/N)
-    main_image_url = Column(String(100), nullable=True)
+    main_image_url = Column(String, nullable=False)
 
     design_line_image_id = Column(String(6), nullable=True)  # 라인 테이블의 id (FK키)
     design_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
