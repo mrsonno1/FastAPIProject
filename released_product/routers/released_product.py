@@ -18,32 +18,50 @@ router = APIRouter(prefix="/released-product", tags=["released-product"])
              status_code=status.HTTP_200_OK
 )
 def create_new_released_product(
-    released_product_str: str = Form(..., alias="released_product"),
+    design_name: str = Form(...),
+    color_name: str = Form(...),
+    brand_id: int = Form(...),
+    color_line_color_id: Optional[str] = Form(None),
+    color_base1_color_id: Optional[str] = Form(None),
+    color_base2_color_id: Optional[str] = Form(None),
+    color_pupil_color_id: Optional[str] = Form(None),
+    graphic_diameter: Optional[str] = Form(None),
+    optic_zone: Optional[str] = Form(None),
+    base_curve: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
 ):
-
     try:
-        released_product_dict = json.loads(released_product_str)
-
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="전송된 'released_product' 데이터의 JSON 형식이 잘못되었습니다.")
+        # --- [수정] 받은 Form 데이터로 Pydantic 모델 객체를 직접 생성 ---
+        released_product_data = released_product_schema.ReleasedProductCreate(
+            design_name=design_name,
+            color_name=color_name,
+            brand_id=brand_id,
+            color_line_color_id=color_line_color_id,
+            color_base1_color_id=color_base1_color_id,
+            color_base2_color_id=color_base2_color_id,
+            color_pupil_color_id=color_pupil_color_id,
+            graphic_diameter=graphic_diameter,
+            optic_zone=optic_zone,
+            base_curve=base_curve
+        )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    if released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_dict['design_name']):
+    if released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_data.design_name):
         raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="메인 이미지 업로드에 실패했습니다.")
 
-    released_product_dict['main_image_url'] = upload_result["public_url"]
+    released_product_data.main_image_url = upload_result["public_url"]
 
     created_released_product = released_product_CRUD.create_released_product(
         db=db,
-        released_product=released_product_dict,
+        # --- [수정] CRUD 함수에 Pydantic 모델 객체 전달 ---
+        released_product=released_product_data,
         user_id=current_user.id
     )
 
@@ -58,7 +76,16 @@ def create_new_released_product(
 @router.patch("/{product_id}", response_model=released_product_schema.ReleasedProductApiResponse)
 def update_released_product_details(
     product_id: int,
-    released_product_str: str = Form(..., alias="released_product"),
+    design_name: str = Form(...),
+    color_name: str = Form(...),
+    brand_id: int = Form(...),
+    color_line_color_id: Optional[str] = Form(None),
+    color_base1_color_id: Optional[str] = Form(None),
+    color_base2_color_id: Optional[str] = Form(None),
+    color_pupil_color_id: Optional[str] = Form(None),
+    graphic_diameter: Optional[str] = Form(None),
+    optic_zone: Optional[str] = Form(None),
+    base_curve: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
@@ -69,10 +96,19 @@ def update_released_product_details(
         raise HTTPException(status_code=404, detail="출시 제품을 찾을 수 없습니다.")
 
     try:
-        released_product_dict = json.loads(released_product_str)
-        released_product_update_data = released_product_schema.ReleasedProductCreate(**released_product_dict)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="전송된 'released_product' 데이터의 JSON 형식이 잘못되었습니다.")
+        # --- [수정] 받은 Form 데이터로 Pydantic 모델 객체를 직접 생성 ---
+        released_product_update_data = released_product_schema.ReleasedProductCreate(
+            design_name=design_name,
+            color_name=color_name,
+            brand_id=brand_id,
+            color_line_color_id=color_line_color_id,
+            color_base1_color_id=color_base1_color_id,
+            color_base2_color_id=color_base2_color_id,
+            color_pupil_color_id=color_pupil_color_id,
+            graphic_diameter=graphic_diameter,
+            optic_zone=optic_zone,
+            base_curve=base_curve
+        )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 

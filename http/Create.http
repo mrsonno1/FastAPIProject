@@ -92,26 +92,61 @@ Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
 --boundary
-Content-Disposition: form-data; name="portfolio"
-Content-Type: application/json
+Content-Disposition: form-data; name="design_name"
 
-{
-  "design_name": "SIMPLE_BLUE_111",
-  "color_name": "심플 블루 테마 버전2",
-  "exposed_countries":  "1,2,3,4,5",
-  "is_fixed_axis": "Y",
-  "design_line_image_id": "1",
-  "design_line_color_id": "10",
-  "design_base1_image_id": "2",
-  "design_base1_color_id": "11",
-  "design_base2_image_id": "3",
-  "design_base2_color_id": "12",
-  "design_pupil_image_id": "4",
-  "design_pupil_color_id": "13",
-  "graphic_diameter": "13.2mm",
-  "optic_zone": "10mm"
-}
+SIMPLE_BLUE_111
+--boundary
+Content-Disposition: form-data; name="color_name"
 
+심플 블루 테마 버전2
+--boundary
+Content-Disposition: form-data; name="exposed_countries"
+
+1,2,3,4,5
+--boundary
+Content-Disposition: form-data; name="is_fixed_axis"
+
+Y
+--boundary
+Content-Disposition: form-data; name="design_line_image_id"
+
+1
+--boundary
+Content-Disposition: form-data; name="design_line_color_id"
+
+10
+--boundary
+Content-Disposition: form-data; name="design_base1_image_id"
+
+2
+--boundary
+Content-Disposition: form-data; name="design_base1_color_id"
+
+11
+--boundary
+Content-Disposition: form-data; name="design_base2_image_id"
+
+3
+--boundary
+Content-Disposition: form-data; name="design_base2_color_id"
+
+12
+--boundary
+Content-Disposition: form-data; name="design_pupil_image_id"
+
+4
+--boundary
+Content-Disposition: form-data; name="design_pupil_color_id"
+
+13
+--boundary
+Content-Disposition: form-data; name="graphic_diameter"
+
+13.2mm
+--boundary
+Content-Disposition: form-data; name="optic_zone"
+
+10mm
 --boundary
 Content-Disposition: form-data; name="file"; filename="summer_sea.png"
 Content-Type: image/png
@@ -127,32 +162,42 @@ Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
 --boundary
-Content-Disposition: form-data; name="portfolio"
-Content-Type: application/json
+Content-Disposition: form-data; name="design_name"
 
-{
-  "design_name": "SIMPLE_BLUE_V112",
-  "color_name": "심플 블루 테마 버전2",
-  "exposed_countries": "1,2,3,4,5",
-  "is_fixed_axis": "Y",
-  "design_line_image_id": "1",
-  "design_line_color_id": "10",
-  "design_base1_image_id": "2",
-  "design_base1_color_id": "11",
-  "design_base2_image_id": "3",
-  "design_base2_color_id": "12",
-  "design_pupil_image_id": "4",
-  "design_pupil_color_id": "13",
-  "graphic_diameter": "13.2mm",
-  "optic_zone": "10mm"
-}
-
+수정된_디자인_이름
 --boundary
-Content-Disposition: form-data; name="file"; filename="summer_sea.png"
-Content-Type: image/png
+Content-Disposition: form-data; name="color_name"
+
+수정된 컬러 이름
+--boundary
+Content-Disposition: form-data; name="exposed_countries"
+
+1,2,5,8
+--boundary
+Content-Disposition: form-data; name="is_fixed_axis"
+
+N
+--boundary
+Content-Disposition: form-data; name="graphic_diameter"
+
+13.5mm
+--boundary
+Content-Disposition: form-data; name="optic_zone"
+
+10.2mm
+--boundary
+# 이미지를 변경하고 싶지 않으면 'file' 파트를 보내지 않으면 됩니다.
+# 이미지를 변경하려면 아래 파트를 추가합니다.
+Content-Disposition: form-data; name="file"; filename="new_image.jpg"
+Content-Type: image/jpeg
 
 < G:/image.png
 --boundary--
+
+
+
+
+
 
 
 

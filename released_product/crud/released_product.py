@@ -8,21 +8,18 @@ from datetime import date
 from sqlalchemy.dialects.postgresql import insert # PostgreSQL의 UPSERT 기능 사용
 
 def create_released_product(db: Session, released_product: dict, user_id: int):
-
-    # models.Releasedproduct 객체를 생성합니다.
-    # 모든 값은 딕셔너리 키 접근 방식( ['key'] 또는 .get('key') )을 사용합니다.
     db_released_product = models.Releasedproduct(
-        design_name=released_product['design_name'],
-        color_name=released_product['color_name'],
-        brand_id=released_product.get('brand_id'),  # DB 모델의 'brand' 컬럼에 'brand_id' 값을 할당
-        main_image_url=released_product['main_image_url'],
-        color_line_color_id=released_product.get('color_line_color_id'),
-        color_base1_color_id=released_product.get('color_base1_color_id'),
-        color_base2_color_id=released_product.get('color_base2_color_id'),
-        color_pupil_color_id=released_product.get('color_pupil_color_id'),
-        graphic_diameter=released_product.get('graphic_diameter'),
-        optic_zone=released_product.get('optic_zone'),
-        base_curve=released_product.get('base_curve'),
+        design_name=released_product.design_name,
+        color_name=released_product.color_name,
+        brand_id=released_product.brand_id,
+        main_image_url=released_product.main_image_url,
+        color_line_color_id=released_product.color_line_color_id,
+        color_base1_color_id=released_product.color_base1_color_id,
+        color_base2_color_id=released_product.color_base2_color_id,
+        color_pupil_color_id=released_product.color_pupil_color_id,
+        graphic_diameter=released_product.graphic_diameter,
+        optic_zone=released_product.optic_zone,
+        base_curve=released_product.base_curve,
         user_id=user_id
     )
     db.add(db_released_product)

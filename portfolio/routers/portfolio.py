@@ -20,7 +20,20 @@ router = APIRouter(prefix="/portfolio", tags=["portfolio"])
              status_code=status.HTTP_200_OK
 )
 def create_new_portfolio(
-    portfolio_str: str = Form(..., alias="portfolio"),
+    design_name: str = Form(...),
+    color_name: str = Form(...),
+    exposed_countries: str = Form(""),  # 기본값 빈 문자열
+    is_fixed_axis: str = Form("N"),  # 기본값 'N'
+    design_line_image_id: Optional[str] = Form(None),
+    design_line_color_id: Optional[str] = Form(None),
+    design_base1_image_id: Optional[str] = Form(None),
+    design_base1_color_id: Optional[str] = Form(None),
+    design_base2_image_id: Optional[str] = Form(None),
+    design_base2_color_id: Optional[str] = Form(None),
+    design_pupil_image_id: Optional[str] = Form(None),
+    design_pupil_color_id: Optional[str] = Form(None),
+    graphic_diameter: Optional[str] = Form(None),
+    optic_zone: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
@@ -32,21 +45,23 @@ def create_new_portfolio(
     """
 
     try:
-        portfolio_dict = json.loads(portfolio_str)
-
-        # exposed_countries 처리 - JSON 객체에서 문자열로 변환
-        if "exposed_countries" in portfolio_dict and isinstance(portfolio_dict["exposed_countries"], dict):
-            countries = [str(key) for key, value in portfolio_dict["exposed_countries"].items() if value]
-            portfolio_dict["exposed_countries"] = ",".join(countries)
-
-        # is_fixed_axis 처리 - Boolean에서 Y/N으로 변환
-        if "is_fixed_axis" in portfolio_dict:
-            portfolio_dict["is_fixed_axis"] = "Y" if portfolio_dict["is_fixed_axis"] else "N"
-
-        portfolio_data = portfolio_schema.PortfolioCreate(**portfolio_dict)
-
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="전송된 'portfolio' 데이터의 JSON 형식이 잘못되었습니다.")
+        # --- [수정] 받은 Form 데이터로 Pydantic 모델 객체를 직접 생성 ---
+        portfolio_data = portfolio_schema.PortfolioCreate(
+            design_name=design_name,
+            color_name=color_name,
+            exposed_countries=exposed_countries,
+            is_fixed_axis=is_fixed_axis,
+            design_line_image_id=design_line_image_id,
+            design_line_color_id=design_line_color_id,
+            design_base1_image_id=design_base1_image_id,
+            design_base1_color_id=design_base1_color_id,
+            design_base2_image_id=design_base2_image_id,
+            design_base2_color_id=design_base2_color_id,
+            design_pupil_image_id=design_pupil_image_id,
+            design_pupil_color_id=design_pupil_color_id,
+            graphic_diameter=graphic_diameter,
+            optic_zone=optic_zone
+        )
     except Exception as e:  # Pydantic 유효성 검사 실패 시
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
@@ -176,7 +191,22 @@ def read_single_portfolio(
 @router.patch("/{portfolio_id}", response_model=portfolio_schema.PortfolioApiResponse)
 def update_portfolio_details(
     portfolio_id: int,
-    portfolio_str: str = Form(..., alias="portfolio"),
+    # 필수 필드
+    design_name: str = Form(...),
+    color_name: str = Form(...),
+    # 선택적 폼 필드
+    exposed_countries: str = Form(""),
+    is_fixed_axis: str = Form("N"),
+    design_line_image_id: Optional[str] = Form(None),
+    design_line_color_id: Optional[str] = Form(None),
+    design_base1_image_id: Optional[str] = Form(None),
+    design_base1_color_id: Optional[str] = Form(None),
+    design_base2_image_id: Optional[str] = Form(None),
+    design_base2_color_id: Optional[str] = Form(None),
+    design_pupil_image_id: Optional[str] = Form(None),
+    design_pupil_color_id: Optional[str] = Form(None),
+    graphic_diameter: Optional[str] = Form(None),
+    optic_zone: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
@@ -187,20 +217,25 @@ def update_portfolio_details(
         raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
 
     try:
-        portfolio_dict = json.loads(portfolio_str)
-
-        # exposed_countries 처리 - JSON 객체에서 문자열로 변환
-        if "exposed_countries" in portfolio_dict and isinstance(portfolio_dict["exposed_countries"], dict):
-            countries = [str(key) for key, value in portfolio_dict["exposed_countries"].items() if value]
-            portfolio_dict["exposed_countries"] = ",".join(countries)
-
-        # is_fixed_axis 처리 - Boolean에서 Y/N으로 변환
-        if "is_fixed_axis" in portfolio_dict:
-            portfolio_dict["is_fixed_axis"] = "Y" if portfolio_dict["is_fixed_axis"] else "N"
-
-        portfolio_update_data = portfolio_schema.PortfolioCreate(**portfolio_dict)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="전송된 'portfolio' 데이터의 JSON 형식이 잘못되었습니다.")
+        # --- [수정] 받은 Form 데이터로 Pydantic 모델 객체를 직접 생성 ---
+        # 수정 시에는 모든 필드가 제공되지 않을 수 있으므로,
+        # 기본 스키마를 사용하여 유효성 검사를 진행합니다.
+        portfolio_update_data = portfolio_schema.PortfolioCreate(
+            design_name=design_name,
+            color_name=color_name,
+            exposed_countries=exposed_countries,
+            is_fixed_axis=is_fixed_axis,
+            design_line_image_id=design_line_image_id,
+            design_line_color_id=design_line_color_id,
+            design_base1_image_id=design_base1_image_id,
+            design_base1_color_id=design_base1_color_id,
+            design_base2_image_id=design_base2_image_id,
+            design_base2_color_id=design_base2_color_id,
+            design_pupil_image_id=design_pupil_image_id,
+            design_pupil_color_id=design_pupil_color_id,
+            graphic_diameter=graphic_diameter,
+            optic_zone=optic_zone
+        )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 

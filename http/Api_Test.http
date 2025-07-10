@@ -54,23 +54,47 @@ Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
 --boundary
-Content-Disposition: form-data; name="released_product"
+Content-Disposition: form-data; name="design_name"
 
-{
-  "design_name": "새로운 겨울 디자인20",
-  "color_name": "스노우 화이트",
-  "brand_id": 3,
-  "color_line_color_id": "1",
-  "color_base1_color_id": "2",
-  "color_base2_color_id": "3",
-  "color_pupil_color_id": "4",
-  "graphic_diameter": "13.8mm",
-  "optic_zone": "8.1mm",
-  "base_curve": "8.8"
-}
-
+새로운 겨울 디자인 2025
 --boundary
-Content-Disposition: form-data; name="file"; filename="summer_sea.png"
+Content-Disposition: form-data; name="color_name"
+
+프로스트 실버
+--boundary
+Content-Disposition: form-data; name="brand_id"
+
+3
+--boundary
+Content-Disposition: form-data; name="color_line_color_id"
+
+31
+--boundary
+Content-Disposition: form-data; name="color_base1_color_id"
+
+33
+--boundary
+Content-Disposition: form-data; name="color_base2_color_id"
+
+35
+--boundary
+Content-Disposition: form-data; name="color_pupil_color_id"
+
+40
+--boundary
+Content-Disposition: form-data; name="graphic_diameter"
+
+13.8mm
+--boundary
+Content-Disposition: form-data; name="optic_zone"
+
+8.1mm
+--boundary
+Content-Disposition: form-data; name="base_curve"
+
+8.8
+--boundary
+Content-Disposition: form-data; name="file"; filename="winter_frost.png"
 Content-Type: image/png
 
 < G:/image.png
@@ -87,24 +111,22 @@ Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
 --boundary
-Content-Disposition: form-data; name="released_product"
+Content-Disposition: form-data; name="design_name"
 
-{
-  "design_name": "새로운 겨울 디자인120",
-  "color_name": "스노우 화이트",
-  "brand_id": 3,
-  "color_line_color_id": "1",
-  "color_base1_color_id": "2",
-  "color_base2_color_id": "3",
-  "color_pupil_color_id": "4",
-  "graphic_diameter": "13.8mm",
-  "optic_zone": "8.1mm",
-  "base_curve": "8.8"
-}
-
+최종 수정된 겨울 디자인2
 --boundary
-Content-Disposition: form-data; name="file"; filename="summer_sea.png"
-Content-Type: image/png
+Content-Disposition: form-data; name="color_name"
+
+최종 프로스트 실버
+--boundary
+Content-Disposition: form-data; name="brand_id"
+
+5
+--boundary
+# ... (다른 수정할 텍스트 필드들) ...
+--boundary
+Content-Disposition: form-data; name="file"; filename="new_winter_image.jpg"
+Content-Type: image/jpeg
 
 < G:/image.png
 --boundary--
