@@ -54,7 +54,7 @@ Authorization: {{superadmin_token}}
 Content-Disposition: form-data; name="released_product"
 
 {
-  "design_name": "새로운 겨울 디자인10",
+  "design_name": "새로운 겨울 디자인20",
   "color_name": "스노우 화이트",
   "brand_id": 3,
   "color_line_color_id": "1",

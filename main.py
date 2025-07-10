@@ -65,6 +65,7 @@ origins = [
     "http://10.10.101.197:3000",
 
     "https://admin.lensgrapick.com",
+    "https://api.lensgrapick.com",
     "null"  # 로컬 파일(file://)에서의 요청을 허용하기 위해 추가
 
     # "https://your-frontend-domain.com",
