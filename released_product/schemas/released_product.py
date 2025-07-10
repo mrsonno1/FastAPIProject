@@ -4,6 +4,13 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 
+class ColorComponentDetail(BaseModel):
+    id: int
+    color_name: str
+    color_values: str
+
+    class Config:
+        from_attributes = True
 
 class ReleasedProductCreate(BaseModel):
     design_name: str
@@ -50,11 +57,19 @@ class ReleasedProductDetailResponse(BaseModel):
     design_name: str
     color_name: str
     image: str
-    dkcolor: List[str] = Field(default_factory=list)
-    dkrgb: List[str] = Field(default_factory=list)
-    G_DIA: Optional[str] = None
-    Optic: Optional[str] = None
+
+    # dk_color, dk_rgb 필드를 아래의 상세 객체 필드로 교체
+    color_line_color: Optional[ColorComponentDetail] = None
+    color_base1_color: Optional[ColorComponentDetail] = None
+    color_base2_color: Optional[ColorComponentDetail] = None
+    color_pupil_color: Optional[ColorComponentDetail] = None
+
+    g_dia: Optional[str] = None
+    optic: Optional[str] = None
     base_curve: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 
 
@@ -80,7 +95,7 @@ class ReleasedProductListItem(BaseModel):
     color_base1_color: Optional[ColorComponentDetail] = None
     color_base2_color: Optional[ColorComponentDetail] = None
     color_pupil_color: Optional[ColorComponentDetail] = None
-    g_dia: Optional[str] = None
+    graphic_diameter: Optional[str] = None
     optic: Optional[str] = None
     base_curve: Optional[str] = None
 

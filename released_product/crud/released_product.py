@@ -164,8 +164,8 @@ def get_released_products_paginated(
                 get_rgb(product.color_base2_color_id),
                 get_rgb(product.color_pupil_color_id),
             ],
-            "G_DIA": product.graphic_diameter,
-            "Optic": product.optic_zone,
+            "graphic_diameter": product.graphic_diameter,
+            "optic": product.optic_zone,
             "base_curve": product.base_curve,
             "view_count": product.views,
             "created_at": product.created_at,
@@ -186,37 +186,28 @@ def get_released_product_detail(db: Session, product_id: int):
     if not product:
         return None
 
-    db.query(models.Releasedproduct).filter(models.Releasedproduct.id == product_id).update(
-        {models.Releasedproduct.views: models.Releasedproduct.views + 1},
-        synchronize_session=False
-    )
-
+    # 조회수 및 일일 조회수 업데이트
+    product.views += 1
     today = date.today()
-    stmt = insert(models.DailyView).values(
-        view_date=today,
-        content_type='released_product',
-        content_id=product_id,
-        view_count=1
-    ).on_conflict_do_update(
-        index_elements=['view_date', 'content_type', 'content_id'],
-        set_={'view_count': models.DailyView.view_count + 1}
-    )
-    db.execute(stmt)
+    daily_view = db.query(models.DailyView).filter(
+        models.DailyView.view_date == today,
+        models.DailyView.content_type == 'released_product',
+        models.DailyView.content_id == product_id
+    ).first()
+    if daily_view:
+        daily_view.view_count += 1
+    else:
+        db.add(models.DailyView(
+            view_date=today, content_type='released_product', content_id=product_id, view_count=1
+        ))
 
-    # 색상 상세 정보를 가져오는 헬퍼 함수
+
+    # --- [수정] 색상 상세 정보를 가져오는 로직 ---
     def get_color_details(color_id: Optional[str]):
         if not color_id:
             return None
-        color = db.query(models.Color).filter(models.Color.id == color_id).first()
-        if not color:
-            return None
-        return {
-            "id": color.id,
-            "color_name": color.color_name,
-            "color_values": color.color_values,
-        }
+        return db.query(models.Color).filter(models.Color.id == color_id).first()
 
-    # 브랜드 정보 조회
     brand_name = ""
     brand_image_url = None
     if product.brand_id:
@@ -225,13 +216,7 @@ def get_released_product_detail(db: Session, product_id: int):
             brand_name = brand.brand_name
             brand_image_url = brand.brand_image_url
 
-    # 각 컴포넌트의 색상 정보 조회
-    color_line_details = get_color_details(product.color_line_color_id)
-    color_base1_details = get_color_details(product.color_base1_color_id)
-    color_base2_details = get_color_details(product.color_base2_color_id)
-    color_pupil_details = get_color_details(product.color_pupil_color_id)
-
-    # 최종 응답 데이터 구성
+    # --- [수정] 최종 응답 데이터 구성 ---
     response_data = {
         "id": product.id,
         "brand_name": brand_name,
@@ -239,99 +224,16 @@ def get_released_product_detail(db: Session, product_id: int):
         "design_name": product.design_name,
         "color_name": product.color_name,
         "image": product.main_image_url,
-        "color_line_color": color_line_details,
-        "color_base1_color": color_base1_details,
-        "color_base2_color": color_base2_details,
-        "color_pupil_color": color_pupil_details,
+        # 각 색상 ID로 전체 Color 객체를 조회하여 할당
+        "color_line_color": get_color_details(product.color_line_color_id),
+        "color_base1_color": get_color_details(product.color_base1_color_id),
+        "color_base2_color": get_color_details(product.color_base2_color_id),
+        "color_pupil_color": get_color_details(product.color_pupil_color_id),
         "g_dia": product.graphic_diameter,
         "optic": product.optic_zone,
         "base_curve": product.base_curve
     }
 
     db.commit()
+    db.refresh(product)
     return response_data
-
-
-def get_formatted_released_products(db: Session, page: int, size: int, design_name: Optional[str] = None, color_name: Optional[str] = None):
-    """출시 제품 목록을 포맷팅된 형태로 조회합니다."""
-    query = db.query(models.Releasedproduct)
-
-    if design_name:
-        query = query.filter(models.Releasedproduct.design_name.ilike(f"%{design_name}%"))
-
-    if color_name:
-        query = query.filter(models.Releasedproduct.color_name.ilike(f"%{color_name}%"))
-
-    total_count = query.count()
-    offset = (page - 1) * size
-    products = query.order_by(models.Releasedproduct.id.desc()).offset(offset).limit(size).all()
-
-    formatted_items = []
-    for idx, product in enumerate(products):
-        # 브랜드 정보 조회
-        brand_data = {}
-        if product.brand_id:
-            brand = db.query(models.Brand).filter(models.Brand.id == product.brand_id).first()
-            if brand:
-                brand_data = {
-                    "brand_name": brand.brand_name,
-                    "brand_image_url": brand.brand_image_url
-                }
-
-        # 컬러 정보 조회
-        color_names = []
-        color_rgb_values = []
-
-        # 라인 컬러 정보
-        if product.color_line_color_id:
-            line_color = db.query(models.Color).filter(models.Color.id == product.color_line_color_id).first()
-            if line_color:
-                color_names.append(line_color.color_name)
-                rgb_parts = line_color.color_values.split(',')[:3]
-                color_rgb_values.append(','.join(rgb_parts))
-
-        # 바탕1 컬러 정보
-        if product.color_base1_color_id:
-            base1_color = db.query(models.Color).filter(models.Color.id == product.color_base1_color_id).first()
-            if base1_color:
-                color_names.append(base1_color.color_name)
-                rgb_parts = base1_color.color_values.split(',')[:3]
-                color_rgb_values.append(','.join(rgb_parts))
-
-        # 바탕2 컬러 정보
-        if product.color_base2_color_id:
-            base2_color = db.query(models.Color).filter(models.Color.id == product.color_base2_color_id).first()
-            if base2_color:
-                color_names.append(base2_color.color_name)
-                rgb_parts = base2_color.color_values.split(',')[:3]
-                color_rgb_values.append(','.join(rgb_parts))
-
-        # 동공 컬러 정보
-        if product.color_pupil_color_id:
-            pupil_color = db.query(models.Color).filter(models.Color.id == product.color_pupil_color_id).first()
-            if pupil_color:
-                color_names.append(pupil_color.color_name)
-                rgb_parts = pupil_color.color_values.split(',')[:3]
-                color_rgb_values.append(','.join(rgb_parts))
-
-        # 등록일 포맷팅 (YY/MM/DD)
-        register_date = product.created_at.strftime("%y/%m/%d") if product.created_at else ""
-
-        # 응답 데이터 구성
-        formatted_items.append({
-            "no": product.id,
-            "brandname": brand_data.get("brand_name", ""),
-            "image": product.main_image_url,
-            "designName": product.design_name,
-            "colorName": product.color_name,
-            "dkColor": color_names,
-            "dkrgb": color_rgb_values,
-            "diameter": {
-                "G_DIA": product.graphic_diameter,
-                "Optic": product.optic_zone
-            },
-            "viewCount": product.views,
-            "registerDate": register_date
-        })
-
-    return {"items": formatted_items, "total_count": total_count}
