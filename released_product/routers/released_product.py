@@ -132,6 +132,8 @@ def list_all_released_products(
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
         design_name: Optional[str] = Query(None, description="디자인명으로 검색"),
         color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
+        brandname: Optional[str] = Query(None, description="브랜드명으로 검색"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'created_at desc', 'views asc')"),
         db: Session = Depends(get_db)
 ):
     """
@@ -143,6 +145,8 @@ def list_all_released_products(
         size=size,
         design_name=design_name,
         color_name=color_name,
+        brandname=brandname,
+        orderBy=orderBy,
     )
 
     items = paginated_data["items"]

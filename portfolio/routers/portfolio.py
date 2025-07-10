@@ -62,7 +62,7 @@ def create_new_portfolio(
     created_portfolio = portfolio_CRUD.create_portfolio(
         db=db,
         portfolio=portfolio_data,
-        user_id=0  # 사용자 ID 필드 제거됨
+        user_id=current_user.id
     )
 
     # 응답 모델로 변환
@@ -101,7 +101,7 @@ def list_all_portfolios(
         color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
         exposed_countries: Optional[List[str]] = Query(None, description="노출 국가 ID로 검색"),
         is_fixed_axis: Optional[str] = Query(None, description="고정 축 여부로 검색 (Y/N)"),
-        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'design_name asc', 'color_name desc')"),
+        orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'created_at desc', 'views asc')"),
         db: Session = Depends(get_db)
 ):
     """

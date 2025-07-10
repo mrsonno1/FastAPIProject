@@ -84,7 +84,7 @@ Content-Disposition: form-data; name="portfolio"
 Content-Type: application/json
 
 {
-  "design_name": "SIMPLE_BLUE_9",
+  "design_name": "SIMPLE_BLUE_11",
   "color_name": "심플 블루 테마 버전2",
   "exposed_countries":  "1,2,3,4,5",
   "is_fixed_axis": "Y",

@@ -1,5 +1,5 @@
 # db/models.py
-from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text, Boolean, Date, ForeignKey
 from sqlalchemy.sql import func
 from .database import Base
 from sqlalchemy.types import JSON
@@ -94,6 +94,7 @@ class Portfolio(Base):
     __tablename__ = "portfolios"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=False)
     design_name = Column(String(100), nullable=True)
     color_name = Column(String(100), nullable=True)
     exposed_countries = Column(String(100), nullable=True)  # 노출국가 (국가 id , 기준 ex-> 1,2,3,4)
@@ -142,6 +143,31 @@ class Releasedproduct(Base):
     views = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+# --- [새로운 DailyView 모델 추가] ---
+class DailyView(Base):
+    __tablename__ = "daily_views"
+
+    id = Column(Integer, primary_key=True, index=True)
+    view_date = Column(Date, nullable=False, index=True)  # 조회 날짜 (YYYY-MM-DD)
+
+    # 어떤 종류의 콘텐츠인지 구분 (released_product 또는 portfolio)
+    content_type = Column(String(50), nullable=False)
+
+    # 해당 콘텐츠의 ID
+    content_id = Column(Integer, nullable=False, index=True)
+
+    # 해당 날짜의 조회수
+    view_count = Column(Integer, default=1)
+
+    __table_args__ = (
+        UniqueConstraint('view_date', 'content_type', 'content_id', name='_daily_view_uc'),
+    )
+
+
+# ------------------------------------
+
 
 class Progressstatus(Base):
     __tablename__ = "progressstatus"

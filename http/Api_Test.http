@@ -4,14 +4,14 @@
 GET {{host}}{{api_prefix}}/v1/rank/
 
 ### 목록
-GET {{host}}{{api_prefix}}/released-product/info/1
+GET {{host}}{{api_prefix}}/released-product/info/4
 ###
 GET {{host}}{{api_prefix}}/released-product/list
 
 
 
 ### 목록
-GET {{host}}{{api_prefix}}/portfolio/info/1
+GET {{host}}{{api_prefix}}/portfolio/info/9
 ###
 GET {{host}}{{api_prefix}}/portfolio/list
 
@@ -55,6 +55,39 @@ Content-Disposition: form-data; name="released_product"
 
 {
   "design_name": "새로운 겨울 디자인10",
+  "color_name": "스노우 화이트",
+  "brand_id": 3,
+  "color_line_color_id": "1",
+  "color_base1_color_id": "2",
+  "color_base2_color_id": "3",
+  "color_pupil_color_id": "4",
+  "graphic_diameter": "13.8mm",
+  "optic_zone": "8.1mm",
+  "base_curve": "8.8"
+}
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="summer_sea.png"
+Content-Type: image/png
+
+< G:/image.png
+--boundary--
+
+
+
+
+
+
+###
+PATCH {{host}}{{api_prefix}}/released-product/1
+Content-Type: multipart/form-data; boundary=boundary
+Authorization: {{superadmin_token}}
+
+--boundary
+Content-Disposition: form-data; name="released_product"
+
+{
+  "design_name": "새로운 겨울 디자인120",
   "color_name": "스노우 화이트",
   "brand_id": 3,
   "color_line_color_id": "1",

@@ -16,22 +16,19 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
         exposed_countries=portfolio.exposed_countries,
         is_fixed_axis=portfolio.is_fixed_axis,
         main_image_url=portfolio.main_image_url,
-
         design_line_image_id=portfolio.design_line_image_id,
         design_line_color_id=portfolio.design_line_color_id,
-
         design_base1_image_id=portfolio.design_base1_image_id,
         design_base1_color_id=portfolio.design_base1_color_id,
-
         design_base2_image_id=portfolio.design_base2_image_id,
         design_base2_color_id=portfolio.design_base2_color_id,
-
         design_pupil_image_id=portfolio.design_pupil_image_id,
         design_pupil_color_id=portfolio.design_pupil_color_id,
-
         graphic_diameter=portfolio.graphic_diameter,
-        optic_zone=portfolio.optic_zone
+        optic_zone=portfolio.optic_zone,
+        user_id=user_id
     )
+
     db.add(db_portfolio)
     db.commit()
     db.refresh(db_portfolio)
@@ -103,20 +100,36 @@ def get_portfolios_paginated(
 
     if orderBy:
         try:
-            order_column, order_direction = orderBy.split()
-            if order_column == "design_name":
-                if order_direction.lower() == "asc":
-                    query = query.order_by(models.Portfolio.design_name.asc())
+            # 1. '컬럼명 방향'으로 문자열을 분리
+            order_column_name, order_direction = orderBy.strip().split()
+
+            # 2. 허용할 컬럼 목록 정의 (보안 및 안정성)
+            allowed_columns = {
+                "design_name": models.Portfolio.design_name,
+                "created_at": models.Portfolio.created_at,
+                "views": models.Portfolio.views,
+                "id": models.Portfolio.id  # 기본 정렬을 위해 id도 포함
+            }
+
+            # 3. 허용된 컬럼인지 확인
+            if order_column_name in allowed_columns:
+                order_column = allowed_columns[order_column_name]
+
+                # 4. 정렬 방향 적용
+                if order_direction.lower() == 'desc':
+                    query = query.order_by(order_column.desc())
                 else:
-                    query = query.order_by(models.Portfolio.design_name.desc())
+                    query = query.order_by(order_column.asc())
             else:
-                # Default sort if orderBy is not recognized
-                query = query.order_by(models.Portfolio.id.desc())
-        except ValueError:
-            # Handle cases where orderBy is not in 'column direction' format
-            query = query.order_by(models.Portfolio.id.desc())
+                # 허용되지 않은 컬럼명이면 기본 정렬 적용
+                query = query.order_by(models.Portfolio.created_at.desc())
+
+        except (ValueError, AttributeError):
+            # orderBy 형식이 잘못되었거나 존재하지 않는 컬럼일 경우 기본 정렬로 대체
+            query = query.order_by(models.Portfolio.created_at.desc())
     else:
-        query = query.order_by(models.Portfolio.id.desc())
+        # orderBy 파라미터가 없으면 기본 정렬 (최신순)
+        query = query.order_by(models.Portfolio.created_at.desc())
 
     total_count = query.count()
     offset = (page - 1) * size

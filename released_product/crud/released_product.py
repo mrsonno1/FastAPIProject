@@ -4,7 +4,8 @@ from db import models
 from released_product.schemas import released_product as released_product_schema
 from typing import Optional
 from fastapi import HTTPException
-
+from datetime import date
+from sqlalchemy.dialects.postgresql import insert # PostgreSQL의 UPSERT 기능 사용
 
 def create_released_product(db: Session, released_product: dict, user_id: int):
 
@@ -68,6 +69,8 @@ def get_released_products_paginated(
         size: int,
         design_name: Optional[str] = None,
         color_name: Optional[str] = None,
+        brandname: Optional[str] = None,
+        orderBy: Optional[str] = None,
 ):
     query = db.query(models.Releasedproduct)
 
@@ -76,6 +79,40 @@ def get_released_products_paginated(
 
     if color_name:
         query = query.filter(models.Releasedproduct.color_name.ilike(f"%{color_name}%"))
+
+    if brandname:
+        # Releasedproduct.brand_id와 Brand.id를 기준으로 JOIN
+        query = query.join(models.Brand, models.Releasedproduct.brand_id == models.Brand.id)
+        # JOIN된 Brand 테이블의 brand_name 컬럼으로 필터링
+        query = query.filter(models.Brand.brand_name.ilike(f"%{brandname}%"))
+
+    if orderBy:
+        try:
+            order_column_name, order_direction = orderBy.strip().split()
+
+            # 허용할 정렬 컬럼 목록 정의
+            allowed_columns = {
+                "created_at": models.Releasedproduct.created_at,
+                "views": models.Releasedproduct.views,
+                "id": models.Releasedproduct.id
+            }
+
+            if order_column_name in allowed_columns:
+                order_column = allowed_columns[order_column_name]
+                if order_direction.lower() == 'desc':
+                    query = query.order_by(order_column.desc())
+                else:
+                    query = query.order_by(order_column.asc())
+            else:
+                # 허용되지 않은 컬럼이면 기본 정렬 (최신순)
+                query = query.order_by(models.Releasedproduct.created_at.desc())
+
+        except (ValueError, AttributeError):
+            # 형식이 잘못된 경우 기본 정렬 (최신순)
+            query = query.order_by(models.Releasedproduct.created_at.desc())
+    else:
+        # orderBy 파라미터가 없으면 기본 정렬 (최신순)
+        query = query.order_by(models.Releasedproduct.created_at.desc())
 
     total_count = query.count()
     offset = (page - 1) * size
@@ -95,6 +132,30 @@ def get_released_product_detail(db: Session, product_id: int):
     product = get_released_product_by_id(db, product_id)
     if not product:
         return None
+
+    db.query(models.Releasedproduct).filter(models.Releasedproduct.id == product_id).update(
+        {models.Releasedproduct.views: models.Releasedproduct.views + 1},
+        synchronize_session=False
+    )
+
+    # --- [DailyView 기록 로직 추가] ---
+    today = date.today()
+
+    # PostgreSQL의 ON CONFLICT DO UPDATE (UPSERT) 문 실행
+    stmt = insert(models.DailyView).values(
+        view_date=today,
+        content_type='released_product',
+        content_id=product_id,
+        view_count=1
+    ).on_conflict_do_update(
+        index_elements=['view_date', 'content_type', 'content_id'],
+        set_={'view_count': models.DailyView.view_count + 1}
+    )
+    db.execute(stmt)
+    # ---------------------------
+
+    db.commit()  # 모든 변경사항(views, daily_views)을 한 번에 커밋
+
 
     # 컬러 정보 조회
     color_names = []

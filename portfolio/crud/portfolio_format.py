@@ -4,6 +4,8 @@ from portfolio.schemas import portfolio_format
 from typing import Optional, List
 from sqlalchemy import func
 import datetime
+from datetime import date
+from sqlalchemy.dialects.postgresql import insert
 
 def get_image_display_name(db: Session, image_id: str) -> Optional[str]:
     """이미지 ID로 이미지의 display_name을 조회"""
@@ -152,16 +154,16 @@ def get_portfolios_formatted(
             designName=portfolio.design_name,
             colorName=portfolio.color_name,
             design=portfolio_format.DesignComponents(
-                라인='L-'+line_image_name,
-                바탕1='B1-'+base1_image_name,
-                바탕2='B2-'+base2_image_name,
-                동공='H-'+pupil_image_name
+                라인=f"L-{line_image_name}" if line_image_name else "",
+                바탕1=f"B1-{base1_image_name}" if base1_image_name else "",
+                바탕2=f"B2-{base2_image_name}" if base2_image_name else "",
+                동공=f"H-{pupil_image_name}" if pupil_image_name else ""
             ),
             dkColor=[
-                'C-'+line_color_name or "",
-                'C-'+base1_color_name or "",
-                'C-'+base2_color_name or "",
-                'C-'+pupil_color_name or ""
+                f"C-{line_color_name}" if line_color_name else "",
+                f"C-{base1_color_name}" if base1_color_name else "",
+                f"C-{base2_color_name}" if base2_color_name else "",
+                f"C-{pupil_color_name}" if pupil_color_name else ""
             ],
             dkrgb=[
                 line_rgb or "",
@@ -194,6 +196,28 @@ def get_portfolio_detail(db: Session, portfolio_id: int):
     portfolio = db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).first()
     if not portfolio:
         return None
+
+    # --- [조회수 증가 로직 추가] ---
+    db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).update(
+        {models.Portfolio.views: models.Portfolio.views + 1},
+        synchronize_session=False
+    )
+
+    # --- [DailyView 기록 로직 추가] ---
+    today = date.today()
+    stmt = insert(models.DailyView).values(
+        view_date=today,
+        content_type='portfolio',
+        content_id=portfolio_id,
+        view_count=1
+    ).on_conflict_do_update(
+        index_elements=['view_date', 'content_type', 'content_id'],
+        set_={'view_count': models.DailyView.view_count + 1}
+    )
+    db.execute(stmt)
+    # ---------------------------
+
+    db.commit()
 
     # 이미지 이름 조회
     line_image_name = get_image_display_name(db, portfolio.design_line_image_id)
@@ -229,10 +253,10 @@ def get_portfolio_detail(db: Session, portfolio_id: int):
         fixed=portfolio.is_fixed_axis,
         image=portfolio.main_image_url,
         design=portfolio_format.DesignComponents(
-            라인='L-'+line_image_name,
-            바탕1='B1-'+base1_image_name,
-            바탕2='B2-'+base2_image_name,
-            동공='H-'+pupil_image_name
+            라인=f"L-{line_image_name}" if line_image_name else "",
+            바탕1=f"B1-{base1_image_name}" if base1_image_name else "",
+            바탕2=f"B2-{base2_image_name}" if base2_image_name else "",
+            동공=f"H-{pupil_image_name}" if pupil_image_name else ""
         ),
         designimage=[
             line_image_url or "",
@@ -241,10 +265,10 @@ def get_portfolio_detail(db: Session, portfolio_id: int):
             pupil_image_url or ""
         ],
         dkColor=[
-            'C-'+line_color_name or "",
-            'C-'+base1_color_name or "",
-            'C-'+base2_color_name or "",
-            'C-'+pupil_color_name or ""
+            f"C-{line_color_name}" if line_color_name else "",
+            f"C-{base1_color_name}" if base1_color_name else "",
+            f"C-{base2_color_name}" if base2_color_name else "",
+            f"C-{pupil_color_name}" if pupil_color_name else ""
         ],
         dkrgb=[
             line_rgb or "",

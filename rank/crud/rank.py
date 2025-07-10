@@ -2,20 +2,41 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from db import models
+from datetime import date
 
 def get_top_released_products(db: Session, limit: int = 10):
+    """오늘 날짜의 조회수(daily_views)가 가장 많은 출시 제품 10개를 조회합니다."""
+    today = date.today()
     return db.query(
         models.Releasedproduct.main_image_url.label('image'),
         models.Releasedproduct.design_name.label('name'),
-        models.Releasedproduct.views.label('view')
-    ).order_by(models.Releasedproduct.views.desc()).limit(limit).all()
+        models.DailyView.view_count.label('view')
+    ).join(
+        models.DailyView,
+        (models.DailyView.content_id == models.Releasedproduct.id) &
+        (models.DailyView.content_type == 'released_product')
+    ).filter(
+        models.DailyView.view_date == today
+    ).order_by(
+        models.DailyView.view_count.desc()
+    ).limit(limit).all()
 
 def get_top_portfolios(db: Session, limit: int = 10):
+    """오늘 날짜의 조회수(daily_views)가 가장 많은 포트폴리오 10개를 조회합니다."""
+    today = date.today()
     return db.query(
         models.Portfolio.main_image_url.label('image'),
         models.Portfolio.design_name.label('name'),
-        models.Portfolio.views.label('view')
-    ).order_by(models.Portfolio.views.desc()).limit(limit).all()
+        models.DailyView.view_count.label('view')
+    ).join(
+        models.DailyView,
+        (models.DailyView.content_id == models.Portfolio.id) &
+        (models.DailyView.content_type == 'portfolio')
+    ).filter(
+        models.DailyView.view_date == today
+    ).order_by(
+        models.DailyView.view_count.desc()
+    ).limit(limit).all()
 
 def get_custom_design_status_counts(db: Session):
     status_counts = db.query(
