@@ -177,7 +177,7 @@ def get_portfolios_paginated(
 
     for portfolio, user in results:
         portfolio.user_name = user.contact_name or user.username
-        portfolio.country_name = get_country_names(portfolio.exposed_countries)
+        portfolio.exposed_countries = portfolio.exposed_countries
         portfolio.view_count = portfolio.views  # *** 오류 수정 지점 ***
         portfolio.design_line = images_map.get(portfolio.design_line_image_id)
         portfolio.design_line_color = colors_map.get(portfolio.design_line_color_id)
@@ -252,10 +252,9 @@ def get_portfolio_detail(db: Session, portfolio_id: int) -> Optional[Dict[str, A
         countries = db.query(models.Country.country_name).filter(models.Country.id.in_(country_ids)).all()
         return ", ".join([name for name, in countries])
 
-        # 관련 객체들을 portfolio 객체에 동적으로 추가
-
+    # 관련 객체들을 portfolio 객체에 동적으로 추가
     portfolio.user_name = user.contact_name or user.username
-    portfolio.country_name = get_country_names(portfolio.exposed_countries)
+    portfolio.exposed_countries = portfolio.exposed_countries
     portfolio.view_count = portfolio.views  # 스키마 필드명에 맞게 값 할당
     portfolio.design_line = get_image_details(portfolio.design_line_image_id)
     portfolio.design_line_color = get_color_details(portfolio.design_line_color_id)

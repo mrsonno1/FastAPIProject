@@ -1,5 +1,5 @@
 
-### 0-1. 'superadmin' 권한을 가진 사용자 로그인
+### 로컬 'superadmin' 권한을 가진 사용자 로그인
 POST {{host}}{{api_prefix}}/auth/login
 Content-Type: application/x-www-form-urlencoded
 
@@ -11,7 +11,7 @@ username=sontest&password=1234567
 %}
 
 
-### 0-1. 'superadmin' 권한을 가진 사용자 로그인
+### 서버 'superadmin' 권한을 가진 사용자 로그인
 POST {{host}}{{api_prefix}}/auth/login
 Content-Type: application/x-www-form-urlencoded
 

@@ -52,7 +52,7 @@ class PortfolioDetailResponse(BaseModel):
     user_name: str
     design_name: str
     color_name: str
-    country_name: str
+    exposed_countries: str
     is_fixed_axis: str
     main_image_url: Optional[str] = None
     view_count: int
@@ -80,7 +80,7 @@ class PortfolioDetailData(BaseModel):
     user_name: str
     design_name: str
     color_name: str
-    country_name: str
+    exposed_countries: str
     is_fixed_axis: str
     main_image_url: Optional[str] = None
     view_count: int
@@ -147,7 +147,7 @@ class PortfolioListItem(BaseModel):
     main_image_url: Optional[str] = None
     design_name: Optional[str] = None
     color_name: Optional[str] = None
-    country_name: str
+    exposed_countries: str
     is_fixed_axis: str
     view_count: int
     created_at: datetime
