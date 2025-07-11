@@ -11,6 +11,17 @@ GET {{host}}{{api_prefix}}/custom-designs/1
 ###
 GET {{host}}{{api_prefix}}/custom-designs/info/1
 
+###
+PATCH {{host}}{{api_prefix}}/custom-designs/status/2
+Content-Type: multipart/form-data; boundary=boundary
+Authorization: {{superadmin_token}}
+
+--boundary
+Content-Disposition: form-data; name="status"
+
+3
+--boundary--
+
 
 ### 출시제품 목록
 GET {{host}}{{api_prefix}}/released-product/info/2

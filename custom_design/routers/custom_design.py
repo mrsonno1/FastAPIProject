@@ -96,18 +96,11 @@ def create_new_custom_design(
     #return custom_design_CRUD.create_design(db=db, design=design, user_id=current_user.id)
 
 
-@router.patch("/info/{design_id}", response_model=custom_design_schema.CustomDesignApiResponse)
+@router.patch("/status/{design_id}", response_model=custom_design_schema.CustomDesignApiResponse)
 def update_custom_design_details(
         design_id: int,
         # 폼 필드들
-        main_image_file: Optional[UploadFile] = File(None),
-        request_message: Optional[str] = Form(None),
-        design_line_image_id: Optional[str] = Form(None),
-        # ... (생성과 동일하게 모든 수정 가능한 필드를 Form으로 정의) ...
-        pupil_transparency: Optional[str] = Form(None),
-        graphic_diameter: Optional[str] = Form(None),
-        optic_zone: Optional[str] = Form(None),
-
+        status: str = Form(...),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
@@ -117,21 +110,10 @@ def update_custom_design_details(
     if not db_design:
         raise HTTPException(status_code=404, detail="수정할 커스텀 디자인을 찾을 수 없습니다.")
 
-    # 이미지 파일 처리
-    main_image_url = db_design.main_image_url  # 기본값은 기존 URL
-    if main_image_file:
-        upload_result = storage_service.upload_file(main_image_file)
-        if not upload_result:
-            raise HTTPException(status_code=500, detail="이미지 업로드에 실패했습니다.")
-        main_image_url = upload_result["public_url"]
 
     # 업데이트할 데이터만 담은 딕셔너리 생성
     update_data = {
-        "request_message": request_message,
-        "main_image_url": main_image_url,
-        "design_line_image_id": design_line_image_id,
-        # ... (모든 필드 추가) ...
-        "optic_zone": optic_zone
+        "status": status
     }
     # None이 아닌 값들만 필터링하여 실제 업데이트할 데이터만 남김
     update_data_filtered = {k: v for k, v in update_data.items() if v is not None}
@@ -228,18 +210,3 @@ def read_single_custom_design(design_id: int, db: Session = Depends(get_db)):
     if db_design is None:
         raise HTTPException(status_code=404, detail="디자인을 찾을 수 없습니다.")
     return db_design
-
-
-@router.patch("/status/{design_id}", response_model=custom_design_schema.CustomDesignResponse)
-def update_status_of_design(
-    design_id: int,
-    status_update: custom_design_schema.CustomDesignStatusUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.AdminUser = Depends(get_current_user)
-):
-
-    updated_design = custom_design_CRUD.update_design_status(db, design_id, status_update)
-    if updated_design is None:
-        raise HTTPException(status_code=404, detail="디자인을 찾을 수 없습니다.")
-
-    return updated_design
