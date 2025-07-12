@@ -136,6 +136,7 @@ def get_design_detail_formatted(db: Session, design_id: int):
     response_data = {
         "id": db_design.id,
         "item_name": db_design.item_name,
+        "user_name": db_design.user_id,
         "status": db_design.status,
         "request_message": db_design.request_message,
         "main_image_url": db_design.main_image_url,

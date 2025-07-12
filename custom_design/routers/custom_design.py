@@ -174,7 +174,7 @@ def read_all_custom_designs(
 @router.get("/info/{design_id}", response_model=custom_design_schema.CustomDesignDetailResponse)
 def get_custom_design_detail(
         design_id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
 ):
     """ID로 커스텀 디자인의 상세 정보를 포맷에 맞게 조회합니다."""
 

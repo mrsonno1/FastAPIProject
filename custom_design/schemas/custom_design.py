@@ -44,6 +44,9 @@ class ColorComponentDetail(BaseModel):
 
 class CustomDesignDetailResponse(BaseModel):
     id: int
+
+    user_name: str
+
     item_name: str
     status: str
     request_message: Optional[str] = None
