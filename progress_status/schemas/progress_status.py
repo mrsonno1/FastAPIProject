@@ -1,7 +1,7 @@
 # progress_status/schemas/progress_status.py
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 
 
 # 진행 상태 기본 스키마
@@ -11,6 +11,11 @@ class ProgressStatusBase(BaseModel):
     portfolio_id: Optional[int] = None
     status: str = Field(..., description="진행 상태 (0: 대기, 1: 진행중, 2: 지연, 3: 배송완료)")
     notes: Optional[str] = None
+    client_name: Optional[str] = None
+    number: Optional[str] = None
+    address: Optional[str] = None
+    status_note: Optional[str] = None
+    expected_shipping_date: Optional[date] = None
 
 
 # 진행 상태 생성용 스키마
@@ -20,19 +25,16 @@ class ProgressStatusCreate(ProgressStatusBase):
 
 # 진행 상태 수정용 스키마
 class ProgressStatusUpdate(BaseModel):
-    client_name: str
-    number: str
-    address: str
-    status_note: str
-    expected_shipping_date: Optional[datetime] = None
     status: Optional[str] = None
     notes: Optional[str] = None
-
+    status_note: Optional[str] = None
+    expected_shipping_date: Optional[date] = None
 
 
 # API 응답을 위한 기본 스키마
 class ProgressStatusResponse(ProgressStatusBase):
     id: int
+    request_date: datetime
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -87,6 +89,38 @@ class ProgressStatusListItem(BaseModel):
         from_attributes = True
 
 
+# 상세 조회용 스키마
+class ProgressStatusDetailResponse(BaseModel):
+    id: int
+    user_name: str
+    type: int  # 0=custom_design, 1=portfolio
+    type_id: int
+    status: str
+    notes: Optional[str] = None
+    type_name: str
+    client_name: Optional[str] = None
+    number: Optional[str] = None
+    address: Optional[str] = None
+    status_note: Optional[str] = None
+    image_url: Optional[str] = None
+
+    # 디자인 컴포넌트 정보
+    design_line: Optional[ImageComponentDetail] = None
+    design_line_color: Optional[ColorComponentDetail] = None
+    design_base1: Optional[ImageComponentDetail] = None
+    design_base1_color: Optional[ColorComponentDetail] = None
+    design_base2: Optional[ImageComponentDetail] = None
+    design_base2_color: Optional[ColorComponentDetail] = None
+    design_pupil: Optional[ImageComponentDetail] = None
+    design_pupil_color: Optional[ColorComponentDetail] = None
+
+    request_date: datetime
+    expected_shipping_date: Optional[date] = None
+
+    class Config:
+        from_attributes = True
+
+
 # 페이지네이션 응답 스키마
 class PaginatedProgressStatusResponse(BaseModel):
     total_count: int
@@ -101,35 +135,6 @@ class ProgressStatusApiResponse(BaseModel):
     success: bool
     message: str
     data: Optional[ProgressStatusResponse] = None
-
-
-# 상세 정보 응답 스키마
-class ProgressStatusDetailResponse(BaseModel):
-    id: int
-    user_name: str
-    type: int  # 0=custom_design, 1=portfolio
-    type_id: int
-    status: str
-    notes: Optional[str] = None
-    type_name: str
-    client_name: Optional[str] = None
-    number: Optional[str] = None
-    address: Optional[str] = None
-    status_note: Optional[str] = None
-    image_url: Optional[str] = None
-    design_line: Optional[ImageComponentDetail] = None
-    design_line_color: Optional[ColorComponentDetail] = None
-    design_base1: Optional[ImageComponentDetail] = None
-    design_base1_color: Optional[ColorComponentDetail] = None
-    design_base2: Optional[ImageComponentDetail] = None
-    design_base2_color: Optional[ColorComponentDetail] = None
-    design_pupil: Optional[ImageComponentDetail] = None
-    design_pupil_color: Optional[ColorComponentDetail] = None
-    request_date: datetime
-    expected_shipping_date: datetime
-
-    class Config:
-        from_attributes = True
 
 
 # 상태 응답 스키마 (삭제 등에 사용)

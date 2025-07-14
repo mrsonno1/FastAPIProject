@@ -44,15 +44,49 @@ Authorization: {{superadmin_token}}
 ### 진행현황 목록
 POST {{host}}{{api_prefix}}//progress-status/
 Authorization: {{superadmin_token}}
-Content-Type: application/json
+# Content-Type 헤더에 boundary를 직접 정의합니다.
+Content-Type: multipart/form-data; boundary=WebAppBoundary
 
-{
-  "user_id": 3,
-  "custom_design_id": 3,
-  "portfolio_id": null,
-  "status": "0",
-  "notes": "새로운 진행 상태 테스트"
-}
+--WebAppBoundary
+Content-Disposition: form-data; name="user_id"
+
+3
+--WebAppBoundary
+Content-Disposition: form-data; name="custom_design_id"
+
+3
+--WebAppBoundary
+Content-Disposition: form-data; name="status"
+
+0
+--WebAppBoundary
+Content-Disposition: form-data; name="notes"
+
+신규 주문 접수 (form-data 테스트)
+--WebAppBoundary
+Content-Disposition: form-data; name="client_name"
+
+김철수
+--WebAppBoundary
+Content-Disposition: form-data; name="number"
+
+010-9876-5432
+--WebAppBoundary
+Content-Disposition: form-data; name="address"
+
+부산광역시 해운대구 마린시티 456
+--WebAppBoundary
+Content-Disposition: form-data; name="status_note"
+
+주문 확인 중
+--WebAppBoundary
+# portfolio_id나 expected_shipping_date가 필요하면 아래 주석을 해제하세요.
+# Content-Disposition: form-data; name="portfolio_id"
+#
+# 1
+# --WebAppBoundary
+# 마지막 boundary는 두 개의 대시(-)로 끝나야 합니다.
+--WebAppBoundary--
 
 ### 진행현황 초기화
 POST {{host}}{{api_prefix}}//progress-status/sync-existing-data

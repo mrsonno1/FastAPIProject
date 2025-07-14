@@ -169,7 +169,6 @@ class DailyView(Base):
     )
 
 
-# ------------------------------------
 class Progressstatus(Base):
     __tablename__ = "progressstatus"
 
@@ -179,9 +178,14 @@ class Progressstatus(Base):
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=True)
     status = Column(String(1), nullable=False, default='0')  # 0: 대기, 1: 진행중, 2: 지연, 3: 배송완료
     notes = Column(Text, nullable=True)
-    client_name = Column(String(100), nullable=True)
-    number = Column(String(100), nullable=True)
-    address = Column(String(100), nullable=True)
-    status_note = Column(String(100), nullable=True)
-    request_date = Column(DateTime(timezone=True), server_default=func.now())
-    expected_shipping_date = Column(DateTime(timezone=True), server_default=func.now()+10)
+
+    # 새로 추가되는 필드들
+    client_name = Column(String(100), nullable=True)  # 받는사람
+    number = Column(String(50), nullable=True)  # 연락처
+    address = Column(Text, nullable=True)  # 주소
+    status_note = Column(Text, nullable=True)  # 진행현황 노트
+    request_date = Column(DateTime(timezone=True), server_default=func.now())  # 요청일
+    expected_shipping_date = Column(Date, nullable=True)  # 예상 배송일
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

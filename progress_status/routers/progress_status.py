@@ -1,16 +1,13 @@
-# progress_status/routers/progress_status.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
 from sqlalchemy.orm import Session
 from typing import Optional
 import math
-from datetime import datetime, timedelta
-
+from datetime import date
 from db.database import get_db
 from progress_status.schemas import progress_status as progress_status_schema
 from progress_status.crud import progress_status as progress_status_crud
 from db import models
 from core.security import get_current_user
-from portfolio.schemas import portfolio as portfolio_schema
 
 router = APIRouter(prefix="/progress-status", tags=["Progress Status"])
 
@@ -18,22 +15,21 @@ router = APIRouter(prefix="/progress-status", tags=["Progress Status"])
 @router.post("/", response_model=progress_status_schema.ProgressStatusApiResponse,
              status_code=status.HTTP_201_CREATED)
 def create_new_progress_status(
-        progress_status: progress_status_schema.ProgressStatusCreate,
+        # JSON Body 대신 Form 데이터로 각 필드를 받습니다.
+        user_id: int = Form(...),
+        custom_design_id: int = Form(...,description="없을시 0"),
+        status: str = Form(..., description="진행 상태 (0: 대기, 1: 진행중, 2: 지연, 3: 배송완료)"),
+        portfolio_id: int = Form(...,description="없을시 0"),
+        notes: Optional[str] = Form(None),
+        client_name: Optional[str] = Form(None),
+        number: Optional[str] = Form(None),
+        address: Optional[str] = Form(None),
+        status_note: Optional[str] = Form(None),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
-    새로운 진행 상태를 생성합니다.
-
-    - **user_id**: 사용자 ID
-    - **custom_design_id**: 커스텀 디자인 ID (필수)
-    - **portfolio_id**: 포트폴리오 ID (선택)
-    - **status**: 진행 상태 (0: 대기, 1: 진행중, 2: 지연, 3: 배송완료)
-    - **notes**: 메모 (선택)
-    - **client_name**: 고객 이름 (필수)
-    - **number**: 연락처 (필수)
-    - **address**: 주소 (필수)
-    - **status_note**: 상태 메모 (필수)
+    expected_shipping_date: 예상 배송일 (YYYY-MM-DD 형식, 선택)
     """
     # 권한 검사 (필요시 추가)
     if current_user.permission not in ['admin', 'superadmin']:
@@ -42,9 +38,26 @@ def create_new_progress_status(
             detail="진행 상태를 생성할 권한이 없습니다."
         )
 
+    # Form 데이터로 받은 값들을 Pydantic 모델로 변환하여 유효성 검사 및 구조화
+    try:
+        progress_status_data = progress_status_schema.ProgressStatusCreate(
+            user_id=user_id,
+            custom_design_id=custom_design_id,
+            portfolio_id=portfolio_id,
+            status=status,
+            notes=notes,
+            client_name=client_name,
+            number=number,
+            address=address,
+            status_note=status_note,
+
+        )
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
+
     # 커스텀 디자인이 존재하는지 확인
     custom_design = db.query(models.CustomDesign).filter(
-        models.CustomDesign.id == progress_status.custom_design_id
+        models.CustomDesign.id == progress_status_data.custom_design_id
     ).first()
     if not custom_design:
         raise HTTPException(
@@ -53,9 +66,9 @@ def create_new_progress_status(
         )
 
     # 포트폴리오 ID가 제공된 경우 존재하는지 확인
-    if progress_status.portfolio_id:
+    if progress_status_data.portfolio_id:
         portfolio = db.query(models.Portfolio).filter(
-            models.Portfolio.id == progress_status.portfolio_id
+            models.Portfolio.id == progress_status_data.portfolio_id
         ).first()
         if not portfolio:
             raise HTTPException(
@@ -65,7 +78,7 @@ def create_new_progress_status(
 
     created_progress_status = progress_status_crud.create_progress_status(
         db=db,
-        progress_status=progress_status
+        progress_status=progress_status_data
     )
 
     response_data = progress_status_schema.ProgressStatusResponse.model_validate(
@@ -77,7 +90,6 @@ def create_new_progress_status(
         message="진행 상태가 성공적으로 생성되었습니다.",
         data=response_data
     )
-
 
 @router.get("/list", response_model=progress_status_schema.PaginatedProgressStatusResponse)
 def list_all_progress_status(
@@ -147,36 +159,13 @@ def list_all_progress_status(
     }
 
 
-@router.get("/info/{progress_status_id}", response_model=progress_status_schema.ProgressStatusDetailResponse)
-def get_progress_status_detail(
-        progress_status_id: int,
-        db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user)
-):
-    """ID로 특정 진행 상태의 상세 정보를 조회합니다."""
-    if current_user.permission not in ['admin', 'superadmin']:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="진행 상태 상세 정보를 조회할 권한이 없습니다."
-        )
-
-    detail_data = progress_status_crud.get_progress_status_detail(db, progress_status_id)
-    if not detail_data:
-        raise HTTPException(
-            status_code=404,
-            detail="해당 ID의 진행 상태를 찾을 수 없습니다."
-        )
-
-    return detail_data
-
-
 @router.get("/{progress_status_id}", response_model=progress_status_schema.ProgressStatusResponse)
 def get_single_progress_status(
         progress_status_id: int,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """ID로 특정 진행 상태의 기본 정보를 조회합니다."""
+    """ID로 특정 진행 상태의 상세 정보를 조회합니다."""
     db_progress_status = progress_status_crud.get_progress_status_by_id(
         db, progress_status_id
     )
@@ -189,6 +178,64 @@ def get_single_progress_status(
     return db_progress_status
 
 
+
+
+@router.post("/sync-existing-data", response_model=progress_status_schema.StatusResponse)
+def sync_existing_progress_data(
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """
+    기존 데이터를 기반으로 progress_status를 일괄 생성합니다.
+    (임시 API - 한 번만 실행)
+
+    - status가 '3'인 모든 custom_design에 대해 progress_status 생성
+    - 모든 portfolio에 대해 progress_status 생성 또는 portfolio_id 업데이트
+    """
+    # superadmin 권한만 실행 가능
+    if current_user.permission != 'superadmin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="이 작업은 superadmin 권한이 필요합니다."
+        )
+
+    try:
+        created_count = progress_status_crud.sync_existing_data(db)
+        return progress_status_schema.StatusResponse(
+            status="success",
+            message=f"기존 데이터 동기화 완료. {created_count}개의 progress_status가 생성되었습니다."
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"동기화 중 오류 발생: {str(e)}"
+        )
+
+@router.get("/info/{progress_status_id}", response_model=progress_status_schema.ProgressStatusDetailResponse)
+def get_progress_status_detail(
+        progress_status_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """
+    ID로 특정 진행 상태의 상세 정보를 조회합니다.
+
+    응답에는 다음 정보가 포함됩니다:
+    - 기본 정보: id, user_name, type, type_id, status, notes
+    - 추가 정보: client_name, number, address, status_note
+    - 디자인 정보: design_line, design_base1/2, design_pupil 및 각 색상 정보
+    - 날짜 정보: request_date, expected_shipping_date (request_date + 10일)
+    """
+    detail_data = progress_status_crud.get_progress_status_detail(db, progress_status_id)
+
+    if not detail_data:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 ID의 진행 상태를 찾을 수 없습니다."
+        )
+
+    return detail_data
+
 @router.patch("/{progress_status_id}", response_model=progress_status_schema.ProgressStatusApiResponse)
 def update_progress_status_details(
         progress_status_id: int,
@@ -196,12 +243,17 @@ def update_progress_status_details(
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """ID로 특정 진행 상태의 정보를 업데이트합니다.
+    """
+    ID로 특정 진행 상태의 정보를 업데이트합니다.
 
     수정 가능한 필드:
     - expected_shipping_date: 예상 배송일
-    - status: 진행 상태 (0=대기, 1=진행중, 2=지연, 3=배송완료)
-    - status_note: 진행 상태 노트
+    - status: 진행 상태 (0~3)
+    - status_note: 진행현황 노트
+    - notes: 일반 메모
+    - client_name: 고객 이름
+    - number: 연락처
+    - address: 주소
     """
     # 권한 검사
     if current_user.permission not in ['admin', 'superadmin']:
@@ -242,9 +294,9 @@ def update_progress_status_details(
         data=response_data
     )
 
-
-@router.delete("/{progress_status_id}", response_model=portfolio_schema.StatusResponse)
-def delete_progress_status(
+@router.delete("/{progress_status_id}", response_model=progress_status_schema.StatusResponse,
+               status_code=status.HTTP_200_OK)
+def delete_single_progress_status(
         progress_status_id: int,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
@@ -257,46 +309,17 @@ def delete_progress_status(
             detail="진행 상태를 삭제할 권한이 없습니다."
         )
 
-    was_deleted = progress_status_crud.delete_progress_status(db, progress_status_id)
+    was_deleted = progress_status_crud.delete_progress_status_by_id(
+        db, progress_status_id
+    )
     if not was_deleted:
         raise HTTPException(
             status_code=404,
-            detail="삭제할 진행 상태를 찾을 수 없습니다."
+            detail="해당 ID의 진행 상태를 찾을 수 없습니다."
         )
 
-    return portfolio_schema.StatusResponse(
-        status="success", 
+    return progress_status_schema.StatusResponse(
+        status="success",
         message="진행 상태가 성공적으로 삭제되었습니다."
-    )
+    )  # progress_status/routers/progress_status.py
 
-
-@router.post("/sync-existing-data", response_model=progress_status_schema.StatusResponse)
-def sync_existing_progress_data(
-        db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user)
-):
-    """
-    기존 데이터를 기반으로 progress_status를 일괄 생성합니다.
-    (임시 API - 한 번만 실행)
-
-    - status가 '3'인 모든 custom_design에 대해 progress_status 생성
-    - 모든 portfolio에 대해 progress_status 생성 또는 portfolio_id 업데이트
-    """
-    # superadmin 권한만 실행 가능
-    if current_user.permission != 'superadmin':
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="이 작업은 superadmin 권한이 필요합니다."
-        )
-
-    try:
-        created_count = progress_status_crud.sync_existing_data(db)
-        return progress_status_schema.StatusResponse(
-            status="success",
-            message=f"기존 데이터 동기화 완료. {created_count}개의 progress_status가 생성되었습니다."
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"동기화 중 오류 발생: {str(e)}"
-        )
