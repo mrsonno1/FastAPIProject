@@ -5,7 +5,7 @@ from datetime import timedelta
 from progress_status.schemas import progress_status as progress_status_schema
 from typing import Optional
 from fastapi import HTTPException
-
+from sqlalchemy import or_
 
 def create_progress_status(
         db: Session,
@@ -190,15 +190,28 @@ def delete_progress_status_by_id(db: Session, progress_status_id: int) -> bool:
 
 def process_component_details(db, result, design_obj):
     """디자인 객체(Portfolio 또는 CustomDesign)에서 컴포넌트 세부 정보를 추출하여 결과에 추가합니다."""
+
+    # 커스텀 디자인인지 확인
+    is_custom_design = isinstance(design_obj, models.CustomDesign)
+
     # 디자인 라인 정보
     if hasattr(design_obj, 'design_line_image_id') and design_obj.design_line_image_id:
         design_line = db.query(models.Image).filter(models.Image.id == design_obj.design_line_image_id).first()
         if design_line:
-            result['design_line'] = {
+            line_data = {
                 'id': design_line.id,
                 'display_name': design_line.display_name,
-                'public_url': design_line.public_url
+                'public_url': design_line.public_url,
             }
+
+            # 커스텀 디자인이면 투명도 정보 추가
+            if is_custom_design and hasattr(design_obj, 'line_transparency') and design_obj.line_transparency:
+                try:
+                    line_data['opacity'] = int(design_obj.line_transparency)
+                except (ValueError, TypeError):
+                    pass
+
+            result['design_line'] = line_data
     else:
         result['design_line'] = None
 
@@ -218,11 +231,20 @@ def process_component_details(db, result, design_obj):
     if hasattr(design_obj, 'design_base1_image_id') and design_obj.design_base1_image_id:
         design_base1 = db.query(models.Image).filter(models.Image.id == design_obj.design_base1_image_id).first()
         if design_base1:
-            result['design_base1'] = {
+            base1_data = {
                 'id': design_base1.id,
                 'display_name': design_base1.display_name,
                 'public_url': design_base1.public_url
             }
+
+            # 커스텀 디자인이면 투명도 정보 추가
+            if is_custom_design and hasattr(design_obj, 'base1_transparency') and design_obj.base1_transparency:
+                try:
+                    base1_data['opacity'] = int(design_obj.base1_transparency)
+                except (ValueError, TypeError):
+                    pass
+
+            result['design_base1'] = base1_data
     else:
         result['design_base1'] = None
 
@@ -242,11 +264,20 @@ def process_component_details(db, result, design_obj):
     if hasattr(design_obj, 'design_base2_image_id') and design_obj.design_base2_image_id:
         design_base2 = db.query(models.Image).filter(models.Image.id == design_obj.design_base2_image_id).first()
         if design_base2:
-            result['design_base2'] = {
+            base2_data = {
                 'id': design_base2.id,
                 'display_name': design_base2.display_name,
                 'public_url': design_base2.public_url
             }
+
+            # 커스텀 디자인이면 투명도 정보 추가
+            if is_custom_design and hasattr(design_obj, 'base2_transparency') and design_obj.base2_transparency:
+                try:
+                    base2_data['opacity'] = int(design_obj.base2_transparency)
+                except (ValueError, TypeError):
+                    pass
+
+            result['design_base2'] = base2_data
     else:
         result['design_base2'] = None
 
@@ -266,11 +297,20 @@ def process_component_details(db, result, design_obj):
     if hasattr(design_obj, 'design_pupil_image_id') and design_obj.design_pupil_image_id:
         design_pupil = db.query(models.Image).filter(models.Image.id == design_obj.design_pupil_image_id).first()
         if design_pupil:
-            result['design_pupil'] = {
+            pupil_data = {
                 'id': design_pupil.id,
                 'display_name': design_pupil.display_name,
-                'public_url': design_pupil.public_url
+                'public_url': design_pupil.public_url,
             }
+
+            # 커스텀 디자인이면 투명도 정보 추가
+            if is_custom_design and hasattr(design_obj, 'pupil_transparency') and design_obj.pupil_transparency:
+                try:
+                    pupil_data['opacity'] = int(design_obj.pupil_transparency)
+                except (ValueError, TypeError):
+                    pass
+
+            result['design_pupil'] = pupil_data
     else:
         result['design_pupil'] = None
 
@@ -387,10 +427,33 @@ def get_progress_status_paginated(
             (models.AdminUser.contact_name.ilike(f"%{user_name}%"))
         )
 
+        # 2. 디자인/포트폴리오 이름으로 필터링
     if custom_design_name:
-        query = query.filter(
-            models.CustomDesign.item_name.ilike(f"%{custom_design_name}%")
-        )
+        # type이 지정되지 않았으면 양쪽 모두에서 검색
+        if type is None:
+            query = query.filter(
+                or_(
+                    models.CustomDesign.item_name.ilike(f"%{custom_design_name}%"),
+                    models.Portfolio.design_name.ilike(f"%{custom_design_name}%")
+                )
+            )
+        # type이 0 (커스텀 디자인)이면 커스텀 디자인 이름만 검색
+        elif type == 0:
+            query = query.filter(
+                models.CustomDesign.item_name.ilike(f"%{custom_design_name}%")
+            )
+        # type이 1 (포트폴리오)이면 포트폴리오 이름만 검색
+        elif type == 1:
+            query = query.filter(
+                models.Portfolio.design_name.ilike(f"%{custom_design_name}%")
+            )
+
+        # 3. 타입으로만 필터링 (custom_design_name이 없을 때만 동작)
+    if type is not None and not custom_design_name:
+        if type == 0:  # 커스텀 디자인
+            query = query.filter(models.Progressstatus.portfolio_id.is_(None))
+        elif type == 1:  # 포트폴리오
+            query = query.filter(models.Progressstatus.portfolio_id.isnot(None))
 
     if type is not None:
         if type == 0:  # 커스텀 디자인
@@ -463,6 +526,22 @@ def get_progress_status_paginated(
             }
         return None
 
+
+
+
+    def get_custom_design_image_details(image_id, opacity: Optional[str]):
+        if not image_id:
+            return None
+        img = images_map.get(str(image_id))
+        if img:
+            return {
+                "id": img.id,
+                "display_name": img.display_name,
+                "public_url": img.public_url,
+                "opacity": opacity
+            }
+        return None
+
     def get_color_details(color_id):
         if not color_id:
             return None
@@ -507,16 +586,16 @@ def get_progress_status_paginated(
                 "type": 0,  # custom_design
                 "type_id": custom_design.id,
                 "type_name": custom_design.item_name,
-                "design_line": get_image_details(custom_design.design_line_image_id),
+                "design_line": get_custom_design_image_details(custom_design.design_line_image_id, custom_design.line_transparency),
                 "design_line_color": get_color_details(custom_design.design_line_color_id),
-                "design_base1": get_image_details(custom_design.design_base1_image_id),
+                "design_base1": get_custom_design_image_details(custom_design.design_base1_image_id, custom_design.base1_transparency),
                 "design_base1_color": get_color_details(custom_design.design_base1_color_id),
-                "design_base2": get_image_details(custom_design.design_base2_image_id),
+                "design_base2": get_custom_design_image_details(custom_design.design_base2_image_id, custom_design.base2_transparency),
                 "design_base2_color": get_color_details(custom_design.design_base2_color_id),
-                "design_pupil": get_image_details(custom_design.design_pupil_image_id),
+                "design_pupil": get_custom_design_image_details(custom_design.design_pupil_image_id, custom_design.pupil_transparency),
                 "design_pupil_color": get_color_details(custom_design.design_pupil_color_id),
-                "graphic_diameter": portfolio.graphic_diameter,
-                "optic_zone": portfolio.optic_zone,
+                "graphic_diameter": custom_design.graphic_diameter,
+                "optic_zone": custom_design.optic_zone,
                 "expected_shipping_date": progress_status.expected_shipping_date,
             }
 

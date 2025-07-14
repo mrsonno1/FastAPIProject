@@ -47,6 +47,7 @@ class ImageComponentDetail(BaseModel):
     id: Optional[int] = None
     display_name: Optional[str] = None
     public_url: Optional[str] = None
+    opacity: Optional[int] = None
 
     class Config:
         from_attributes = True

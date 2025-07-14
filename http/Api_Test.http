@@ -5,7 +5,7 @@ GET {{host}}{{api_prefix}}/v1/rank/
 
 
 ### 커스텀 디자인 목록
-GET {{host}}{{api_prefix}}/custom-designs/list?page=1&size=10
+GET {{host}}{{api_prefix}}/custom-designs/list?page=1&size=10&item_name=345
 ###
 GET {{host}}{{api_prefix}}/custom-designs/1
 ###
@@ -56,7 +56,7 @@ Content-Disposition: form-data; name="user_id"
 --WebAppBoundary
 Content-Disposition: form-data; name="custom_design_id"
 
-0
+3
 --WebAppBoundary
 Content-Disposition: form-data; name="status"
 
@@ -64,7 +64,7 @@ Content-Disposition: form-data; name="status"
 --WebAppBoundary
 Content-Disposition: form-data; name="portfolio_id"
 
-18
+0
 --WebAppBoundary
 Content-Disposition: form-data; name="notes"
 
@@ -99,7 +99,7 @@ POST {{host}}{{api_prefix}}//progress-status/sync-existing-data
 Authorization: {{superadmin_token}}
 
 ###
-GET {{host}}{{api_prefix}}//progress-status/list
+GET {{host}}{{api_prefix}}//progress-status/list?custom_design_name=SI
 Authorization: {{superadmin_token}}
 
 ###
@@ -116,7 +116,7 @@ GET {{host}}{{api_prefix}}//progress-status/2
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 상세 정보 조회
-GET {{host}}{{api_prefix}}//progress-status/info/3
+GET {{host}}{{api_prefix}}//progress-status/info/4
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 업데이트
