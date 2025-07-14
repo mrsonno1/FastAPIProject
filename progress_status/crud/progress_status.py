@@ -306,6 +306,7 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
     result['address'] = progress_status.address
     result['status_note'] = progress_status.status_note
 
+
     # 사용자 정보 조회
     user = db.query(models.AdminUser).filter(models.AdminUser.id == progress_status.user_id).first()
     if user:
@@ -332,7 +333,8 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
         if portfolio:
             result['type_name'] = portfolio.design_name
             result['image_url'] = portfolio.main_image_url
-
+            result['graphic_diameter'] = portfolio.graphic_diameter
+            result['optic_zone'] = portfolio.optic_zone
             # 디자인 정보 구성
             process_component_details(db, result, portfolio)
 
@@ -345,7 +347,8 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
         if custom_design:
             result['type_name'] = custom_design.item_name
             result['image_url'] = custom_design.main_image_url
-
+            result['graphic_diameter'] = custom_design.graphic_diameter
+            result['optic_zone'] = custom_design.optic_zone
             # 디자인 정보 구성
             process_component_details(db, result, custom_design)
 
@@ -491,6 +494,9 @@ def get_progress_status_paginated(
                 "design_base2_color": get_color_details(portfolio.design_base2_color_id),
                 "design_pupil": get_image_details(portfolio.design_pupil_image_id),
                 "design_pupil_color": get_color_details(portfolio.design_pupil_color_id),
+                "graphic_diameter": portfolio.graphic_diameter,
+                "optic_zone": portfolio.optic_zone,
+                "expected_shipping_date": progress_status.expected_shipping_date,
             }
         else:
             item = {
@@ -508,6 +514,9 @@ def get_progress_status_paginated(
                 "design_base2_color": get_color_details(custom_design.design_base2_color_id),
                 "design_pupil": get_image_details(custom_design.design_pupil_image_id),
                 "design_pupil_color": get_color_details(custom_design.design_pupil_color_id),
+                "graphic_diameter": portfolio.graphic_diameter,
+                "optic_zone": portfolio.optic_zone,
+                "expected_shipping_date": progress_status.expected_shipping_date,
             }
 
         # 공통 필드 추가

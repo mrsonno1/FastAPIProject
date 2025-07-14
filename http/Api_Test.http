@@ -25,7 +25,8 @@ Content-Disposition: form-data; name="status"
 
 
 ### 출시제품 목록
-GET {{host}}{{api_prefix}}/released-product/info/2
+GET {{host}}{{api_prefix}}/released-product/info/12
+
 ###
 GET {{host}}{{api_prefix}}/released-product/list
 
