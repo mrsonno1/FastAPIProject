@@ -144,6 +144,13 @@ def get_released_products_paginated(
             return ",".join(colors_map[str(col_id)].color_values.split(',')[:3])
         return ""
 
+
+    def get_color_details(color_id: Optional[str]):
+        if not color_id:
+            return None
+        return db.query(models.Color).filter(models.Color.id == color_id).first()
+
+
     for product, brand in results:
         formatted_items.append({
             "id": product.id,
@@ -153,18 +160,10 @@ def get_released_products_paginated(
             "design_name": product.design_name,
             "color_name": product.color_name,
             "image": product.main_image_url,  # 이 라인을 추가합니다.
-            "dkColor": [
-                get_color_name(product.color_line_color_id) if get_color_name(product.color_line_color_id) else "",
-                get_color_name(product.color_base1_color_id) if get_color_name(product.color_base1_color_id) else "",
-                get_color_name(product.color_base2_color_id) if get_color_name(product.color_base2_color_id) else "",
-                get_color_name(product.color_pupil_color_id) if get_color_name(product.color_pupil_color_id) else "",
-            ],
-            "dkrgb": [
-                get_rgb(product.color_line_color_id),
-                get_rgb(product.color_base1_color_id),
-                get_rgb(product.color_base2_color_id),
-                get_rgb(product.color_pupil_color_id),
-            ],
+            "color_line_color": get_color_details(product.color_line_color_id),
+            "color_base1_color": get_color_details(product.color_base1_color_id),
+            "color_base2_color": get_color_details(product.color_base2_color_id),
+            "color_pupil_color": get_color_details(product.color_pupil_color_id),
             "graphic_diameter": product.graphic_diameter,
             "optic": product.optic_zone,
             "base_curve": product.base_curve,

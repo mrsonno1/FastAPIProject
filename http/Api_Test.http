@@ -34,6 +34,10 @@ GET {{host}}{{api_prefix}}/portfolio/info/2
 ###
 GET {{host}}{{api_prefix}}/portfolio/list
 
+### 포트폴리오 축고정 상태 토글 (Y→N, N→Y)
+PATCH {{host}}{{api_prefix}}/portfolio/axis/2
+Authorization: {{superadmin_token}}
+
 
 ### 진행현황 목록
 POST {{host}}{{api_prefix}}//progress-status/

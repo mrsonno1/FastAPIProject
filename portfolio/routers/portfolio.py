@@ -183,6 +183,36 @@ def read_single_portfolio(
         raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
     return db_portfolio
 
+@router.patch("/axis/{portfolio_id}", response_model=portfolio_schema.PortfolioApiResponse)
+def toggle_fixed_axis(
+    portfolio_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
+):
+    """포트폴리오의 is_fixed_axis 값을 토글합니다 (Y→N, N→Y)."""
+
+    # 1. 포트폴리오 조회
+    db_portfolio = db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).first()
+    if not db_portfolio:
+        raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
+
+    # 2. is_fixed_axis 값 토글 (Y→N, N→Y)
+    current_value = db_portfolio.is_fixed_axis
+    new_value = "N" if current_value == "Y" else "Y"
+
+    # 3. 값 업데이트
+    db_portfolio.is_fixed_axis = new_value
+    db.commit()
+    db.refresh(db_portfolio)
+
+    # 4. 응답 생성
+    response_data = portfolio_schema.PortfolioResponse.model_validate(db_portfolio)
+
+    return portfolio_schema.PortfolioApiResponse(
+        success=True,
+        message=f"포트폴리오 축고정 상태가 '{current_value}'에서 '{new_value}'로 변경되었습니다.",
+        data=response_data
+    )
 
 
 
