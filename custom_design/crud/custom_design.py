@@ -217,7 +217,7 @@ def get_designs_paginated(
 
     # 페이지네이션 적용
     offset = (page - 1) * size
-    results = query.offset(offset).limit(size).all()
+    results = query.order_by(models.CustomDesign.created_at.desc()).offset(offset).limit(size).all()
 
     # --- [수정 3] 결과를 새로운 형식에 맞게 가공 ---
     formatted_items = []

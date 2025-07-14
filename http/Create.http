@@ -280,7 +280,7 @@ Content-Type: image/jpeg
 
 
 ###  디자인 패치
-PATCH {{host}}{{api_prefix}}/custom-designs/info/15
+PATCH {{host}}{{api_prefix}}/custom-designs/status/3
 Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 

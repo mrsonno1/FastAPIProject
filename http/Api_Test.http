@@ -7,12 +7,14 @@ GET {{host}}{{api_prefix}}/v1/rank/
 ### 커스텀 디자인 목록
 GET {{host}}{{api_prefix}}/custom-designs/list?page=1&size=10&item_name=345
 ###
+GET {{host}}{{api_prefix}}/custom-designs/list
+###
 GET {{host}}{{api_prefix}}/custom-designs/1
 ###
 GET {{host}}{{api_prefix}}/custom-designs/info/1
 
 ###
-PATCH {{host}}{{api_prefix}}/custom-designs/status/2
+PATCH {{host}}{{api_prefix}}/custom-designs/status/1
 Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
@@ -99,7 +101,7 @@ POST {{host}}{{api_prefix}}//progress-status/sync-existing-data
 Authorization: {{superadmin_token}}
 
 ###
-GET {{host}}{{api_prefix}}//progress-status/list?custom_design_name=SI
+GET {{host}}{{api_prefix}}//progress-status/list?custom_design_name=de
 Authorization: {{superadmin_token}}
 
 ###
