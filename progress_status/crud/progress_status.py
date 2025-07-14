@@ -16,7 +16,11 @@ def create_progress_status(
         custom_design_id=progress_status.custom_design_id,
         portfolio_id=progress_status.portfolio_id,
         status=progress_status.status,
-        notes=progress_status.notes
+        notes=progress_status.notes,
+        client_name=progress_status.client_name,
+        number=progress_status.number,
+        address=progress_status.address,
+        status_note=progress_status.status_note
     )
     db.add(db_progress_status)
     db.commit()
@@ -36,13 +40,20 @@ def check_and_create_progress_status_for_custom_design(
     ).first()
 
     if not existing:
+        # 사용자 정보 가져오기
+        user = db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+
         # progress_status 생성
         progress_status_data = progress_status_schema.ProgressStatusCreate(
             user_id=user_id,
             custom_design_id=custom_design_id,
             portfolio_id=None,
             status="0",  # 대기 상태로 시작
-            notes="커스텀 디자인 완료로 인한 자동 생성"
+            notes="커스텀 디자인 완료로 인한 자동 생성",
+            client_name=user.contact_name if user else "",
+            number=user.contact_number if user else "",
+            address=user.address if user else "",
+            status_note="자동 생성된 진행 상태입니다."
         )
         return create_progress_status(db, progress_status_data)
     return existing
@@ -55,13 +66,20 @@ def create_progress_status_for_portfolio(
         user_id: int
 ):
     """포트폴리오 생성 시 progress_status를 생성합니다. (업데이트 하지 않음)"""
+    # 사용자 정보 가져오기
+    user = db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+
     # 새로운 progress_status 생성
     progress_status_data = progress_status_schema.ProgressStatusCreate(
         user_id=user_id,
         custom_design_id=custom_design_id,
         portfolio_id=portfolio_id,
         status="0",  # 대기 상태로 시작
-        notes="포트폴리오 생성으로 인한 자동 생성"
+        notes="포트폴리오 생성으로 인한 자동 생성",
+        client_name=user.contact_name if user else "",
+        number=user.contact_number if user else "",
+        address=user.address if user else "",
+        status_note="포트폴리오 관련 진행 상태입니다."
     )
     return create_progress_status(db, progress_status_data)
 
@@ -94,7 +112,11 @@ def sync_existing_data(db: Session):
                     custom_design_id=design.id,
                     portfolio_id=None,
                     status="0",
-                    notes="기존 데이터 동기화 - custom_design"
+                    notes="기존 데이터 동기화 - custom_design",
+                    client_name=user.contact_name if user else "",
+                    number=user.contact_number if user else "",
+                    address=user.address if user else "",
+                    status_note="데이터 동기화를 통해 생성된 진행 상태입니다."
                 )
                 create_progress_status(db, progress_status_data)
                 created_count += 1
@@ -130,7 +152,11 @@ def sync_existing_data(db: Session):
                         custom_design_id=latest_design.id,
                         portfolio_id=portfolio.id,
                         status="0",
-                        notes="기존 데이터 동기화 - portfolio"
+                        notes="기존 데이터 동기화 - portfolio",
+                        client_name=user.contact_name if user else "",
+                        number=user.contact_number if user else "",
+                        address=user.address if user else "",
+                        status_note="포트폴리오 데이터 동기화를 통해 생성된 진행 상태입니다."
                     )
                     create_progress_status(db, progress_status_data)
                     created_count += 1
@@ -152,11 +178,27 @@ def update_progress_status(
 ):
     """진행 상태 정보를 업데이트합니다."""
     update_data = progress_status_update.model_dump(exclude_unset=True)
+
+    table_columns = db_progress_status.__table__.columns.keys()
+
     for key, value in update_data.items():
-        setattr(db_progress_status, key, value)
+        if key in table_columns:
+            setattr(db_progress_status, key, value)
+
     db.commit()
     db.refresh(db_progress_status)
     return db_progress_status
+
+
+def delete_progress_status(db: Session, progress_status_id: int) -> bool:
+    """ID로 진행 상태 삭제"""
+    db_progress_status = get_progress_status_by_id(db, progress_status_id)
+    if not db_progress_status:
+        return False
+
+    db.delete(db_progress_status)
+    db.commit()
+    return True
 
 
 def delete_progress_status_by_id(db: Session, progress_status_id: int) -> bool:
@@ -170,6 +212,168 @@ def delete_progress_status_by_id(db: Session, progress_status_id: int) -> bool:
     db.delete(db_progress_status)
     db.commit()
     return True
+
+
+def get_progress_status_detail(db: Session, progress_status_id: int):
+    """ID로 단일 진행 상태의 상세 정보를 조회합니다."""
+    progress_status = get_progress_status_by_id(db, progress_status_id)
+    if not progress_status:
+        return None
+
+    # 상세 정보 구성
+    result = {}
+    result['id'] = progress_status.id
+    result['status'] = progress_status.status
+    result['notes'] = progress_status.notes
+    result['request_date'] = progress_status.created_at
+
+    # progress_status 테이블에서 직접 가져오는 필드들
+    result['client_name'] = progress_status.client_name
+    result['number'] = progress_status.number
+    result['address'] = progress_status.address
+    result['status_note'] = progress_status.status_note
+
+    # 사용자 정보 조회
+    user = db.query(models.AdminUser).filter(models.AdminUser.id == progress_status.user_id).first()
+    if user:
+        result['user_name'] = user.username
+    else:
+        result['user_name'] = "Unknown"
+
+    # 예상 배송일
+    if hasattr(progress_status, 'expected_shipping_date') and progress_status.expected_shipping_date:
+        result['expected_shipping_date'] = progress_status.expected_shipping_date
+    else:
+        from datetime import timedelta
+        result['expected_shipping_date'] = progress_status.created_at + timedelta(days=10)
+
+    # 타입 및 관련 데이터 처리
+    if progress_status.portfolio_id:
+        # 포트폴리오 타입(1)
+        result['type'] = 1
+        result['type_id'] = progress_status.portfolio_id
+
+        portfolio = db.query(models.Portfolio).filter(models.Portfolio.id == progress_status.portfolio_id).first()
+        if portfolio:
+            result['type_name'] = portfolio.design_name
+            result['image_url'] = portfolio.main_image_url
+
+            # 디자인 정보 구성
+            process_component_details(db, result, portfolio)
+
+    elif progress_status.custom_design_id:
+        # 커스텀 디자인 타입(0)
+        result['type'] = 0
+        result['type_id'] = progress_status.custom_design_id
+
+        custom_design = db.query(models.CustomDesign).filter(models.CustomDesign.id == progress_status.custom_design_id).first()
+        if custom_design:
+            result['type_name'] = custom_design.item_name
+            result['image_url'] = custom_design.main_image_url
+
+            # 디자인 정보 구성
+            process_component_details(db, result, custom_design)
+
+    return result
+
+
+def process_component_details(db, result, design_obj):
+    """디자인 객체(Portfolio 또는 CustomDesign)에서 컴포넌트 세부 정보를 추출하여 결과에 추가합니다."""
+    # 디자인 라인 정보
+    if hasattr(design_obj, 'design_line_image_id') and design_obj.design_line_image_id:
+        design_line = db.query(models.Image).filter(models.Image.id == design_obj.design_line_image_id).first()
+        if design_line:
+            result['design_line'] = {
+                'id': design_line.id,
+                'display_name': design_line.display_name,
+                'public_url': design_line.public_url
+            }
+    else:
+        result['design_line'] = None
+
+    # 디자인 라인 컬러 정보
+    if hasattr(design_obj, 'design_line_color_id') and design_obj.design_line_color_id:
+        design_line_color = db.query(models.Color).filter(models.Color.id == design_obj.design_line_color_id).first()
+        if design_line_color:
+            result['design_line_color'] = {
+                'id': design_line_color.id,
+                'color_name': design_line_color.color_name,
+                'color_values': design_line_color.color_values
+            }
+    else:
+        result['design_line_color'] = None
+
+    # 디자인 base1 정보
+    if hasattr(design_obj, 'design_base1_image_id') and design_obj.design_base1_image_id:
+        design_base1 = db.query(models.Image).filter(models.Image.id == design_obj.design_base1_image_id).first()
+        if design_base1:
+            result['design_base1'] = {
+                'id': design_base1.id,
+                'display_name': design_base1.display_name,
+                'public_url': design_base1.public_url
+            }
+    else:
+        result['design_base1'] = None
+
+    # 디자인 base1 컬러 정보
+    if hasattr(design_obj, 'design_base1_color_id') and design_obj.design_base1_color_id:
+        design_base1_color = db.query(models.Color).filter(models.Color.id == design_obj.design_base1_color_id).first()
+        if design_base1_color:
+            result['design_base1_color'] = {
+                'id': design_base1_color.id,
+                'color_name': design_base1_color.color_name,
+                'color_values': design_base1_color.color_values
+            }
+    else:
+        result['design_base1_color'] = None
+
+    # 디자인 base2 정보
+    if hasattr(design_obj, 'design_base2_image_id') and design_obj.design_base2_image_id:
+        design_base2 = db.query(models.Image).filter(models.Image.id == design_obj.design_base2_image_id).first()
+        if design_base2:
+            result['design_base2'] = {
+                'id': design_base2.id,
+                'display_name': design_base2.display_name,
+                'public_url': design_base2.public_url
+            }
+    else:
+        result['design_base2'] = None
+
+    # 디자인 base2 컬러 정보
+    if hasattr(design_obj, 'design_base2_color_id') and design_obj.design_base2_color_id:
+        design_base2_color = db.query(models.Color).filter(models.Color.id == design_obj.design_base2_color_id).first()
+        if design_base2_color:
+            result['design_base2_color'] = {
+                'id': design_base2_color.id,
+                'color_name': design_base2_color.color_name,
+                'color_values': design_base2_color.color_values
+            }
+    else:
+        result['design_base2_color'] = None
+
+    # 디자인 pupil 정보
+    if hasattr(design_obj, 'design_pupil_image_id') and design_obj.design_pupil_image_id:
+        design_pupil = db.query(models.Image).filter(models.Image.id == design_obj.design_pupil_image_id).first()
+        if design_pupil:
+            result['design_pupil'] = {
+                'id': design_pupil.id,
+                'display_name': design_pupil.display_name,
+                'public_url': design_pupil.public_url
+            }
+    else:
+        result['design_pupil'] = None
+
+    # 디자인 pupil 컬러 정보
+    if hasattr(design_obj, 'design_pupil_color_id') and design_obj.design_pupil_color_id:
+        design_pupil_color = db.query(models.Color).filter(models.Color.id == design_obj.design_pupil_color_id).first()
+        if design_pupil_color:
+            result['design_pupil_color'] = {
+                'id': design_pupil_color.id,
+                'color_name': design_pupil_color.color_name,
+                'color_values': design_pupil_color.color_values
+            }
+    else:
+        result['design_pupil_color'] = None
 
 
 def get_progress_status_paginated(
@@ -334,6 +538,10 @@ def get_progress_status_paginated(
         item.update({
             "status": progress_status.status,
             "notes": progress_status.notes,
+            "client_name": progress_status.client_name,
+            "number": progress_status.number,
+            "address": progress_status.address,
+            "status_note": progress_status.status_note,
             "created_at": progress_status.created_at,
             "updated_at": progress_status.updated_at
         })

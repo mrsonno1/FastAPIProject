@@ -23,6 +23,7 @@ Content-Disposition: form-data; name="status"
 --boundary--
 
 
+
 ### 출시제품 목록
 GET {{host}}{{api_prefix}}/released-product/info/2
 ###
@@ -35,8 +36,9 @@ GET {{host}}{{api_prefix}}/portfolio/info/2
 GET {{host}}{{api_prefix}}/portfolio/list
 
 ### 포트폴리오 축고정 상태 토글 (Y→N, N→Y)
-PATCH {{host}}{{api_prefix}}/portfolio/axis/2
+PATCH {{host}}{{api_prefix}}/portfolio/axis/15
 Authorization: {{superadmin_token}}
+
 
 
 ### 진행현황 목록
@@ -52,13 +54,35 @@ Content-Type: application/json
   "notes": "새로운 진행 상태 테스트"
 }
 
-### 진행현황 목록
+### 진행현황 초기화
 POST {{host}}{{api_prefix}}//progress-status/sync-existing-data
 Authorization: {{superadmin_token}}
 
-
 ###
 GET {{host}}{{api_prefix}}//progress-status/list
+Authorization: {{superadmin_token}}
+
+### 진행 상태 기본 정보 조회
+GET {{host}}{{api_prefix}}//progress-status/2
+Authorization: {{superadmin_token}}
+
+### 진행 상태 상세 정보 조회
+GET {{host}}{{api_prefix}}//progress-status/info/3
+Authorization: {{superadmin_token}}
+
+### 진행 상태 업데이트
+PATCH {{host}}{{api_prefix}}//progress-status/3
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "status": "1",
+  "status_note": "배송 준비 중입니다.",
+  "expected_shipping_date": "2025-07-25T00:00:00+09:00"
+}
+
+### 진행 상태 삭제
+DELETE {{host}}{{api_prefix}}//progress-status/4
 Authorization: {{superadmin_token}}
 
 ### 국가 삭제

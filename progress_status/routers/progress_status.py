@@ -1,14 +1,16 @@
 # progress_status/routers/progress_status.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 from typing import Optional
 import math
+from datetime import datetime, timedelta
 
 from db.database import get_db
 from progress_status.schemas import progress_status as progress_status_schema
 from progress_status.crud import progress_status as progress_status_crud
 from db import models
 from core.security import get_current_user
+from portfolio.schemas import portfolio as portfolio_schema
 
 router = APIRouter(prefix="/progress-status", tags=["Progress Status"])
 
@@ -28,6 +30,10 @@ def create_new_progress_status(
     - **portfolio_id**: 포트폴리오 ID (선택)
     - **status**: 진행 상태 (0: 대기, 1: 진행중, 2: 지연, 3: 배송완료)
     - **notes**: 메모 (선택)
+    - **client_name**: 고객 이름 (필수)
+    - **number**: 연락처 (필수)
+    - **address**: 주소 (필수)
+    - **status_note**: 상태 메모 (필수)
     """
     # 권한 검사 (필요시 추가)
     if current_user.permission not in ['admin', 'superadmin']:
@@ -141,13 +147,36 @@ def list_all_progress_status(
     }
 
 
+@router.get("/info/{progress_status_id}", response_model=progress_status_schema.ProgressStatusDetailResponse)
+def get_progress_status_detail(
+        progress_status_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 특정 진행 상태의 상세 정보를 조회합니다."""
+    if current_user.permission not in ['admin', 'superadmin']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="진행 상태 상세 정보를 조회할 권한이 없습니다."
+        )
+
+    detail_data = progress_status_crud.get_progress_status_detail(db, progress_status_id)
+    if not detail_data:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 ID의 진행 상태를 찾을 수 없습니다."
+        )
+
+    return detail_data
+
+
 @router.get("/{progress_status_id}", response_model=progress_status_schema.ProgressStatusResponse)
 def get_single_progress_status(
         progress_status_id: int,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """ID로 특정 진행 상태의 상세 정보를 조회합니다."""
+    """ID로 특정 진행 상태의 기본 정보를 조회합니다."""
     db_progress_status = progress_status_crud.get_progress_status_by_id(
         db, progress_status_id
     )
@@ -167,7 +196,13 @@ def update_progress_status_details(
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """ID로 특정 진행 상태의 정보를 업데이트합니다."""
+    """ID로 특정 진행 상태의 정보를 업데이트합니다.
+
+    수정 가능한 필드:
+    - expected_shipping_date: 예상 배송일
+    - status: 진행 상태 (0=대기, 1=진행중, 2=지연, 3=배송완료)
+    - status_note: 진행 상태 노트
+    """
     # 권한 검사
     if current_user.permission not in ['admin', 'superadmin']:
         raise HTTPException(
@@ -205,6 +240,33 @@ def update_progress_status_details(
         success=True,
         message="진행 상태가 성공적으로 업데이트되었습니다.",
         data=response_data
+    )
+
+
+@router.delete("/{progress_status_id}", response_model=portfolio_schema.StatusResponse)
+def delete_progress_status(
+        progress_status_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 특정 진행 상태를 삭제합니다."""
+    # 권한 검사
+    if current_user.permission not in ['admin', 'superadmin']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="진행 상태를 삭제할 권한이 없습니다."
+        )
+
+    was_deleted = progress_status_crud.delete_progress_status(db, progress_status_id)
+    if not was_deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="삭제할 진행 상태를 찾을 수 없습니다."
+        )
+
+    return portfolio_schema.StatusResponse(
+        status="success", 
+        message="진행 상태가 성공적으로 삭제되었습니다."
     )
 
 
