@@ -147,6 +147,7 @@ def get_released_products_paginated(
     for product, brand in results:
         formatted_items.append({
             "id": product.id,
+            "brand_id": brand.id,
             "brand_name": brand.brand_name,
             "brand_image_url": brand.brand_image_url,
             "design_name": product.design_name,
@@ -219,6 +220,7 @@ def get_released_product_detail(db: Session, product_id: int):
     # --- [수정] 최종 응답 데이터 구성 ---
     response_data = {
         "id": product.id,
+        "brand_id": product.brand_id,
         "brand_name": brand_name,
         "brand_image_url": brand_image_url,
         "design_name": product.design_name,

@@ -52,6 +52,7 @@ class StatusResponse(BaseModel):
 
 class ReleasedProductDetailResponse(BaseModel):
     id: int
+    brand_id: int
     brand_name: str
     brand_image_url: Optional[str] = None
     design_name: str
@@ -86,6 +87,7 @@ class ColorComponentDetail(BaseModel):
 
 class ReleasedProductListItem(BaseModel):
     id: int
+    brand_id: int
     brand_name: str
     brand_image_url: Optional[str] = None
     design_name: str
