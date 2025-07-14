@@ -99,9 +99,9 @@ def list_all_progress_status(
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
 
         # 검색 필터 파라미터
-        user_name: Optional[str] = Query(None, description="사용자명으로 검색"),
-        custom_design_name: Optional[str] = Query(None, description="커스텀 디자인명으로 검색"),
-        portfolio_name: Optional[str] = Query(None, description="포트폴리오명으로 검색"),
+        user_name: Optional[str] = Query(None, description="아이디 검색"),
+        custom_design_name: Optional[str] = Query(None, description="코드명으로 검색"),
+        type: Optional[int] = Query(None, ge=0, le=1, description="타입으로 검색 (0: 커스텀 디자인, 1: 포트폴리오)"),
         status: Optional[str] = Query(None, description="상태값으로 검색 (0~3)"),
 
         db: Session = Depends(get_db),
@@ -144,7 +144,7 @@ def list_all_progress_status(
         size=size,
         user_name=user_name,
         custom_design_name=custom_design_name,
-        portfolio_name=portfolio_name,
+        type=type,
         status=status
     )
 

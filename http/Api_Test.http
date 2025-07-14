@@ -64,7 +64,7 @@ Content-Disposition: form-data; name="status"
 --WebAppBoundary
 Content-Disposition: form-data; name="portfolio_id"
 
-21
+18
 --WebAppBoundary
 Content-Disposition: form-data; name="notes"
 
@@ -101,6 +101,11 @@ Authorization: {{superadmin_token}}
 ###
 GET {{host}}{{api_prefix}}//progress-status/list
 Authorization: {{superadmin_token}}
+
+###
+GET {{host}}{{api_prefix}}/progress-status/list?type=1
+Authorization: {{superadmin_token}}
+
 
 ###
 DELETE {{host}}{{api_prefix}}//progress-status/2

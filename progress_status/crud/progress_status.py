@@ -361,7 +361,7 @@ def get_progress_status_paginated(
         size: int,
         user_name: Optional[str] = None,
         custom_design_name: Optional[str] = None,
-        portfolio_name: Optional[str] = None,
+        type: Optional[int] = None,
         status: Optional[str] = None,
 ):
     """진행 상태 목록을 페이지네이션하여 조회합니다."""
@@ -392,10 +392,11 @@ def get_progress_status_paginated(
             models.CustomDesign.item_name.ilike(f"%{custom_design_name}%")
         )
 
-    if portfolio_name:
-        query = query.filter(
-            models.Portfolio.design_name.ilike(f"%{portfolio_name}%")
-        )
+    if type is not None:
+        if type == 0:  # 커스텀 디자인
+            query = query.filter(models.Progressstatus.portfolio_id.is_(None))
+        elif type == 1:  # 포트폴리오
+            query = query.filter(models.Progressstatus.portfolio_id.isnot(None))
 
     if status:
         query = query.filter(models.Progressstatus.status == status)
