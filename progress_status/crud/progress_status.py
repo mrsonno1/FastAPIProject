@@ -371,9 +371,9 @@ def get_progress_status_paginated(
         models.Portfolio
     ).join(
         models.AdminUser, models.Progressstatus.user_id == models.AdminUser.id
-    ).join(
+    ).outerjoin(  # custom_design도 optional이므로 outerjoin으로 변경
         models.CustomDesign, models.Progressstatus.custom_design_id == models.CustomDesign.id
-    ).outerjoin(  # portfolio는 optional이므로 left outer join
+    ).outerjoin(
         models.Portfolio, models.Progressstatus.portfolio_id == models.Portfolio.id
     )
 
