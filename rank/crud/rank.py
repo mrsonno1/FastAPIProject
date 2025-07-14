@@ -71,3 +71,34 @@ def get_custom_design_status_counts(db: Session):
     counts['total'] = total
     
     return counts
+
+
+def get_progress_status_counts(db: Session):
+    """진행 상태별 개수를 조회합니다."""
+    status_counts = db.query(
+        models.Progressstatus.status,
+        func.count(models.Progressstatus.id)
+    ).group_by(models.Progressstatus.status).all()
+
+    # wait=0, progress=1, delay=2, delivery_completed=3
+    counts = {
+        'wait': 0,
+        'pregress': 0,  # 오타 그대로 유지 (기존 API 호환성)
+        'delay': 0,
+        'delivery_completed': 0,
+    }
+
+    for status_val, count in status_counts:
+        if status_val == '0':
+            counts['wait'] = count
+        elif status_val == '1':
+            counts['pregress'] = count
+        elif status_val == '2':
+            counts['delay'] = count
+        elif status_val == '3':
+            counts['delivery_completed'] = count
+
+    total = sum(counts.values())
+    counts['total'] = total
+
+    return counts

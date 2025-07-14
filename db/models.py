@@ -168,10 +168,14 @@ class DailyView(Base):
 
 
 # ------------------------------------
-
-
 class Progressstatus(Base):
     __tablename__ = "progressstatus"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("account.id"), nullable=False)
+    custom_design_id = Column(Integer, ForeignKey("custom_designs.id"), nullable=False)
+    portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=True)
+    status = Column(String(1), nullable=False, default='0')  # 0: 대기, 1: 진행중, 2: 지연, 3: 배송완료
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

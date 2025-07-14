@@ -35,8 +35,27 @@ GET {{host}}{{api_prefix}}/portfolio/info/2
 GET {{host}}{{api_prefix}}/portfolio/list
 
 
+### 진행현황 목록
+POST {{host}}{{api_prefix}}//progress-status/
+Authorization: {{superadmin_token}}
+Content-Type: application/json
+
+{
+  "user_id": 3,
+  "custom_design_id": 3,
+  "portfolio_id": null,
+  "status": "0",
+  "notes": "새로운 진행 상태 테스트"
+}
+
+### 진행현황 목록
+POST {{host}}{{api_prefix}}//progress-status/sync-existing-data
+Authorization: {{superadmin_token}}
 
 
+###
+GET {{host}}{{api_prefix}}//progress-status/list
+Authorization: {{superadmin_token}}
 
 ### 국가 삭제
 DELETE {{host}}{{api_prefix}}/countries/15

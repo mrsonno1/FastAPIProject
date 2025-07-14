@@ -4,6 +4,7 @@ from db import models
 from typing import Optional, Dict, Any
 from datetime import date, timedelta # date, timedelta 임포트
 from fastapi import HTTPException
+from progress_status.crud import progress_status as progress_status_crud
 
 def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: str):
     db_design = models.CustomDesign(
@@ -33,16 +34,33 @@ def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, 
     return db_design
 
 
-# --- [새로운 업데이트 함수 추가] ---
 def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict[str, Any]):
     """
     제공된 데이터로 커스텀 디자인 객체를 업데이트합니다.
     """
+    # 기존 상태 저장
+    old_status = db_design.status
+
     for key, value in update_data.items():
         setattr(db_design, key, value)
 
     db.commit()
     db.refresh(db_design)
+
+    # status가 '3'으로 변경되었으면 progress_status 생성
+    if 'status' in update_data and update_data['status'] == '3' and old_status != '3':
+        # AdminUser에서 user_id 가져오기
+        user = db.query(models.AdminUser).filter(
+            models.AdminUser.username == db_design.user_id
+        ).first()
+
+        if user:
+            progress_status_crud.check_and_create_progress_status_for_custom_design(
+                db=db,
+                custom_design_id=db_design.id,
+                user_id=user.id
+            )
+
     return db_design
 
 

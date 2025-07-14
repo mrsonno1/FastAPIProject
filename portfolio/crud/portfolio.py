@@ -6,6 +6,8 @@ from sqlalchemy import or_
 from fastapi import HTTPException
 from datetime import date
 from sqlalchemy import insert
+from progress_status.crud import progress_status as progress_status_crud
+
 
 def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, user_id: int):
     # is_fixed_axis 값 검증
@@ -34,6 +36,23 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
     db.add(db_portfolio)
     db.commit()
     db.refresh(db_portfolio)
+
+    # 포트폴리오 생성 후 progress_status 생성/업데이트
+    # 해당 사용자의 가장 최근 custom_design 찾기
+    user = db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+    if user:
+        latest_design = db.query(models.CustomDesign).filter(
+            models.CustomDesign.user_id == user.username
+        ).order_by(models.CustomDesign.created_at.desc()).first()
+
+        if latest_design:
+            progress_status_crud.create_progress_status_for_portfolio(
+                db=db,
+                portfolio_id=db_portfolio.id,
+                custom_design_id=latest_design.id,
+                user_id=user_id
+            )
+
     return db_portfolio
 
 
