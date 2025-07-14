@@ -142,8 +142,6 @@ class Releasedproduct(Base):
     base_curve = Column(String(20), nullable=True)  # 베이스커브
 
     views = Column(Integer, nullable=False, default=0)
-    status_note = Column(String, nullable=True)  # 진행현황 노트
-    expected_shipping_date = Column(DateTime(timezone=True), nullable=True)  # 예상 배송일
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

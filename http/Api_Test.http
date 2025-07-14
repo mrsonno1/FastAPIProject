@@ -30,6 +30,7 @@ GET {{host}}{{api_prefix}}/released-product/info/2
 GET {{host}}{{api_prefix}}/released-product/list
 
 
+
 ### 포트폴리오 목록
 GET {{host}}{{api_prefix}}/portfolio/info/2
 ###
@@ -98,6 +99,10 @@ Authorization: {{superadmin_token}}
 
 ###
 GET {{host}}{{api_prefix}}//progress-status/list
+Authorization: {{superadmin_token}}
+
+###
+DELETE {{host}}{{api_prefix}}//progress-status/2
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 기본 정보 조회
