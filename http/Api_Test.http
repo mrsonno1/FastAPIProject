@@ -54,11 +54,15 @@ Content-Disposition: form-data; name="user_id"
 --WebAppBoundary
 Content-Disposition: form-data; name="custom_design_id"
 
-3
+0
 --WebAppBoundary
 Content-Disposition: form-data; name="status"
 
 0
+--WebAppBoundary
+Content-Disposition: form-data; name="portfolio_id"
+
+3
 --WebAppBoundary
 Content-Disposition: form-data; name="notes"
 

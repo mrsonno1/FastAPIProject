@@ -24,7 +24,7 @@ def create_new_progress_status(
         client_name: Optional[str] = Form(None),
         number: Optional[str] = Form(None),
         address: Optional[str] = Form(None),
-        status_note: Optional[str] = Form(None),
+        status_note: Optional[str] = Form(None,description="발송완료시 입력"),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
@@ -55,25 +55,26 @@ def create_new_progress_status(
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    # 커스텀 디자인이 존재하는지 확인
-    custom_design = db.query(models.CustomDesign).filter(
-        models.CustomDesign.id == progress_status_data.custom_design_id
-    ).first()
-    if not custom_design:
-        raise HTTPException(
-            status_code=404,
-            detail="해당 ID의 커스텀 디자인을 찾을 수 없습니다."
-        )
+    # custom_design_id가 0이 아닐 경우에만 존재 여부 확인
+    if progress_status_data.custom_design_id != 0:
+        custom_design = db.query(models.CustomDesign).filter(
+            models.CustomDesign.id == progress_status_data.custom_design_id
+        ).first()
+        if not custom_design:
+            raise HTTPException(
+                status_code=404,
+                detail=f"ID가 {progress_status_data.custom_design_id}인 커스텀 디자인을 찾을 수 없습니다."
+            )
 
-    # 포트폴리오 ID가 제공된 경우 존재하는지 확인
-    if progress_status_data.portfolio_id:
+    # portfolio_id가 제공되었고, 0이 아닐 경우에만 존재 여부 확인
+    if progress_status_data.portfolio_id is not None and progress_status_data.portfolio_id != 0:
         portfolio = db.query(models.Portfolio).filter(
             models.Portfolio.id == progress_status_data.portfolio_id
         ).first()
         if not portfolio:
             raise HTTPException(
                 status_code=404,
-                detail="해당 ID의 포트폴리오를 찾을 수 없습니다."
+                detail=f"ID가 {progress_status_data.portfolio_id}인 포트폴리오를 찾을 수 없습니다."
             )
 
     created_progress_status = progress_status_crud.create_progress_status(

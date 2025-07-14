@@ -174,7 +174,7 @@ class Progressstatus(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    custom_design_id = Column(Integer, ForeignKey("custom_designs.id"), nullable=False)
+    custom_design_id = Column(Integer, ForeignKey("custom_designs.id"), nullable=True)
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=True)
     status = Column(String(1), nullable=False, default='0')  # 0: 대기, 1: 진행중, 2: 지연, 3: 배송완료
     notes = Column(Text, nullable=True)

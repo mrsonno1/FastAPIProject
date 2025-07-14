@@ -7,7 +7,7 @@ from datetime import datetime, date
 # 진행 상태 기본 스키마
 class ProgressStatusBase(BaseModel):
     user_id: int
-    custom_design_id: int
+    custom_design_id: Optional[int] = None
     portfolio_id: Optional[int] = None
     status: str = Field(..., description="진행 상태 (0: 대기, 1: 진행중, 2: 지연, 3: 배송완료)")
     notes: Optional[str] = None

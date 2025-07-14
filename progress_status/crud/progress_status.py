@@ -11,11 +11,15 @@ def create_progress_status(
         db: Session,
         progress_status: progress_status_schema.ProgressStatusCreate
 ):
-    """새로운 진행 상태를 생성합니다."""
+    # ID 값이 0이면 DB 저장을 위해 None으로 변환
+    final_custom_design_id = progress_status.custom_design_id if progress_status.custom_design_id != 0 else None
+    final_portfolio_id = progress_status.portfolio_id if progress_status.portfolio_id is not None and progress_status.portfolio_id != 0 else None
+
+
     db_progress_status = models.Progressstatus(
         user_id=progress_status.user_id,
-        custom_design_id=progress_status.custom_design_id,
-        portfolio_id=progress_status.portfolio_id,
+        custom_design_id=final_custom_design_id,  # 0일 경우 None으로 변환된 값을 전달
+        portfolio_id=final_portfolio_id,  # 0일 경우 None으로 변환된 값을 전달
         status=progress_status.status,
         notes=progress_status.notes,
         client_name=progress_status.client_name,
