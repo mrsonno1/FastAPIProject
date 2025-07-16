@@ -63,12 +63,12 @@ def delete_color_by_id(db: Session, color_id: int) -> bool:
         )
 
     # 종속성 검사: released_product 테이블에서 사용 여부 확인
-    released_product_usage = db.query(models.ReleasedProduct).filter(
+    released_product_usage = db.query(models.Releasedproduct).filter(
         or_(
-            models.ReleasedProduct.color_line_color_id == str(color_id),
-            models.ReleasedProduct.color_base1_color_id == str(color_id),
-            models.ReleasedProduct.color_base2_color_id == str(color_id),
-            models.ReleasedProduct.color_pupil_color_id == str(color_id)
+            models.Releasedproduct.color_line_color_id == str(color_id),
+            models.Releasedproduct.color_base1_color_id == str(color_id),
+            models.Releasedproduct.color_base2_color_id == str(color_id),
+            models.Releasedproduct.color_pupil_color_id == str(color_id)
         )
     ).first()
 
