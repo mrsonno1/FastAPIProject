@@ -136,7 +136,10 @@ def get_colors_paginated(
 
                 if order_column_name == 'color_name':
                     # color_name을 숫자로 변환하여 정렬 (기존 로직 유지)
-                    numeric_expression = cast(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), Integer)
+                    # [수정] 숫자가 없는 color_name이 빈 문자열("")로 변환되어 발생하는 캐스팅 오류를 방지합니다.
+                    # regexp_replace의 결과가 ""이면 NULL로 바꾸고, NULL이면 0으로 처리하여 정렬합니다.
+                    numeric_part = func.nullif(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), '')
+                    numeric_expression = func.coalesce(cast(numeric_part, Integer), 0)
                     query = query.order_by(direction_func(numeric_expression))
                 else:
                     query = query.order_by(direction_func(order_column))
