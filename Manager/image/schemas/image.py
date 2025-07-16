@@ -10,6 +10,7 @@ class ImageResponse(BaseModel):
     object_name: str
     public_url: str
     uploaded_at: datetime
+    created_at: datetime
 
     class Config:
         from_attributes = True

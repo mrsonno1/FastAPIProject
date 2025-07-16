@@ -25,6 +25,7 @@ class ColorResponse(ColorBase):
     color_name: str
     monochrome_type: str
     updated_at: datetime
+    created_at: datetime
 
     class Config:
         from_attributes = True

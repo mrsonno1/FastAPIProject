@@ -1,7 +1,7 @@
 # progress_status/crud/progress_status.py
 from sqlalchemy.orm import Session
 from db import models
-from datetime import timedelta
+from datetime import timedelta, date
 from Manager.progress_status.schemas import progress_status as progress_status_schema
 from typing import Optional
 from sqlalchemy import or_
@@ -413,7 +413,7 @@ def get_progress_status_paginated(
         models.Portfolio
     ).join(
         models.AdminUser, models.Progressstatus.user_id == models.AdminUser.id
-    ).outerjoin(  # custom_design도 optional이므로 outerjoin으로 변경
+    ).outerjoin(
         models.CustomDesign, models.Progressstatus.custom_design_id == models.CustomDesign.id
     ).outerjoin(
         models.Portfolio, models.Progressstatus.portfolio_id == models.Portfolio.id
@@ -426,9 +426,7 @@ def get_progress_status_paginated(
             (models.AdminUser.contact_name.ilike(f"%{user_name}%"))
         )
 
-        # 2. 디자인/포트폴리오 이름으로 필터링
     if custom_design_name:
-        # type이 지정되지 않았으면 양쪽 모두에서 검색
         if type is None:
             query = query.filter(
                 or_(
@@ -436,23 +434,14 @@ def get_progress_status_paginated(
                     models.Portfolio.design_name.ilike(f"%{custom_design_name}%")
                 )
             )
-        # type이 0 (커스텀 디자인)이면 커스텀 디자인 이름만 검색
         elif type == 0:
             query = query.filter(
                 models.CustomDesign.item_name.ilike(f"%{custom_design_name}%")
             )
-        # type이 1 (포트폴리오)이면 포트폴리오 이름만 검색
         elif type == 1:
             query = query.filter(
                 models.Portfolio.design_name.ilike(f"%{custom_design_name}%")
             )
-
-        # 3. 타입으로만 필터링 (custom_design_name이 없을 때만 동작)
-    if type is not None and not custom_design_name:
-        if type == 0:  # 커스텀 디자인
-            query = query.filter(models.Progressstatus.portfolio_id.is_(None))
-        elif type == 1:  # 포트폴리오
-            query = query.filter(models.Progressstatus.portfolio_id.isnot(None))
 
     if type is not None:
         if type == 0:  # 커스텀 디자인
@@ -472,99 +461,77 @@ def get_progress_status_paginated(
         models.Progressstatus.created_at.desc()
     ).offset(offset).limit(size).all()
 
-    # 모든 필요한 ID들을 먼저 수집 (N+1 문제 방지)
+    # --- [수정 1] 배송 지연 상태 자동 업데이트 ---
+    # 먼저 메모리상에서 지연 상태를 확인하고 DB에 일괄 반영합니다.
+    today = date.today()
+    needs_commit = False
+    for progress_status, user, custom_design, portfolio in results:
+        # '대기(0)' 또는 '진행중(1)' 상태만 확인
+        if progress_status.status in ['0', '1']:
+            if progress_status.expected_shipping_date and today > progress_status.expected_shipping_date:
+                progress_status.status = '2'  # '지연' 상태로 변경
+                needs_commit = True
+
+    if needs_commit:
+        db.commit()
+
+    # N+1 문제 해결을 위한 ID 사전 수집 로직 (기존과 동일)
     all_image_ids = set()
     all_color_ids = set()
 
     for progress_status, user, custom_design, portfolio in results:
-        # portfolio가 있으면 portfolio의 ID들 수집
-        if portfolio:
-            ids_to_add = [
-                portfolio.design_line_image_id, portfolio.design_base1_image_id,
-                portfolio.design_base2_image_id, portfolio.design_pupil_image_id
+        item_to_process = portfolio if portfolio else custom_design
+        if item_to_process:
+            image_ids = [
+                item_to_process.design_line_image_id, item_to_process.design_base1_image_id,
+                item_to_process.design_base2_image_id, item_to_process.design_pupil_image_id
             ]
-            all_image_ids.update(filter(None, ids_to_add))
-
-            color_ids_to_add = [
-                portfolio.design_line_color_id, portfolio.design_base1_color_id,
-                portfolio.design_base2_color_id, portfolio.design_pupil_color_id
+            color_ids = [
+                item_to_process.design_line_color_id, item_to_process.design_base1_color_id,
+                item_to_process.design_base2_color_id, item_to_process.design_pupil_color_id
             ]
-            all_color_ids.update(filter(None, color_ids_to_add))
-        else:
-            # portfolio가 없으면 custom_design의 ID들 수집
-            ids_to_add = [
-                custom_design.design_line_image_id, custom_design.design_base1_image_id,
-                custom_design.design_base2_image_id, custom_design.design_pupil_image_id
-            ]
-            all_image_ids.update(filter(None, ids_to_add))
-
-            color_ids_to_add = [
-                custom_design.design_line_color_id, custom_design.design_base1_color_id,
-                custom_design.design_base2_color_id, custom_design.design_pupil_color_id
-            ]
-            all_color_ids.update(filter(None, color_ids_to_add))
+            all_image_ids.update(filter(None, image_ids))
+            all_color_ids.update(filter(None, color_ids))
 
     # ID를 한 번에 조회하여 딕셔너리로 만듦
     images_map = {str(img.id): img for img in
-                  db.query(models.Image).filter(
-                      models.Image.id.in_(list(all_image_ids))).all()} if all_image_ids else {}
+                  db.query(models.Image).filter(models.Image.id.in_(list(all_image_ids))).all()} if all_image_ids else {}
     colors_map = {str(col.id): col for col in
-                  db.query(models.Color).filter(
-                      models.Color.id.in_(list(all_color_ids))).all()} if all_color_ids else {}
+                  db.query(models.Color).filter(models.Color.id.in_(list(all_color_ids))).all()} if all_color_ids else {}
 
     # 헬퍼 함수
     def get_image_details(image_id):
-        if not image_id:
-            return None
+        if not image_id: return None
         img = images_map.get(str(image_id))
-        if img:
-            return {
-                "id": img.id,
-                "display_name": img.display_name,
-                "public_url": img.public_url
-            }
-        return None
-
-
-
+        return {"id": img.id, "display_name": img.display_name, "public_url": img.public_url} if img else None
 
     def get_custom_design_image_details(image_id, opacity: Optional[str]):
-        if not image_id:
-            return None
-        img = images_map.get(str(image_id))
-        if img:
-            return {
-                "id": img.id,
-                "display_name": img.display_name,
-                "public_url": img.public_url,
-                "opacity": opacity
-            }
-        return None
+        details = get_image_details(image_id)
+        if details:
+            details["opacity"] = opacity
+        return details
 
     def get_color_details(color_id):
-        if not color_id:
-            return None
+        if not color_id: return None
         col = colors_map.get(str(color_id))
-        if col:
-            return {
-                "id": col.id,
-                "color_name": col.color_name,
-                "color_values": col.color_values
-            }
-        return None
+        return {"id": col.id, "color_name": col.color_name, "color_values": col.color_values} if col else None
 
-    # 결과를 원하는 형식으로 가공
+    # --- [수정 2] 결과를 가공하면서 업데이트된 상태를 기준으로 필터링 ---
     formatted_items = []
     for progress_status, user, custom_design, portfolio in results:
+        # API 요청 시 status 필터가 있었고, DB 업데이트 후 현재 아이템의 상태가
+        # 해당 필터와 일치하지 않으면 최종 결과 목록에서 제외합니다.
+        if status and progress_status.status != status:
+            continue
+
+        item = {}
         # portfolio가 있으면 portfolio 정보 사용, 없으면 custom_design 정보 사용
         if portfolio:
             item = {
-                "id": progress_status.id,
-                "user_name": user.contact_name or user.username,
-                "image_url": portfolio.main_image_url,
                 "type": 1,  # portfolio
                 "type_id": portfolio.id,
                 "type_name": portfolio.design_name,
+                "image_url": portfolio.main_image_url,
                 "design_line": get_image_details(portfolio.design_line_image_id),
                 "design_line_color": get_color_details(portfolio.design_line_color_id),
                 "design_base1": get_image_details(portfolio.design_base1_image_id),
@@ -575,16 +542,13 @@ def get_progress_status_paginated(
                 "design_pupil_color": get_color_details(portfolio.design_pupil_color_id),
                 "graphic_diameter": portfolio.graphic_diameter,
                 "optic_zone": portfolio.optic_zone,
-                "expected_shipping_date": progress_status.expected_shipping_date,
             }
-        else:
+        elif custom_design:  # custom_design이 있을 때만 처리
             item = {
-                "id": progress_status.id,
-                "user_name": user.contact_name or user.username,
-                "image_url": custom_design.main_image_url,
                 "type": 0,  # custom_design
                 "type_id": custom_design.id,
                 "type_name": custom_design.item_name,
+                "image_url": custom_design.main_image_url,
                 "design_line": get_custom_design_image_details(custom_design.design_line_image_id, custom_design.line_transparency),
                 "design_line_color": get_color_details(custom_design.design_line_color_id),
                 "design_base1": get_custom_design_image_details(custom_design.design_base1_image_id, custom_design.base1_transparency),
@@ -595,17 +559,21 @@ def get_progress_status_paginated(
                 "design_pupil_color": get_color_details(custom_design.design_pupil_color_id),
                 "graphic_diameter": custom_design.graphic_diameter,
                 "optic_zone": custom_design.optic_zone,
-                "expected_shipping_date": progress_status.expected_shipping_date,
             }
+        else:
+            continue
 
         # 공통 필드 추가
         item.update({
+            "id": progress_status.id,
+            "user_name": user.contact_name or user.username,
+            "expected_shipping_date": progress_status.expected_shipping_date,
             "status": progress_status.status,
             "notes": progress_status.notes,
             "created_at": progress_status.created_at,
             "updated_at": progress_status.updated_at
         })
-
         formatted_items.append(item)
 
+    # total_count는 업데이트 전 기준이지만, 페이지네이션의 일관성을 위해 그대로 반환합니다.
     return {"items": formatted_items, "total_count": total_count}

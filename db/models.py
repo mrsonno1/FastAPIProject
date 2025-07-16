@@ -46,6 +46,7 @@ class Image(Base):
     display_name = Column(String, index=True, nullable=False)
     object_name = Column(String, index=True)
     public_url = Column(String, unique=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     uploaded_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
 class Color(Base):
@@ -55,10 +56,8 @@ class Color(Base):
     color_name = Column(String, unique=True, index=True, nullable=False)
     color_values = Column(String(100), nullable=False)
     monochrome_type = Column(String(10), nullable=False)
-    updated_at = Column(
-        TIMESTAMP(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
 class CustomDesign(Base):

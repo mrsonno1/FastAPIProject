@@ -115,27 +115,34 @@ def get_images_paginated(
     # 3. 동적 정렬 (orderBy)
     if orderBy:
         try:
-            order_column_name, order_direction = orderBy.split()
-            direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
+            order_column_name, order_direction = orderBy.strip().split()
 
-            # 정렬할 컬럼을 가져옴
-            order_column = getattr(models.Image, order_column_name)
+            # 허용된 정렬 기준 컬럼 정의
+            allowed_columns = {
+                "id": models.Image.id,
+                "display_name": models.Image.display_name,
+                "created_at": models.Image.created_at
+            }
 
-            # 만약 정렬 대상이 display_name이라면, 숫자로 형 변환(cast)하여 정렬
-            if order_column_name == 'display_name':
-                # 숫자로 변환할 수 없는 값이 포함된 경우를 대비해 정규식으로 숫자만 추출 후 형 변환
-                numeric_expression = cast(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), Integer)
-                query = query.order_by(direction_func(numeric_expression))
-            # id나 rank 같은 이미 숫자형인 컬럼 또는 다른 문자열 컬럼은 그대로 정렬
+            if order_column_name in allowed_columns:
+                order_column = allowed_columns[order_column_name]
+                direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
+
+                # display_name을 숫자로 변환하여 정렬 (기존 로직 유지)
+                if order_column_name == 'display_name':
+                    numeric_expression = cast(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), Integer)
+                    query = query.order_by(direction_func(numeric_expression))
+                else:
+                    query = query.order_by(direction_func(order_column))
             else:
-                query = query.order_by(direction_func(order_column))
-
+                # 허용되지 않은 컬럼이면 기본 정렬 (최신순)
+                query = query.order_by(models.Image.created_at.desc())
         except (ValueError, AttributeError):
             # orderBy 형식이 잘못되었거나 존재하지 않는 컬럼일 경우 기본 정렬로 대체
-            query = query.order_by(models.Image.id.desc())
+            query = query.order_by(models.Image.created_at.desc())
     else:
-        # 기본 정렬
-        query = query.order_by(models.Image.id.desc())
+        # orderBy 파라미터가 없으면 기본 정렬 (최신순)
+        query = query.order_by(models.Image.created_at.desc())
 
     total_count = query.count()
     offset = (page - 1) * size
