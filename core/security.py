@@ -1,5 +1,6 @@
 # core/security.py
 from datetime import datetime, timedelta
+from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,9 +10,9 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from db.database import get_db
-from admin.crud import user as user_crud
+from Manager.admin.crud import user as user_crud
 from db import models
-from admin.schemas.user import TokenData
+from Manager.admin.schemas.user import TokenData
 
 # 비밀번호 해싱 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -27,6 +28,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
+def authenticate_user(db: Session, username: str, password: str) -> Optional[models.AdminUser]:
+    """
+    사용자 이름과 비밀번호를 확인하여 사용자를 인증합니다.
+    - 사용자 이름으로 DB에서 사용자를 찾습니다.
+    - 사용자가 존재하면, 입력된 비밀번호와 DB의 해시된 비밀번호를 비교합니다.
+    - 인증에 성공하면 user 객체를, 실패하면 None을 반환합니다.
+    """
+    user = user_crud.get_user_by_username(db, username=username)
+    if not user:
+        return None
+    # user.hashed_password는 실제 AdminUser 모델에 정의된 비밀번호 필드명이어야 합니다.
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
 
 def create_access_token(data: dict):
     to_encode = data.copy()

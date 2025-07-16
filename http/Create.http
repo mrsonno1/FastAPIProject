@@ -22,7 +22,16 @@ username=admin&password=123456
     client.global.set("code", response.body.account_code + "-");
 %}
 
+### 유니티 사용자 로그인
+POST {{host}}/unity/login/token
+Content-Type: application/x-www-form-urlencoded
 
+username=sontest&password=1234567
+
+> {%
+    client.global.set("superadmin_token", "Bearer " + response.body.access_token);
+    client.global.set("code", response.body.account_code + "-");
+%}
 
 
 ### 계정 등록
@@ -54,7 +63,8 @@ Content-Type: application/json
 }
 
 
-
+### 브랜드 리스트
+GET {{host}}{{api_prefix}}/brands/listall
 
 ### 브랜드 생성
 POST {{host}}{{api_prefix}}/brands/
@@ -94,15 +104,11 @@ Authorization: {{superadmin_token}}
 --boundary
 Content-Disposition: form-data; name="design_name"
 
-SIMPLE_BLUE_1294
+SIMPLE_BLUE_12973
 --boundary
 Content-Disposition: form-data; name="color_name"
 
 심플 블루 테마 버전2
---boundary
-Content-Disposition: form-data; name="exposed_countries"
-
-1,2,3,4,5
 --boundary
 Content-Disposition: form-data; name="is_fixed_axis"
 

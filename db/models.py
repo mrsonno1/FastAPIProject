@@ -97,6 +97,10 @@ class Portfolio(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True, nullable=False)
     design_name = Column(String(100), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+
+    deleted_at = Column(DateTime, nullable=True)
+
     color_name = Column(String(100), nullable=True)
     exposed_countries = Column(String(100), nullable=True)  # 노출국가 (국가 id , 기준 ex-> 1,2,3,4)
     is_fixed_axis = Column(String(1), nullable=False, default='N')  # 축고정 (Y/N)

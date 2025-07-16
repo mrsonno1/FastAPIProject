@@ -27,15 +27,16 @@ Content-Disposition: form-data; name="status"
 
 
 ### 출시제품 목록
-GET {{host}}{{api_prefix}}/released-product/info/12
+GET {{host}}{{api_prefix}}/released-product/info/2
 
 ###
 GET {{host}}{{api_prefix}}/released-product/list
 
 
-
+### 포트폴리오 삭제
+DELETE {{host}}{{api_prefix}}/portfolio/14
 ### 포트폴리오 목록
-GET {{host}}{{api_prefix}}/portfolio/info/2
+GET {{host}}{{api_prefix}}/portfolio/info/14
 ###
 GET {{host}}{{api_prefix}}/portfolio/list
 

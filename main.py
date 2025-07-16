@@ -1,16 +1,18 @@
 # main.py
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from released_product.routers import released_product
-from portfolio.routers import portfolio
-from image.routers import upload
-from custom_design.routers import custom_design
-from country.routers import country
-from color.routers import color
-from brand.routers import brand
-from admin.routers import admin, auth
-from rank.routers import rank as rank
-from progress_status.routers import progress_status
+from Enduser.routers import login as enduser_login_router
+from Enduser import Email
+from Manager.released_product.routers import released_product
+from Manager.portfolio.routers import portfolio
+from Manager.image.routers import upload
+from Manager.custom_design.routers import custom_design
+from Manager.country.routers import country
+from Manager.color.routers import color
+from Manager.brand.routers import brand
+from Manager.admin.routers import auth, admin
+from Manager.rank.routers import rank as rank
+from Manager.progress_status.routers import progress_status
 from db.database import engine, Base
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
@@ -81,9 +83,11 @@ app.add_middleware(
     allow_headers=["*"],    # 모든 HTTP 헤더를 허용
 )
 
+unity_router = APIRouter(prefix="/unity")
+unity_router.include_router(enduser_login_router.router)
+unity_router.include_router(Email.router)
 
 api_router = APIRouter(prefix="/api")
-
 api_router.include_router(auth.router)
 api_router.include_router(admin.router)
 api_router.include_router(upload.router)
@@ -95,9 +99,9 @@ api_router.include_router(portfolio.router)
 api_router.include_router(released_product.router)
 api_router.include_router(rank.router)
 api_router.include_router(progress_status.router)
-# 앱에 api_router를 포함시킵니다.
-app.include_router(api_router)
 
+app.include_router(api_router)
+app.include_router(unity_router)
 
 
 
