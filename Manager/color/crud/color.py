@@ -118,37 +118,37 @@ def get_colors_paginated(
             )
         )
 
-        # 2. 동적 정렬
-        if orderBy:
-            try:
-                order_column_name, order_direction = orderBy.strip().split()
+    # 2. 동적 정렬
+    if orderBy:
+        try:
+            order_column_name, order_direction = orderBy.strip().split()
 
-                # 허용된 정렬 기준 컬럼 정의 (SQL Injection 방지 및 안정성)
-                allowed_columns = {
-                    "id": models.Color.id,
-                    "color_name": models.Color.color_name,
-                    "created_at": models.Color.created_at
-                }
+            # 허용된 정렬 기준 컬럼 정의 (SQL Injection 방지 및 안정성)
+            allowed_columns = {
+                "id": models.Color.id,
+                "color_name": models.Color.color_name,
+                "created_at": models.Color.created_at
+            }
 
-                if order_column_name in allowed_columns:
-                    order_column = allowed_columns[order_column_name]
-                    direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
+            if order_column_name in allowed_columns:
+                order_column = allowed_columns[order_column_name]
+                direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
 
-                    if order_column_name == 'color_name':
-                        # color_name을 숫자로 변환하여 정렬 (기존 로직 유지)
-                        numeric_expression = cast(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), Integer)
-                        query = query.order_by(direction_func(numeric_expression))
-                    else:
-                        query = query.order_by(direction_func(order_column))
+                if order_column_name == 'color_name':
+                    # color_name을 숫자로 변환하여 정렬 (기존 로직 유지)
+                    numeric_expression = cast(func.regexp_replace(order_column, r'[^0-9]', '', 'g'), Integer)
+                    query = query.order_by(direction_func(numeric_expression))
                 else:
-                    # 허용되지 않은 컬럼명이면 기본 정렬(최신순) 적용
-                    query = query.order_by(models.Color.created_at.desc())
-            except (ValueError, AttributeError):
-                # orderBy 형식이 잘못되었거나 존재하지 않는 컬럼일 경우 기본 정렬로 대체
+                    query = query.order_by(direction_func(order_column))
+            else:
+                # 허용되지 않은 컬럼명이면 기본 정렬(최신순) 적용
                 query = query.order_by(models.Color.created_at.desc())
-        else:
-            # orderBy 파라미터가 없으면 기본 정렬 (최신순)
+        except (ValueError, AttributeError):
+            # orderBy 형식이 잘못되었거나 존재하지 않는 컬럼일 경우 기본 정렬로 대체
             query = query.order_by(models.Color.created_at.desc())
+    else:
+        # orderBy 파라미터가 없으면 기본 정렬 (최신순)
+        query = query.order_by(models.Color.created_at.desc())
 
     total_count = query.count()
     offset = (page - 1) * size

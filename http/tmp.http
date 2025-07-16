@@ -10,3 +10,8 @@ username=sontest&password=1234567
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
     client.global.set("code", response.body.account_code + "-");
 %}
+
+
+
+### 브랜드 리스트
+GET {{host}}{{api_prefix}}/images/list
