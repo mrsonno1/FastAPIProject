@@ -127,7 +127,8 @@ def get_colors_paginated(
             allowed_columns = {
                 "id": models.Color.id,
                 "color_name": models.Color.color_name,
-                "created_at": models.Color.created_at
+                "created_at": models.Color.created_at,
+                "updated_at": models.Color.updated_at
             }
 
             if order_column_name in allowed_columns:
