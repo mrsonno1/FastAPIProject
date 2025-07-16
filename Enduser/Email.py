@@ -1,46 +1,75 @@
-from fastapi import FastAPI, APIRouter
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from pydantic import EmailStr, BaseModel  # BaseModel을 가져옵니다.
-from fastapi import HTTPException
-from email.mime.text import MIMEText
+from fastapi import APIRouter, HTTPException, Body
+from pydantic import BaseModel, EmailStr
 import smtplib
 import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 router = APIRouter(prefix="/mail", tags=["email"])
 
 
-# Cafe24 메일 서버 설정
-SMTP_SERVER = "smtp.cafe24.com"
-SMTP_PORT = 587
-EMAIL = "lensgrapick@dkmv.co.kr"
-
+# API 요청 본문을 위한 Pydantic 모델
+class EmailSchema(BaseModel):
+    to_email: EmailStr  # 이메일 형식 자동 검증
+    subject: str
+    body: str
 
 
 @router.post("/send-email")
-async def send_email(to_email: str, subject: str, body: str):
-    # 이메일 메시지 생성
-    msg = MIMEText(body, "plain")
-    msg["Subject"] = subject
-    msg["From"] = EMAIL
-    msg["To"] = to_email
+def send_email_endpoint(email: EmailSchema = Body(...)):
+    """제공된 상세 정보를 사용하여 이메일을 전송합니다."""
 
     try:
-        # SSL/TLS 컨텍스트 설정
+        # SMTP Configuration - 추후 보안을 위해 환경변수나 별도 설정 파일로 옮기는 것을 권장합니다.
+        SMTP_SERVER = "smtp.cafe24.com"
+        SMTP_PORT = 587
+        SMTP_USER = "lensgrapick@dkmv.co.kr"
+        SMTP_PASSWORD = "lgp00100"
+
+        # 이메일 메시지 생성 (MIMEMultipart 사용)
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USER
+        msg['To'] = email.to_email
+        msg['Subject'] = email.subject
+        msg.attach(MIMEText(email.body, 'plain'))
+
+        # SSL 컨텍스트 설정을 더 유연하게 수정
         context = ssl.create_default_context()
-        context.minimum_version = ssl.TLSVersion.TLSv1_2  # TLS 1.2 이상 강제
-        context.set_ciphers("DEFAULT@SECLEVEL=1")  # 호환성 강화를 위해 낮은 보안 레벨
+        # 보안 수준을 낮추고 더 많은 암호화 방식을 허용
+        context.set_ciphers('DEFAULT@SECLEVEL=1')
+        # 인증서 검증을 비활성화 (테스트 환경에서만 사용)
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
 
-        # SMTP 서버 연결
-        if SMTP_PORT == 465:
-            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context, timeout=30)
-        else:
-            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=30)
-            server.set_debuglevel(1)  # 디버깅 활성화
-            server.starttls(context=context)
+        try:
+            # 방법 1: STARTTLS를 사용한 연결
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls(context=context)
+                server.login(SMTP_USER, SMTP_PASSWORD)
+                server.sendmail(SMTP_USER, email.to_email, msg.as_string())
 
-        server.login("lensgrapick", "lgp00100")
-        server.send_message(msg)
-        server.quit()
+        except Exception as starttls_error:
+            print(f"STARTTLS 연결 실패: {starttls_error}")
+
+            # 방법 2: SSL 직접 연결 (포트 465 사용)
+            try:
+                with smtplib.SMTP_SSL(SMTP_SERVER, 465, context=context) as server:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.sendmail(SMTP_USER, email.to_email, msg.as_string())
+
+            except Exception as ssl_error:
+                print(f"SSL 직접 연결 실패: {ssl_error}")
+
+                # 방법 3: 암호화 없이 연결 (보안상 권장하지 않음)
+                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.sendmail(SMTP_USER, email.to_email, msg.as_string())
+
         return {"message": "Email sent successfully"}
+
+    except smtplib.SMTPAuthenticationError:
+        raise HTTPException(status_code=500, detail="SMTP 인증에 실패했습니다. 아이디 또는 비밀번호를 확인하세요.")
+    except smtplib.SMTPException as e:
+        raise HTTPException(status_code=500, detail=f"이메일 전송 중 SMTP 오류가 발생했습니다: {e}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"예기치 않은 오류가 발생했습니다: {e}")

@@ -20,6 +20,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # OAuth2 스킴 정의, tokenUrl은 로그인 엔드포인트를 가리킵니다.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+def verify_token(token: str):
+    """토큰 검증"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
