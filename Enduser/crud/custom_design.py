@@ -3,9 +3,6 @@ from sqlalchemy import func, or_
 from db import models
 from typing import Optional, Dict, Any
 import math
-import base64
-import io
-from PIL import Image
 from services.storage_service import storage_service
 from fastapi import UploadFile
 
@@ -155,75 +152,33 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
     }
 
 
-def create_custom_design(db: Session, design_data: Dict[str, Any], user_id: str) -> models.CustomDesign:
-    """커스텀 디자인 생성 - Manager 버전과 동일한 구조"""
+def create_custom_design(
+        db: Session,
+        form_data: Dict[str, Any],
+        user_id: str,
+        main_image_url: Optional[str] = None
+) -> models.CustomDesign:
+    """커스텀 디자인 생성 - Form 데이터와 업로드된 이미지 URL 방식"""
 
-    # 이미지 데이터 처리 (Base64를 UploadFile로 변환하여 S3에 업로드)
-    image_data = design_data.get("image_data")
-    main_image_url = None
-
-    if image_data:
-        try:
-            # Base64에서 헤더 제거 (data:image/png;base64, 등)
-            if ',' in image_data:
-                image_data = image_data.split(',')[1]
-
-            # Base64 디코딩
-            image_bytes = base64.b64decode(image_data)
-
-            # PIL로 이미지 검증 및 처리
-            image = Image.open(io.BytesIO(image_bytes))
-
-            # PNG 형식으로 변환
-            img_buffer = io.BytesIO()
-            image.save(img_buffer, format='PNG')
-            img_buffer.seek(0)
-
-            # UploadFile 객체 생성
-            class FakeUploadFile:
-                def __init__(self, content, filename, content_type):
-                    self.file = io.BytesIO(content)
-                    self.filename = filename
-                    self.content_type = content_type
-
-                def read(self, size=-1):
-                    return self.file.read(size)
-
-            fake_file = FakeUploadFile(
-                img_buffer.getvalue(),
-                f"{design_data['item_name']}.png",
-                "image/png"
-            )
-
-            # S3에 업로드
-            upload_result = storage_service.upload_file(fake_file)
-
-            if upload_result:
-                main_image_url = upload_result["public_url"]
-
-        except Exception as e:
-            print(f"이미지 업로드 실패: {e}")
-            pass  # 이미지 업로드 실패 시 None으로 유지
-
-    # 커스텀 디자인 생성 - Manager와 동일한 구조
+    # 커스텀 디자인 생성
     db_design = models.CustomDesign(
         user_id=user_id,
-        item_name=design_data["item_name"],
-        main_image_url=main_image_url,
-        design_line_image_id=design_data.get("design_line", {}).get("image_id"),
-        design_line_color_id=design_data.get("design_line", {}).get("RGB_id"),
-        design_base1_image_id=design_data.get("design_base1", {}).get("image_id"),
-        design_base1_color_id=design_data.get("design_base1", {}).get("RGB_id"),
-        design_base2_image_id=design_data.get("design_base2", {}).get("image_id"),
-        design_base2_color_id=design_data.get("design_base2", {}).get("RGB_id"),
-        design_pupil_image_id=design_data.get("design_pupil", {}).get("image_id"),
-        design_pupil_color_id=design_data.get("design_pupil", {}).get("RGB_id"),
-        line_transparency=str(design_data.get("design_line", {}).get("opacity", 100)),
-        base1_transparency=str(design_data.get("design_base1", {}).get("opacity", 100)),
-        base2_transparency=str(design_data.get("design_base2", {}).get("opacity", 100)),
-        pupil_transparency=str(design_data.get("design_pupil", {}).get("opacity", 100)),
-        graphic_diameter=design_data.get("graphic_diameter"),
-        optic_zone=design_data.get("optic_zone"),
+        item_name=form_data["item_name"],
+        main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
+        design_line_image_id=form_data.get("design_line_image_id"),
+        design_line_color_id=form_data.get("design_line_color_id"),
+        design_base1_image_id=form_data.get("design_base1_image_id"),
+        design_base1_color_id=form_data.get("design_base1_color_id"),
+        design_base2_image_id=form_data.get("design_base2_image_id"),
+        design_base2_color_id=form_data.get("design_base2_color_id"),
+        design_pupil_image_id=form_data.get("design_pupil_image_id"),
+        design_pupil_color_id=form_data.get("design_pupil_color_id"),
+        line_transparency=form_data.get("line_transparency", "100"),
+        base1_transparency=form_data.get("base1_transparency", "100"),
+        base2_transparency=form_data.get("base2_transparency", "100"),
+        pupil_transparency=form_data.get("pupil_transparency", "100"),
+        graphic_diameter=form_data.get("graphic_diameter"),
+        optic_zone=form_data.get("optic_zone"),
         status="1"  # 완료 상태로 설정
     )
 
@@ -234,6 +189,7 @@ def create_custom_design(db: Session, design_data: Dict[str, Any], user_id: str)
     return db_design
 
 
+
 def get_user_custom_designs_paginated(
         db: Session,
         user_id: str,
@@ -241,10 +197,11 @@ def get_user_custom_designs_paginated(
         size: int = 10,
         orderBy: Optional[str] = None
 ) -> Dict[str, Any]:
-    """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회 - Manager 버전과 동일한 구조"""
+    """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회"""
 
     query = db.query(models.CustomDesign).filter(
-        models.CustomDesign.user_id == user_id
+        models.CustomDesign.user_id == user_id,
+        models.CustomDesign.status == "1"  # 완료된 디자인만 조회
     )
 
     # 정렬

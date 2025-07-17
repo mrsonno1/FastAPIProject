@@ -60,18 +60,6 @@ class CustomDesignDetailResponse(BaseModel):
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
 
-# 커스텀 디자인 생성 요청
-class CustomDesignCreateRequest(BaseModel):
-    item_name: str
-    image_data: str
-    design_line: Optional[DesignComponent] = None
-    design_base1: Optional[DesignComponent] = None
-    design_base2: Optional[DesignComponent] = None
-    design_pupil: Optional[DesignComponent] = None
-    graphic_diameter: Optional[str] = None
-    optic_zone: Optional[str] = None
-    color_name: str
-
 # 커스텀 디자인 생성 응답
 class CustomDesignCreateResponse(BaseModel):
     id: int

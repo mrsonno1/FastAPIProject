@@ -4,7 +4,7 @@
 POST {{host}}{{api_prefix}}/login/
 Content-Type: application/x-www-form-urlencoded
 
-username=admin&password=123456
+username=sontest&password=1234567
 
 > {%
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
@@ -97,10 +97,6 @@ GET {{host}}{{api_prefix}}/colors/list?page=1&size=10&color_name=빨강
 Authorization: {{superadmin_token}}
 
 ### 11. 내 커스텀 디자인 목록 조회
-GET {{host}}{{api_prefix}}/my-designs/list2
-Authorization: {{superadmin_token}}
-
-### 11. 내 커스텀 디자인 목록 조회
 GET {{host}}{{api_prefix}}/my-designs/list?page=1&size=10
 Authorization: {{superadmin_token}}
 
@@ -108,38 +104,82 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/my-designs/1
 Authorization: {{superadmin_token}}
 
-### 13. 커스텀 디자인 생성
+### 13. 커스텀 디자인 생성 (File 업로드 방식)
 POST {{host}}{{api_prefix}}/my-designs
 Authorization: {{superadmin_token}}
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=boundary
 
-{
-  "item_name": "나만의 디자인 001",
-  "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-  "design_line": {
-    "image_id": "1",
-    "RGB_id": "10",
-    "opacity": 80
-  },
-  "design_base1": {
-    "image_id": "2",
-    "RGB_id": "11",
-    "opacity": 90
-  },
-  "design_base2": {
-    "image_id": "3",
-    "RGB_id": "12",
-    "opacity": 70
-  },
-  "design_pupil": {
-    "image_id": "4",
-    "RGB_id": "13",
-    "opacity": 100
-  },
-  "graphic_diameter": "13.2mm",
-  "optic_zone": "10mm",
-  "color_name": "블루 스카이"
-}
+--boundary
+Content-Disposition: form-data; name="item_name"
+
+나만의 디자인 0014
+--boundary
+Content-Disposition: form-data; name="color_name"
+
+블루 스카이
+--boundary
+Content-Disposition: form-data; name="design_line_image_id"
+
+1
+--boundary
+Content-Disposition: form-data; name="design_line_color_id"
+
+10
+--boundary
+Content-Disposition: form-data; name="line_transparency"
+
+80
+--boundary
+Content-Disposition: form-data; name="design_base1_image_id"
+
+2
+--boundary
+Content-Disposition: form-data; name="design_base1_color_id"
+
+11
+--boundary
+Content-Disposition: form-data; name="base1_transparency"
+
+90
+--boundary
+Content-Disposition: form-data; name="design_base2_image_id"
+
+3
+--boundary
+Content-Disposition: form-data; name="design_base2_color_id"
+
+12
+--boundary
+Content-Disposition: form-data; name="base2_transparency"
+
+70
+--boundary
+Content-Disposition: form-data; name="design_pupil_image_id"
+
+4
+--boundary
+Content-Disposition: form-data; name="design_pupil_color_id"
+
+13
+--boundary
+Content-Disposition: form-data; name="pupil_transparency"
+
+100
+--boundary
+Content-Disposition: form-data; name="graphic_diameter"
+
+13.2mm
+--boundary
+Content-Disposition: form-data; name="optic_zone"
+
+10mm
+--boundary
+Content-Disposition: form-data; name="file"; filename="custom_design_preview.png"
+Content-Type: image/png
+
+< G:/image.png
+--boundary--
+
 
 ### ========================================
 ### 포트폴리오 관련 API
