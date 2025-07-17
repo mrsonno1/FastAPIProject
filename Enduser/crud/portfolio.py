@@ -3,8 +3,8 @@ from sqlalchemy import func, or_, and_
 from db import models
 from typing import Optional, List, Dict, Any
 import math
-import random
 from datetime import date, datetime
+from Enduser.crud import realtime_users as realtime_users_crud
 
 
 def get_portfolios_paginated(
@@ -62,8 +62,10 @@ def get_portfolios_paginated(
     # 결과 포맷팅
     formatted_items = []
     for portfolio in items:
-        # 실시간 유저수는 랜덤으로 생성 (실제 구현시에는 실제 데이터 사용)
-        realtime_users = random.randint(0, 100)
+        # 실시간 유저수 조회
+        realtime_users = realtime_users_crud.get_realtime_users_count(
+            db, 'portfolio', portfolio.design_name
+        )
 
         formatted_items.append({
             "item_name": portfolio.design_name,

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
+from sqlalchemy.exc import IntegrityError
 from db.database import get_db
 from Manager.admin.schemas import user as user_schema
 from Manager.admin.crud import user as user_crud
@@ -58,11 +58,30 @@ def register_user(user: user_schema.AdminUserCreate, db: Session = Depends(get_d
     if db_user_by_name:
         raise HTTPException(status_code=400, detail="이미 등록된 아이디입니다.")
 
-    # ▼▼▼ 이메일 중복 검사 로직 수정 ▼▼▼
-    if user.email:  # 이메일이 입력된 경우에만 검사
+
+    if user.email:
         db_user_by_email = user_crud.get_user_by_email(db, email=user.email)
         if db_user_by_email:
             raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
+
+        # create_user 함수를 try-except로 감싸서 데이터베이스 오류를 처리합니다.
+        try:
+            new_user = user_crud.create_user(db=db, user=user)
+            return new_user
+        except IntegrityError:
+            # 데이터베이스의 UNIQUE 제약 조건 위반 시 실행됩니다.
+            db.rollback()  # 트랜잭션을 롤백하여 세션을 깨끗한 상태로 만듭니다.
+            raise HTTPException(
+                status_code=409,  # 409 Conflict는 리소스 충돌을 의미합니다.
+                detail="이미 등록된 계정 코드입니다."
+            )
+        except Exception as e:
+            # 그 외 예기치 못한 오류 처리
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"계정 생성 중 예기치 못한 오류가 발생했습니다: {e}"
+            )
 
     return user_crud.create_user(db=db, user=user)
 

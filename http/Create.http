@@ -40,13 +40,13 @@ Content-Type: application/json
 
 {
     "permission": "superadmin",
-    "username": "sontest",
+    "username": "sontest23",
     "password": "1234567",
-    "email": "bba1@gmail.com",
+    "email": "bba13@gmail.com",
     "company_name": "넷스트림",
     "contact_name": "홍길동",
     "contact_phone": "01022334455",
-    "account_code": "DA"
+    "account_code": "DA22"
 }
 
 

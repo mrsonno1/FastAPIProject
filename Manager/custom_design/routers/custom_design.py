@@ -34,6 +34,7 @@ def create_new_custom_design(
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
 ):
+    """사용하지 않음."""
     last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
     next_id = (last.id + 1) if last else 1
     formatted_id = str(next_id).zfill(4)

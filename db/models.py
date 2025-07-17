@@ -1,5 +1,6 @@
 # db/models.py
-from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text, Boolean, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, DateTime, Text, Boolean, Date, ForeignKey, \
+    Index
 from sqlalchemy.sql import func
 from .database import Base
 from sqlalchemy.types import JSON
@@ -190,3 +191,49 @@ class Progressstatus(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class Cart(Base):
+    __tablename__ = "carts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(50), nullable=False, index=True)  # AdminUser의 username
+    item_name = Column(String(100), nullable=False)
+    main_image_url = Column(String, nullable=True)
+    category = Column(String(20), nullable=False)  # '커스텀디자인' 또는 '포트폴리오'
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'item_name', 'category', name='_user_item_category_uc'),
+    )
+
+
+class Share(Base):
+    __tablename__ = "shares"
+
+    id = Column(Integer, primary_key=True, index=True)
+    image_id = Column(String(50), unique=True, nullable=False, index=True)  # 고유 이미지 ID
+    user_id = Column(String(50), nullable=False)  # AdminUser의 username
+    item_name = Column(String(100), nullable=False)
+    category = Column(String(20), nullable=False)  # '커스텀디자인' 또는 '포트폴리오'
+    image_url = Column(String, nullable=False)  # S3 업로드된 이미지 URL
+    object_name = Column(String, nullable=True)  # S3 object name
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'item_name', 'category', name='_user_share_item_uc'),
+    )
+
+class RealtimeUser(Base):
+    __tablename__ = "realtime_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(50), nullable=False, index=True)  # AdminUser의 username
+    content_type = Column(String(20), nullable=False)  # 'portfolio' 또는 'released_product'
+    content_name = Column(String(100), nullable=False, index=True)  # design_name
+    entered_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'content_type', 'content_name', name='_user_content_uc'),
+        Index('idx_entered_at', 'entered_at'),  # 만료된 레코드 삭제를 위한 인덱스
+    )

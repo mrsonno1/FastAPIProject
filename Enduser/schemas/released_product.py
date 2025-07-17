@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List, Optional
 from datetime import datetime
 
 
@@ -15,28 +15,28 @@ class DesignComponent(BaseModel):
     opacity: Optional[int] = 100
 
 
-# 포트폴리오 목록 아이템
-class PortfolioListItem(BaseModel):
+# 출시 제품 목록 아이템
+class ReleasedProductListItem(BaseModel):
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
-    realtime_users: int = 0  # 실시간 유저수 (인기순 정렬시 사용)
-    created_at: datetime  # 생성일시 (최신순 정렬시 사용)
+    brand_name: str  # 브랜드 이름
+    realtime_users: int = 0  # 실시간 유저수
 
     class Config:
         from_attributes = True
 
 
-# 포트폴리오 목록 응답
-class PaginatedPortfolioResponse(BaseModel):
+# 출시 제품 목록 응답
+class PaginatedReleasedProductResponse(BaseModel):
     total_count: int
     total_pages: int
     page: int
     size: int
-    items: List[PortfolioListItem]
+    items: List[ReleasedProductListItem]
 
 
-# 포트폴리오 상세 조회 응답
-class PortfolioDetailResponse(BaseModel):
+# 출시 제품 상세 정보 응답
+class ReleasedProductDetailResponse(BaseModel):
     item_name: str  # 디자인 이름
     color_name: str  # 디자인 컬러 이름
     design_line: Optional[DesignComponent] = None  # 라인 디자인 정보
@@ -45,6 +45,8 @@ class PortfolioDetailResponse(BaseModel):
     design_pupil: Optional[DesignComponent] = None  # 동공 디자인 정보
     graphic_diameter: Optional[str] = None  # 그래픽 직경
     optic_zone: Optional[str] = None  # 옵틱존
+    brand_name: str  # 브랜드 이름
+    realtime_users: int = 0  # 실시간 유저수
 
 
 # 실시간 유저수 응답

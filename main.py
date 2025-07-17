@@ -4,6 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from Enduser.routers import login as enduser_login_router
 from Enduser.routers import custom_design as enduser_custom_design_router
 from Enduser.routers import portfolio as enduser_portfolio_router
+from Enduser.routers import cart as enduser_cart_router  # 추가
+from Enduser.routers import sample as enduser_sample_router  # 추가
+from Enduser.routers import brand as enduser_brand_router  # 추가
+from Enduser.routers import released_product as enduser_released_product_router  # 추가
+from Enduser.routers import share as enduser_share_router  # 추가
 from Enduser import Email
 from Manager.released_product.routers import released_product
 from Manager.portfolio.routers import portfolio
@@ -89,6 +94,11 @@ unity_router = APIRouter(prefix="/unity")
 unity_router.include_router(enduser_login_router.router)
 unity_router.include_router(enduser_custom_design_router.router)
 unity_router.include_router(enduser_portfolio_router.router)
+unity_router.include_router(enduser_cart_router.router)  # 추가
+unity_router.include_router(enduser_sample_router.router)  # 추가
+unity_router.include_router(enduser_brand_router.router)  # 추가
+unity_router.include_router(enduser_released_product_router.router)  # 추가
+unity_router.include_router(enduser_share_router.router)  # 추가
 
 unity_router.include_router(Email.router)
 

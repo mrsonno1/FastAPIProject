@@ -1,45 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional
 from db.database import get_db
 from db import models
 from core.security import get_current_user
-from Enduser.schemas import portfolio as portfolio_schema
-from Enduser.crud import portfolio as portfolio_crud
+from Enduser.schemas import released_product as released_product_schema
+from Enduser.crud import released_product as released_product_crud
 from Enduser.crud import realtime_users as realtime_users_crud
 import math
 
-router = APIRouter(tags=["Portfolio"])
+router = APIRouter(tags=["Released Product"])
 
 
-@router.get("/portfolio/list", response_model=portfolio_schema.PaginatedPortfolioResponse)
-def get_portfolio_list(
+@router.get("/released_product/list", response_model=released_product_schema.PaginatedReleasedProductResponse)
+def get_released_product_list(
         page: int = Query(1, ge=1, description="페이지 번호"),
         size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
-        exposed_countries: Optional[List[str]] = Query(None, description="노출 국가 ID 필터링"),
-        is_fixed_axis: Optional[str] = Query(None, description="축고정 여부 필터링 (Y/N)"),
+        brand_name: Optional[str] = Query(None, description="브랜드 이름"),
         item_name: Optional[str] = Query(None, description="디자인 이름으로 검색"),
         orderBy: Optional[str] = Query("popularity", description="정렬 기준 (popularity: 인기순-기본값, latest: 최신순)"),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """
-    포트폴리오 목록 조회
-
-    - exposed_countries: 노출 국가 ID 목록으로 필터링
-    - is_fixed_axis: 축고정 여부로 필터링 (Y 또는 N)
-    - item_name: 디자인 이름으로 검색
-    - orderBy: 정렬 기준
-      - popularity: 인기순 (기본값) - 조회수 기준, 동일한 경우 디자인명 ABC순
-      - latest: 최신순 - 생성일 기준
-    """
-
-    # is_fixed_axis 검증
-    if is_fixed_axis and is_fixed_axis not in ['Y', 'N']:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="is_fixed_axis는 'Y' 또는 'N'이어야 합니다."
-        )
+    """선택된 브랜드에 해당하는 디자인 목록 조회"""
 
     # orderBy 검증
     if orderBy not in ['popularity', 'latest']:
@@ -48,12 +31,11 @@ def get_portfolio_list(
             detail="orderBy는 'popularity' 또는 'latest'여야 합니다."
         )
 
-    paginated_data = portfolio_crud.get_portfolios_paginated(
+    paginated_data = released_product_crud.get_released_products_paginated(
         db=db,
         page=page,
         size=size,
-        exposed_countries=exposed_countries,
-        is_fixed_axis=is_fixed_axis,
+        brand_name=brand_name,
         item_name=item_name,
         orderBy=orderBy
     )
@@ -61,7 +43,7 @@ def get_portfolio_list(
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
-    return portfolio_schema.PaginatedPortfolioResponse(
+    return released_product_schema.PaginatedReleasedProductResponse(
         total_count=total_count,
         total_pages=total_pages,
         page=page,
@@ -70,69 +52,68 @@ def get_portfolio_list(
     )
 
 
-@router.get("/portfolio/{item_name}", response_model=portfolio_schema.PortfolioDetailResponse)
-def get_portfolio_detail(
+@router.get("/released_product/{item_name}", response_model=released_product_schema.ReleasedProductDetailResponse)
+def get_released_product_detail(
         item_name: str,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
-    포트폴리오 디자인 항목 조회
+    선택된 디자인 정보 조회
 
-    디자인 이름으로 포트폴리오의 상세 정보를 조회합니다.
+    디자인 이름으로 출시 제품의 상세 정보를 조회합니다.
     조회시 조회수가 증가합니다.
     """
 
-    portfolio_detail = portfolio_crud.get_portfolio_detail(
+    product_detail = released_product_crud.get_released_product_detail(
         db=db,
         item_name=item_name
     )
 
-    if not portfolio_detail:
+    if not product_detail:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="포트폴리오를 찾을 수 없습니다."
+            detail="출시 제품을 찾을 수 없습니다."
         )
 
-    return portfolio_schema.PortfolioDetailResponse(**portfolio_detail)
+    return released_product_schema.ReleasedProductDetailResponse(**product_detail)
 
 
-@router.post("/portfolio/enter/{item_name}", response_model=portfolio_schema.RealtimeUsersResponse)
-def enter_portfolio(
+@router.post("/released_product/enter/{item_name}", response_model=released_product_schema.RealtimeUsersResponse)
+def enter_released_product(
         item_name: str,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """조회된 디자인 실시간 유저수 +1"""
 
-    # 포트폴리오 존재 확인
-    portfolio = db.query(models.Portfolio).filter(
-        models.Portfolio.design_name == item_name,
-        models.Portfolio.is_deleted == False
+    # 출시제품 존재 확인
+    product = db.query(models.Releasedproduct).filter(
+        models.Releasedproduct.design_name == item_name
     ).first()
 
-    if not portfolio:
+    if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="포트폴리오를 찾을 수 없습니다."
+            detail="출시 제품을 찾을 수 없습니다."
         )
 
     # 유저 입장 처리
     realtime_users = realtime_users_crud.enter_content(
         db=db,
         user_id=current_user.username,
-        content_type='portfolio',
+        content_type='released_product',
         content_name=item_name
     )
 
-    return portfolio_schema.RealtimeUsersResponse(
+    return released_product_schema.RealtimeUsersResponse(
         item_name=item_name,
         realtime_users=realtime_users
     )
 
 
-@router.post("/portfolio/leave/{item_name}", response_model=portfolio_schema.RealtimeUsersResponse)
-def leave_portfolio(
+@router.post("/released_product/leave/{item_name}", response_model=released_product_schema.RealtimeUsersResponse)
+def leave_released_product(
         item_name: str,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
@@ -143,18 +124,19 @@ def leave_portfolio(
     realtime_users = realtime_users_crud.leave_content(
         db=db,
         user_id=current_user.username,
-        content_type='portfolio',
+        content_type='released_product',
         content_name=item_name
     )
 
-    return portfolio_schema.RealtimeUsersResponse(
+    return released_product_schema.RealtimeUsersResponse(
         item_name=item_name,
         realtime_users=realtime_users
     )
 
 
-@router.get("/portfolio/realtime-users/{item_name}", response_model=portfolio_schema.RealtimeUsersResponse)
-def get_portfolio_realtime_users(
+@router.get("/released_product/realtime-users/{item_name}",
+            response_model=released_product_schema.RealtimeUsersResponse)
+def get_released_product_realtime_users(
         item_name: str,
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
@@ -163,11 +145,11 @@ def get_portfolio_realtime_users(
 
     realtime_users = realtime_users_crud.get_realtime_users_count(
         db=db,
-        content_type='portfolio',
+        content_type='released_product',
         content_name=item_name
     )
 
-    return portfolio_schema.RealtimeUsersResponse(
+    return released_product_schema.RealtimeUsersResponse(
         item_name=item_name,
         realtime_users=realtime_users
     )
