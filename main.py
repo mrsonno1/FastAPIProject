@@ -3,6 +3,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from Enduser.routers import login as enduser_login_router
 from Enduser.routers import custom_design as enduser_custom_design_router
+from Enduser.routers import portfolio as enduser_portfolio_router
 from Enduser import Email
 from Manager.released_product.routers import released_product
 from Manager.portfolio.routers import portfolio
@@ -86,8 +87,8 @@ app.add_middleware(
 
 unity_router = APIRouter(prefix="/unity")
 unity_router.include_router(enduser_login_router.router)
-
 unity_router.include_router(enduser_custom_design_router.router)
+unity_router.include_router(enduser_portfolio_router.router)
 
 unity_router.include_router(Email.router)
 

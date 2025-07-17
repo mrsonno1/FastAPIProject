@@ -244,8 +244,7 @@ def get_user_custom_designs_paginated(
     """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회 - Manager 버전과 동일한 구조"""
 
     query = db.query(models.CustomDesign).filter(
-        models.CustomDesign.user_id == user_id,
-        models.CustomDesign.status == "1"  # 완료된 디자인만 조회
+        models.CustomDesign.user_id == user_id
     )
 
     # 정렬

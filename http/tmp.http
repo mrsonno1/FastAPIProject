@@ -46,3 +46,145 @@ Content-Type: application/json
 ### 리프레쉬
 POST {{host}}{{api_prefix}}/login/refresh
 refresh-token: {{my_refresh_token}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 4. 토큰 갱신
+POST {{host}}{{api_prefix}}/login/refresh
+refresh-token: {{enduser_refresh_token}}
+
+### ========================================
+### 커스텀 디자인 관련 API
+### ========================================
+
+### 5. 이미지 목록 조회 (라인)
+GET {{host}}{{api_prefix}}/images/list?page=1&size=10&category=라인
+Authorization: {{superadmin_token}}
+
+### 6. 이미지 목록 조회 (바탕1)
+GET {{host}}{{api_prefix}}/images/list?page=1&size=10&category=바탕1
+Authorization: {{superadmin_token}}
+
+### 7. 이미지 목록 조회 (바탕2)
+GET {{host}}{{api_prefix}}/images/list?page=1&size=10&category=바탕2
+Authorization: {{superadmin_token}}
+
+### 8. 이미지 목록 조회 (동공)
+GET {{host}}{{api_prefix}}/images/list?page=1&size=10&category=동공
+Authorization: {{superadmin_token}}
+
+### 9. 색상 목록 조회
+GET {{host}}{{api_prefix}}/colors/list?page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 10. 색상 검색
+GET {{host}}{{api_prefix}}/colors/list?page=1&size=10&color_name=빨강
+Authorization: {{superadmin_token}}
+
+### 11. 내 커스텀 디자인 목록 조회
+GET {{host}}{{api_prefix}}/my-designs/list2
+Authorization: {{superadmin_token}}
+
+### 11. 내 커스텀 디자인 목록 조회
+GET {{host}}{{api_prefix}}/my-designs/list?page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 12. 내 커스텀 디자인 상세 조회
+GET {{host}}{{api_prefix}}/my-designs/1
+Authorization: {{superadmin_token}}
+
+### 13. 커스텀 디자인 생성
+POST {{host}}{{api_prefix}}/my-designs
+Authorization: {{superadmin_token}}
+Content-Type: application/json
+
+{
+  "item_name": "나만의 디자인 001",
+  "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "design_line": {
+    "image_id": "1",
+    "RGB_id": "10",
+    "opacity": 80
+  },
+  "design_base1": {
+    "image_id": "2",
+    "RGB_id": "11",
+    "opacity": 90
+  },
+  "design_base2": {
+    "image_id": "3",
+    "RGB_id": "12",
+    "opacity": 70
+  },
+  "design_pupil": {
+    "image_id": "4",
+    "RGB_id": "13",
+    "opacity": 100
+  },
+  "graphic_diameter": "13.2mm",
+  "optic_zone": "10mm",
+  "color_name": "블루 스카이"
+}
+
+### ========================================
+### 포트폴리오 관련 API
+### ========================================
+
+### 14. 포트폴리오 목록 조회 (기본 - 인기순)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 15. 포트폴리오 목록 조회 (최신순)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&orderBy=latest
+Authorization: {{superadmin_token}}
+
+### 16. 포트폴리오 목록 조회 (인기순 명시)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&orderBy=popularity
+Authorization: {{superadmin_token}}
+
+### 17. 포트폴리오 목록 조회 (축고정 Y 필터)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&is_fixed_axis=Y
+Authorization: {{superadmin_token}}
+
+### 18. 포트폴리오 목록 조회 (축고정 N 필터)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&is_fixed_axis=N
+Authorization: {{superadmin_token}}
+
+### 19. 포트폴리오 목록 조회 (국가 필터 - 단일)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&exposed_countries=1
+Authorization: {{superadmin_token}}
+
+### 20. 포트폴리오 목록 조회 (국가 필터 - 복수)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&exposed_countries=1&exposed_countries=2&exposed_countries=3
+Authorization: {{superadmin_token}}
+
+### 21. 포트폴리오 목록 조회 (디자인명 검색)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&item_name=BLUE
+Authorization: {{superadmin_token}}
+
+### 22. 포트폴리오 목록 조회 (복합 필터)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&is_fixed_axis=Y&exposed_countries=1&exposed_countries=2&item_name=SIMPLE&orderBy=latest
+Authorization: {{superadmin_token}}
+
+### 23. 포트폴리오 상세 조회
+GET {{host}}{{api_prefix}}/portfolio/SIMPLE_BLUE_V188
+Authorization: {{superadmin_token}}
+
+### 24. 포트폴리오 상세 조회 (존재하지 않는 디자인)
+GET {{host}}{{api_prefix}}/portfolio/NOT_EXIST_DESIGN
+Authorization: {{superadmin_token}}
