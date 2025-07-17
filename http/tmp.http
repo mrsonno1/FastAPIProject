@@ -4,7 +4,7 @@
 POST {{host}}{{api_prefix}}/login/
 Content-Type: application/x-www-form-urlencoded
 
-username=sontest&password=1234567
+username=admin&password=123456
 
 > {%
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
