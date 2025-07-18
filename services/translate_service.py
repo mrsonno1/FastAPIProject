@@ -1,4 +1,4 @@
-from googletrans import Googletrans
+from deep_translator import GoogleTranslator
 from typing import Optional, List
 from functools import lru_cache
 import logging
@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class TranslateService:
     def __init__(self):
-        self.translator = Googletrans()
+        pass  # GoogleTranslator는 인스턴스별로 생성
 
     @lru_cache(maxsize=1000)
     def translate_text(self, text: str, target_lang: str, source_lang: str = 'ko') -> str:
@@ -17,8 +17,9 @@ class TranslateService:
             return text
 
         try:
-            result = self.translator.translate(text, dest=target_lang, src=source_lang)
-            return result.text
+            translator = GoogleTranslator(source=source_lang, target=target_lang)
+            result = translator.translate(text)
+            return result
         except Exception as e:
             logger.error(f"Translation error: {e}")
             return text  # 번역 실패 시 원본 반환

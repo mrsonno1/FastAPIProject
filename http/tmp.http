@@ -62,9 +62,35 @@ refresh-token: {{my_refresh_token}}
 
 
 
+### 2. 한국어로 설정
+GET {{host}}{{api_prefix}}/locale_kr
+Authorization: {{superadmin_token}}
 
 
+### 3. 영어로 설정
+GET {{host}}{{api_prefix}}/locale_en
+Authorization: {{superadmin_token}}
 
+
+### 4. 브랜드 목록 조회 (현재 설정된 언어로 표시됨)
+GET {{host}}{{api_prefix}}/brands/list?page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 5. 포트폴리오 목록 조회 (exposed_countries가 번역됨)
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 6. 포트폴리오 상세 조회 (exposed_countries가 번역됨)
+GET {{host}}{{api_prefix}}/portfolio/SIMPLE_BLUE_114
+Authorization: {{superadmin_token}}
+
+### 7. 출시제품 목록 조회 (brand_name이 번역됨)
+GET {{host}}{{api_prefix}}/released_product/list?page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 8. 출시제품 상세 조회 (brand_name이 번역됨)
+GET {{host}}{{api_prefix}}/released_product/334
+Authorization: {{superadmin_token}}
 
 ### 3. 커스텀 디자인 생성 - Base64 방식 (이미지 포함)
 POST {{host}}/unity/my-designs/base64

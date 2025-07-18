@@ -18,10 +18,15 @@ from Manager.custom_design.routers import custom_design
 from Manager.country.routers import country
 from Manager.color.routers import color
 from Manager.brand.routers import brand
-from Manager.admin.routers import auth, admin
+from Manager.admin.routers import auth, admin, database
 from Manager.rank.routers import rank as rank
 from Manager.progress_status.routers import progress_status
 from db.database import engine, Base
+
+
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 # DB 테이블 생성 (프로덕션에서는 Alembic 같은 마이그레이션 도구 사용 권장)
 Base.metadata.create_all(bind=engine)
@@ -116,12 +121,25 @@ api_router.include_router(portfolio.router)
 api_router.include_router(released_product.router)
 api_router.include_router(rank.router)
 api_router.include_router(progress_status.router)
+api_router.include_router(database.router)
 
 app.include_router(api_router)
 app.include_router(unity_router)
 
+# HTML 페이지 라우트 추가
+@app.get("/admin/database", response_class=HTMLResponse,include_in_schema=False)
+async def database_manager():
+    """데이터베이스 관리 페이지"""
+    file_path = Path("templates/admin/database_manager.html")
+    if not file_path.exists():
+        # 파일이 없으면 생성
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        # 여기에 HTML 내용을 직접 작성하거나
+        return HTMLResponse(content="<h1>Database Manager HTML file not found</h1>")
 
+    with open(file_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
 
-@app.get("/")
+@app.get("/",include_in_schema=False)
 def read_root():
     return {"message": "Welcome to the FastAPI Token Auth System"}

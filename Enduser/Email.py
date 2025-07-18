@@ -31,7 +31,19 @@ def send_email_endpoint(email: EmailSchema = Body(...)):
         msg['From'] = SMTP_USER
         msg['To'] = email.to_email
         msg['Subject'] = email.subject
-        msg.attach(MIMEText(email.body, 'plain'))
+        image_url = email.body
+        data = f"""
+            <html>
+                <body>
+                    <h1>Title</h1>
+                    <p>This is a paragraph.</p>
+                    <img src="{image_url}">
+                </body>
+            </html>
+        """
+
+        msg.attach(MIMEText(data, 'html'))
+        #msg.attach(MIMEText(data, 'plain'))
 
         # SSL 컨텍스트 설정을 더 유연하게 수정
         context = ssl.create_default_context()

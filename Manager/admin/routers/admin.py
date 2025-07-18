@@ -10,7 +10,7 @@ from Manager.admin.schemas import user as user_schema
 from Manager.admin.crud import user as user_crud
 from core.security import get_current_user
 from db import models
-
+from . import database
 
 # 새로운 APIRouter 객체 생성
 router = APIRouter(

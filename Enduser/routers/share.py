@@ -191,7 +191,7 @@ def get_shared_image(
         category=shared_image.category,
         image_url=shared_image.image_url
     )
-
+"""
 
 @router.post("/share/email/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
 def share_image_by_email(
@@ -200,7 +200,7 @@ def share_image_by_email(
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """디자인 이미지 링크 이메일로 공유"""
+
 
     # 공유된 이미지 확인
     shared_image = share_crud.get_shared_image_detail(
@@ -228,3 +228,6 @@ def share_image_by_email(
         )
 
     return
+
+
+"""
