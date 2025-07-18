@@ -26,6 +26,9 @@ ALLOWED_TABLES = [
 READONLY_COLUMNS = ['id', 'created_at', 'updated_at', 'uploaded_at']
 
 
+
+
+
 @router.get("/tables", response_model=List[str])
 async def get_tables(
         current_user: models.AdminUser = Depends(get_current_user),
