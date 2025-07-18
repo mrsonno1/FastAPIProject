@@ -3,6 +3,8 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
 import uuid
+import io
+from typing import Dict, Optional
 
 from core.config import settings
 
@@ -61,6 +63,37 @@ class StorageService:
             print(f"Error uploading file: {e}")
             return None
 
+    def upload_base64_file(self, file_data: bytes, filename: str, content_type: str) -> Optional[Dict[str, str]]:
+        """Base64 디코딩된 파일 데이터를 업로드합니다."""
+        file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
+        object_name = f"uploads/{uuid.uuid4()}.{file_extension}"
+
+        extra_args = {'ContentType': content_type}
+        if settings.APP_ENV == 'production':
+            extra_args['ACL'] = 'public-read'
+
+        try:
+            # 바이트 데이터를 BytesIO 객체로 변환
+            file_obj = io.BytesIO(file_data)
+
+            self.s3_client.upload_fileobj(
+                file_obj,
+                self.bucket_name,
+                object_name,
+                ExtraArgs=extra_args
+            )
+
+            # 환경에 따라 다른 Public URL 생성
+            if settings.APP_ENV == 'production':
+                public_url = f"https://{self.bucket_name}.s3.{settings.AWS_S3_REGION}.amazonaws.com/{object_name}"
+            else:  # local
+                public_url = f"http://{settings.MINIO_ENDPOINT}/{self.bucket_name}/{object_name}"
+
+            return {"object_name": object_name, "public_url": public_url}
+        except ClientError as e:
+            print(f"Error uploading base64 file: {e}")
+            return None
+
     def delete_file(self, object_name: str) -> bool:
         try:
             self.s3_client.delete_object(Bucket=self.bucket_name, Key=object_name)
@@ -68,5 +101,6 @@ class StorageService:
         except ClientError as e:
             print(f"Error deleting file: {e}")
             return False
+
 
 storage_service = StorageService()

@@ -5,9 +5,10 @@ from db.database import get_db
 from db import models
 from core.security import get_current_user
 from Enduser.schemas import custom_design as custom_design_schema
+from Enduser.schemas import base64_upload as base64_schema  # 추가
 from Enduser.crud import custom_design as custom_design_crud
 import math
-from services.storage_service import storage_service  # 추가
+from services.storage_service import storage_service
 
 router = APIRouter(tags=["Custom Design"])
 
@@ -114,6 +115,7 @@ def get_my_designs_list(
         items=items
     )
 
+
 @router.get("/my-designs/{design_id}", response_model=custom_design_schema.CustomDesignDetailResponse)
 def get_my_design_detail(
         design_id: int,
@@ -137,6 +139,7 @@ def get_my_design_detail(
     return custom_design_schema.CustomDesignDetailResponse(**design_detail)
 
 
+# 기존 Form/File 업로드 방식 (하위 호환성 유지)
 @router.post("/my-designs", response_model=custom_design_schema.CustomDesignCreateResponse)
 def create_my_design(
         # Form 데이터로 받기
@@ -156,7 +159,6 @@ def create_my_design(
         pupil_transparency: Optional[str] = Form("100", description="동공 투명도"),
         graphic_diameter: Optional[str] = Form(None, description="그래픽 직경"),
         optic_zone: Optional[str] = Form(None, description="옵틱 존"),
-        # 파일 업로드 - 파라미터 이름을 'file'로 수정
         file: Optional[UploadFile] = File(None, description="메인 이미지 파일"),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
@@ -179,45 +181,20 @@ def create_my_design(
     main_image_url = None
     if file:
         try:
-            # 파일 검증
-            if not file.filename:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="파일 이름이 없습니다."
-                )
-
-            # 파일 형식 확인 (선택사항)
-            allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-            if file.content_type and file.content_type not in allowed_types:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"지원하지 않는 파일 형식입니다. 지원 형식: {', '.join(allowed_types)}"
-                )
-
-            print(f"업로드할 파일: {file.filename}, 타입: {file.content_type}")
-
-            # 파일 업로드
             upload_result = storage_service.upload_file(file)
             if not upload_result:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="이미지 업로드에 실패했습니다."
                 )
-
             main_image_url = upload_result["public_url"]
-            print(f"업로드 성공: {main_image_url}")
-
-        except HTTPException:
-            raise
         except Exception as e:
-            print(f"이미지 업로드 오류: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"이미지 업로드 중 오류가 발생했습니다: {str(e)}"
             )
 
     try:
-        # Form 데이터 구성
         form_data = {
             "item_name": item_name,
             "color_name": color_name,
@@ -237,12 +214,11 @@ def create_my_design(
             "optic_zone": optic_zone,
         }
 
-        # 커스텀 디자인 생성 - 업로드된 이미지 URL 포함
         created_design = custom_design_crud.create_custom_design(
             db=db,
             form_data=form_data,
             user_id=current_user.username,
-            main_image_url=main_image_url  # 업로드된 URL 직접 전달
+            main_image_url=main_image_url
         )
 
         return custom_design_schema.CustomDesignCreateResponse(
@@ -252,7 +228,97 @@ def create_my_design(
         )
 
     except Exception as e:
-        print(f"커스텀 디자인 생성 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"커스텀 디자인 생성 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+# 새로운 Base64 업로드 방식
+@router.post("/my-designs/base64", response_model=custom_design_schema.CustomDesignCreateResponse)
+def create_my_design_base64(
+        design_data: base64_schema.CustomDesignCreateWithBase64,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """커스텀디자인 완료 목록 추가 - Base64 업로드 방식 (Unity용)"""
+
+    # 디자인명 중복 검사
+    existing_design = db.query(models.CustomDesign).filter(
+        models.CustomDesign.item_name == design_data.item_name,
+        models.CustomDesign.user_id == current_user.username
+    ).first()
+
+    if existing_design:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 존재하는 디자인명입니다."
+        )
+
+    # Base64 이미지 업로드 처리
+    main_image_url = None
+    if design_data.main_image:
+        try:
+            # Base64 데이터를 바이트로 변환
+            image_bytes = design_data.main_image.to_bytes()
+
+            # Storage Service를 통해 업로드
+            upload_result = storage_service.upload_base64_file(
+                file_data=image_bytes,
+                filename=design_data.main_image.filename,
+                content_type=design_data.main_image.content_type
+            )
+
+            if not upload_result:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="이미지 업로드에 실패했습니다."
+                )
+
+            main_image_url = upload_result["public_url"]
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"이미지 업로드 중 오류가 발생했습니다: {str(e)}"
+            )
+
+    try:
+        # Form 데이터 구성
+        form_data = {
+            "item_name": design_data.item_name,
+            "color_name": design_data.color_name,
+            "design_line_image_id": design_data.design_line_image_id,
+            "design_line_color_id": design_data.design_line_color_id,
+            "line_transparency": design_data.line_transparency,
+            "design_base1_image_id": design_data.design_base1_image_id,
+            "design_base1_color_id": design_data.design_base1_color_id,
+            "base1_transparency": design_data.base1_transparency,
+            "design_base2_image_id": design_data.design_base2_image_id,
+            "design_base2_color_id": design_data.design_base2_color_id,
+            "base2_transparency": design_data.base2_transparency,
+            "design_pupil_image_id": design_data.design_pupil_image_id,
+            "design_pupil_color_id": design_data.design_pupil_color_id,
+            "pupil_transparency": design_data.pupil_transparency,
+            "graphic_diameter": design_data.graphic_diameter,
+            "optic_zone": design_data.optic_zone,
+        }
+
+        # 커스텀 디자인 생성
+        created_design = custom_design_crud.create_custom_design(
+            db=db,
+            form_data=form_data,
+            user_id=current_user.username,
+            main_image_url=main_image_url
+        )
+
+        return custom_design_schema.CustomDesignCreateResponse(
+            id=created_design.id,
+            item_name=created_design.item_name,
+            main_image_url=created_design.main_image_url or ""
+        )
+
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"커스텀 디자인 생성 중 오류가 발생했습니다: {str(e)}"

@@ -98,9 +98,9 @@ unity_router.include_router(enduser_cart_router.router)  # 추가
 unity_router.include_router(enduser_sample_router.router)  # 추가
 unity_router.include_router(enduser_brand_router.router)  # 추가
 unity_router.include_router(enduser_released_product_router.router)  # 추가
-unity_router.include_router(enduser_share_router.router)  # 추가
+#unity_router.include_router(enduser_share_router.router)  # 추가
 
-unity_router.include_router(Email.router)
+#unity_router.include_router(Email.router)
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth.router)

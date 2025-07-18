@@ -66,6 +66,37 @@ refresh-token: {{my_refresh_token}}
 
 
 
+### 3. 커스텀 디자인 생성 - Base64 방식 (이미지 포함)
+POST {{host}}/unity/my-designs/base64
+Authorization: {{superadmin_token}}
+Content-Type: application/json
+
+{
+  "item_name": "d0023",
+  "color_name": "Unity 레드",
+  "design_line_image_id": "1",
+  "design_line_color_id": "10",
+  "line_transparency": "85",
+  "design_base1_image_id": "2",
+  "design_base1_color_id": "11",
+  "base1_transparency": "95",
+  "design_base2_image_id": "3",
+  "design_base2_color_id": "12",
+  "base2_transparency": "75",
+  "design_pupil_image_id": "4",
+  "design_pupil_color_id": "13",
+  "pupil_transparency": "100",
+  "graphic_diameter": "13.5mm",
+  "optic_zone": "10.2mm",
+  "main_image": {
+    "filename": "unity_design.png",
+    "content_type": "image/png",
+    "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+  }
+}
+
+
+
 
 
 

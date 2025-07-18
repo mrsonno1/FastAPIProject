@@ -2,10 +2,11 @@ from sqlalchemy.dialects.postgresql import Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import models
-from typing import Optional
+from typing import Optional, Union
 import uuid
 import hashlib
 from services.storage_service import storage_service
+from fastapi import UploadFile
 
 
 def generate_unique_image_id(user_id: str, item_name: str, category: str) -> str:
@@ -21,7 +22,7 @@ def create_or_get_shared_image(
         user_id: str,
         item_name: str,
         category: str,
-        image_file: Any
+        image_file: Union[UploadFile, dict]  # UploadFile 또는 dict (base64 데이터)
 ) -> Optional[str]:
     """공유 이미지 생성 또는 기존 이미지 URL 반환"""
 
@@ -38,7 +39,17 @@ def create_or_get_shared_image(
         return existing_share.image_url
 
     # 이미지 업로드
-    upload_result = storage_service.upload_file(image_file)
+    if isinstance(image_file, UploadFile):
+        # 기존 파일 업로드 방식
+        upload_result = storage_service.upload_file(image_file)
+    else:
+        # Base64 업로드 방식 (dict 형태로 전달됨)
+        upload_result = storage_service.upload_base64_file(
+            file_data=image_file['data'],
+            filename=image_file['filename'],
+            content_type=image_file['content_type']
+        )
+
     if not upload_result:
         return None
 
