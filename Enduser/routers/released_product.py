@@ -8,6 +8,8 @@ from Enduser.schemas import released_product as released_product_schema
 from Enduser.crud import released_product as released_product_crud
 from Enduser.crud import realtime_users as realtime_users_crud
 import math
+from services.translate_service import translate_service
+from core.dependencies import get_current_language_dependency
 
 router = APIRouter(tags=["Released Product"])
 
@@ -20,7 +22,8 @@ def get_released_product_list(
         item_name: Optional[str] = Query(None, description="디자인 이름으로 검색"),
         orderBy: Optional[str] = Query("popularity", description="정렬 기준 (popularity: 인기순-기본값, latest: 최신순)"),
         db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user)
+        current_user: models.AdminUser = Depends(get_current_user),
+        language: str = Depends(get_current_language_dependency)  # 추가
 ):
     """선택된 브랜드에 해당하는 디자인 목록 조회"""
 
@@ -43,20 +46,33 @@ def get_released_product_list(
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
+    # 브랜드명 번역 처리
+    items = paginated_data["items"]
+    if language == 'en':
+        for item in items:
+            if 'brand_name' in item:
+                item['brand_name'] = translate_service.translate_text(
+                    item['brand_name'],
+                    target_lang='en',
+                    source_lang='ko'
+                )
+
     return released_product_schema.PaginatedReleasedProductResponse(
         total_count=total_count,
         total_pages=total_pages,
         page=page,
         size=size,
-        items=paginated_data["items"]
+        items=items
     )
 
 
+# get_released_product_detail 함수 수정 - Depends에 언어 추가
 @router.get("/released_product/{item_name}", response_model=released_product_schema.ReleasedProductDetailResponse)
 def get_released_product_detail(
         item_name: str,
         db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user)
+        current_user: models.AdminUser = Depends(get_current_user),
+        language: str = Depends(get_current_language_dependency)  # 추가
 ):
     """
     선택된 디자인 정보 조회
@@ -74,6 +90,14 @@ def get_released_product_detail(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="출시 제품을 찾을 수 없습니다."
+        )
+
+    # 브랜드명 번역 처리
+    if language == 'en' and 'brand_name' in product_detail:
+        product_detail['brand_name'] = translate_service.translate_text(
+            product_detail['brand_name'],
+            target_lang='en',
+            source_lang='ko'
         )
 
     return released_product_schema.ReleasedProductDetailResponse(**product_detail)

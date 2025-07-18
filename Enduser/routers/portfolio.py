@@ -8,7 +8,8 @@ from Enduser.schemas import portfolio as portfolio_schema
 from Enduser.crud import portfolio as portfolio_crud
 from Enduser.crud import realtime_users as realtime_users_crud
 import math
-
+from services.translate_service import translate_service
+from core.dependencies import get_current_language_dependency
 router = APIRouter(tags=["Portfolio"])
 
 
@@ -74,7 +75,8 @@ def get_portfolio_list(
 def get_portfolio_detail(
         item_name: str,
         db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user)
+        current_user: models.AdminUser = Depends(get_current_user),
+        language: str = Depends(get_current_language_dependency)  # 추가
 ):
     """
     포트폴리오 디자인 항목 조회
@@ -93,6 +95,16 @@ def get_portfolio_detail(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="포트폴리오를 찾을 수 없습니다."
         )
+
+    # 노출 국가 번역 처리
+    if language == 'en' and portfolio_detail.get('exposed_countries'):
+        countries = portfolio_detail['exposed_countries'].split(', ')
+        translated_countries = translate_service.translate_list(
+            countries,
+            target_lang='en',
+            source_lang='ko'
+        )
+        portfolio_detail['exposed_countries'] = ', '.join(translated_countries)
 
     return portfolio_schema.PortfolioDetailResponse(**portfolio_detail)
 

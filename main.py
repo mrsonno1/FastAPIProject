@@ -9,6 +9,7 @@ from Enduser.routers import sample as enduser_sample_router  # 추가
 from Enduser.routers import brand as enduser_brand_router  # 추가
 from Enduser.routers import released_product as enduser_released_product_router  # 추가
 from Enduser.routers import share as enduser_share_router  # 추가
+from Enduser.routers import language_setting as enduser_language_setting_router
 from Enduser import Email
 from Manager.released_product.routers import released_product
 from Manager.portfolio.routers import portfolio
@@ -98,9 +99,10 @@ unity_router.include_router(enduser_cart_router.router)  # 추가
 unity_router.include_router(enduser_sample_router.router)  # 추가
 unity_router.include_router(enduser_brand_router.router)  # 추가
 unity_router.include_router(enduser_released_product_router.router)  # 추가
-#unity_router.include_router(enduser_share_router.router)  # 추가
+unity_router.include_router(enduser_share_router.router)  # 추가
+unity_router.include_router(enduser_language_setting_router.router)
 
-#unity_router.include_router(Email.router)
+unity_router.include_router(Email.router)
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth.router)
