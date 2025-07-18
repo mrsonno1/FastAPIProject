@@ -127,7 +127,7 @@ app.include_router(api_router)
 app.include_router(unity_router)
 
 # HTML 페이지 라우트 추가
-@app.get("/admin/database", response_class=HTMLResponse,include_in_schema=False)
+@app.get("/admin/database", response_class=HTMLResponse)
 async def database_manager():
     """데이터베이스 관리 페이지"""
     file_path = Path("templates/admin/database_manager.html")
