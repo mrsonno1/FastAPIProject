@@ -148,6 +148,8 @@ def get_released_product_detail(db: Session, item_name: str) -> Optional[Dict[st
         "design_pupil": get_component_info(product.color_pupil_color_id),
         "graphic_diameter": product.graphic_diameter,
         "optic_zone": product.optic_zone,
+        "base_curve": product.base_curve,  # 추가
+        "g_dia": product.graphic_diameter,
         "brand_name": brand.brand_name,
         "realtime_users": realtime_users
     }

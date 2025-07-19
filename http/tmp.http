@@ -180,10 +180,6 @@ Authorization: {{superadmin_token}}
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
-Content-Disposition: form-data; name="item_name"
-
-나만의 디자인 0019
---boundary
 Content-Disposition: form-data; name="color_name"
 
 블루 스카이

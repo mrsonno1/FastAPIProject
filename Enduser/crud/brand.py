@@ -14,9 +14,9 @@ def get_brands_paginated(
 
     query = db.query(models.Brand)
 
-    # 브랜드명 검색
+    # 브랜드명 검색 (부분 일치)
     if brand_name:
-        query = query.filter(models.Brand.brand_name.contains(brand_name))
+        query = query.filter(models.Brand.brand_name.ilike(f"%{brand_name}%"))
 
     # 전체 카운트
     total_count = query.count()

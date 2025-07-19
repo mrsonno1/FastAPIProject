@@ -1,3 +1,4 @@
+# Enduser/routers/custom_design.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -98,12 +99,15 @@ def get_my_designs_list(
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
-    # 응답 형식에 맞게 변환
+    # 응답 형식에 맞게 변환 (status에 따른 item_name 표시 처리)
     items = []
     for design in paginated_data["items"]:
+        # status가 '1' 또는 '2'일 때 item_name을 "-"로 표시
+        display_item_name = "-" if design.status in ['1', '2'] else design.item_name
+
         items.append(custom_design_schema.CustomDesignListItem(
             id=design.id,
-            item_name=design.item_name,
+            item_name=display_item_name,
             main_image_url=design.main_image_url or ""
         ))
 
@@ -136,15 +140,20 @@ def get_my_design_detail(
             detail="커스텀 디자인을 찾을 수 없습니다."
         )
 
+    # design 상태 확인을 위해 DB에서 디자인 정보 가져오기
+    design = custom_design_crud.get_design_by_id(db, design_id, current_user.username)
+
+    # status가 '1' 또는 '2'일 때 item_name을 "-"로 표시
+    if design and design.status in ['1', '2']:
+        design_detail['item_name'] = "-"
+
     return custom_design_schema.CustomDesignDetailResponse(**design_detail)
 
 
 # 기존 Form/File 업로드 방식 (하위 호환성 유지)
 @router.post("/my-designs", response_model=custom_design_schema.CustomDesignCreateResponse)
 def create_my_design(
-        # Form 데이터로 받기
-        item_name: str = Form(..., description="디자인 이름"),
-        color_name: str = Form(..., description="색상 이름"),
+        # Form 데이터로 받기 (item_name 제거 - 자동생성)
         design_line_image_id: Optional[str] = Form(None, description="라인 이미지 ID"),
         design_line_color_id: Optional[str] = Form(None, description="라인 색상 ID"),
         line_transparency: Optional[str] = Form("100", description="라인 투명도"),
@@ -159,23 +168,22 @@ def create_my_design(
         pupil_transparency: Optional[str] = Form("100", description="동공 투명도"),
         graphic_diameter: Optional[str] = Form(None, description="그래픽 직경"),
         optic_zone: Optional[str] = Form(None, description="옵틱 존"),
+        request_message: Optional[str] = Form(None, description="요청 메시지"),
         file: Optional[UploadFile] = File(None, description="메인 이미지 파일"),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """커스텀디자인 완료 목록 추가 - File 업로드 방식"""
 
-    # 디자인명 중복 검사
-    existing_design = db.query(models.CustomDesign).filter(
-        models.CustomDesign.item_name == item_name,
-        models.CustomDesign.user_id == current_user.username
-    ).first()
+    # Manager/custom_design의 로직을 참고하여 item_name 자동 생성
+    last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
+    next_id = (last.id + 1) if last else 1
+    formatted_id = str(next_id).zfill(4)
+    new_code = f"{current_user.account_code}-{formatted_id}"
 
-    if existing_design:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 존재하는 디자인명입니다."
-        )
+    # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
+    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == new_code).first():
+        raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
 
     # 파일 업로드 처리
     main_image_url = None
@@ -196,8 +204,8 @@ def create_my_design(
 
     try:
         form_data = {
-            "item_name": item_name,
-            "color_name": color_name,
+            "item_name": new_code,  # 자동 생성된 코드 사용
+            "request_message": request_message,
             "design_line_image_id": design_line_image_id,
             "design_line_color_id": design_line_color_id,
             "line_transparency": line_transparency,
@@ -243,17 +251,15 @@ def create_my_design_base64(
 ):
     """커스텀디자인 완료 목록 추가 - Base64 업로드 방식 (Unity용)"""
 
-    # 디자인명 중복 검사
-    existing_design = db.query(models.CustomDesign).filter(
-        models.CustomDesign.item_name == design_data.item_name,
-        models.CustomDesign.user_id == current_user.username
-    ).first()
+    # Manager/custom_design의 로직을 참고하여 item_name 자동 생성
+    last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
+    next_id = (last.id + 1) if last else 1
+    formatted_id = str(next_id).zfill(4)
+    new_code = f"{current_user.account_code}-{formatted_id}"
 
-    if existing_design:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 존재하는 디자인명입니다."
-        )
+    # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
+    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == new_code).first():
+        raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
 
     # Base64 이미지 업로드 처리
     main_image_url = None
@@ -284,10 +290,10 @@ def create_my_design_base64(
             )
 
     try:
-        # Form 데이터 구성
+        # Form 데이터 구성 (item_name은 자동 생성된 값 사용)
         form_data = {
-            "item_name": design_data.item_name,
-            "color_name": design_data.color_name,
+            "item_name": new_code,  # 자동 생성된 코드 사용
+            "request_message": getattr(design_data, 'request_message', None),
             "design_line_image_id": design_data.design_line_image_id,
             "design_line_color_id": design_data.design_line_color_id,
             "line_transparency": design_data.line_transparency,

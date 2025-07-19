@@ -1,3 +1,4 @@
+# Enduser/crud/custom_design.py
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from db import models
@@ -165,6 +166,7 @@ def create_custom_design(
         user_id=user_id,
         item_name=form_data["item_name"],
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
+        request_message=form_data.get("request_message"),
         design_line_image_id=form_data.get("design_line_image_id"),
         design_line_color_id=form_data.get("design_line_color_id"),
         design_base1_image_id=form_data.get("design_base1_image_id"),
@@ -179,7 +181,7 @@ def create_custom_design(
         pupil_transparency=form_data.get("pupil_transparency", "100"),
         graphic_diameter=form_data.get("graphic_diameter"),
         optic_zone=form_data.get("optic_zone"),
-        status="1"  # 완료 상태로 설정
+        status="0"  # 기본값 '0' (대기) 상태로 설정
     )
 
     db.add(db_design)
@@ -200,8 +202,7 @@ def get_user_custom_designs_paginated(
     """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회"""
 
     query = db.query(models.CustomDesign).filter(
-        models.CustomDesign.user_id == user_id,
-        models.CustomDesign.status == "1"  # 완료된 디자인만 조회
+        models.CustomDesign.user_id == user_id
     )
 
     # 정렬

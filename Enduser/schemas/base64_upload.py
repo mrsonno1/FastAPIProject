@@ -1,3 +1,4 @@
+# Enduser/schemas/base64_upload.py
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import base64
@@ -47,8 +48,7 @@ class Base64File(BaseModel):
 
 class CustomDesignCreateWithBase64(BaseModel):
     """Base64 이미지를 포함한 커스텀 디자인 생성 요청"""
-    item_name: str = Field(..., description="디자인 이름")
-    color_name: str = Field(..., description="색상 이름")
+    # item_name과 color_name 제거 - 자동 생성됨
     design_line_image_id: Optional[str] = Field(None, description="라인 이미지 ID")
     design_line_color_id: Optional[str] = Field(None, description="라인 색상 ID")
     line_transparency: Optional[str] = Field("100", description="라인 투명도")
@@ -63,6 +63,7 @@ class CustomDesignCreateWithBase64(BaseModel):
     pupil_transparency: Optional[str] = Field("100", description="동공 투명도")
     graphic_diameter: Optional[str] = Field(None, description="그래픽 직경")
     optic_zone: Optional[str] = Field(None, description="옵틱 존")
+    request_message: Optional[str] = Field(None, description="요청 메시지")
     main_image: Optional[Base64File] = Field(None, description="메인 이미지 (Base64)")
 
 
