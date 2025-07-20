@@ -179,7 +179,7 @@ def create_progress_status_from_cart(
         client_name: str,
         number: str,
         address: str,
-        request_date: Optional[datetime] = None
+        request_note: Optional[str] = None
 ) -> bool:
     """장바구니 아이템으로부터 progress_status 생성"""
 
@@ -230,12 +230,12 @@ def create_progress_status_from_cart(
         custom_design_id=custom_design_id,
         portfolio_id=portfolio_id,
         status='0',  # 대기 상태
-        notes=f"{category} 샘플 제작 요청",
+        notes=request_note or f"{category} 샘플 제작 요청",
         client_name=client_name,
         number=number,
         address=address,
-        request_date=request_date or datetime.now(),
-        expected_shipping_date=(request_date or datetime.now()).date() + timedelta(days=10)
+        request_date=datetime.now(),
+        expected_shipping_date=datetime.now().date() + timedelta(days=10)
     )
 
     db.add(progress_status)

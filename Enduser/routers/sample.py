@@ -94,22 +94,11 @@ def create_sample_from_custom_design(
         client_name: str = Form(...),
         number: str = Form(...),
         address: str = Form(...),
-        request_date: Optional[str] = Form(None),
+        request_note: Optional[str] = Form(None),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """장바구니의 커스텀디자인을 샘플 요청(progress_status)으로 생성"""
-
-    # request_date 문자열을 datetime으로 변환
-    parsed_date = None
-    if request_date:
-        try:
-            parsed_date = datetime.fromisoformat(request_date)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="잘못된 날짜 형식입니다. ISO 형식(YYYY-MM-DDTHH:MM:SS)을 사용하세요."
-            )
 
     success = sample_crud.create_progress_status_from_cart(
         db=db,
@@ -119,7 +108,7 @@ def create_sample_from_custom_design(
         client_name=client_name,
         number=number,
         address=address,
-        request_date=parsed_date
+        request_note=request_note
     )
 
     if not success:
@@ -137,22 +126,11 @@ def create_sample_from_portfolio(
         client_name: str = Form(...),
         number: str = Form(...),
         address: str = Form(...),
-        request_date: Optional[str] = Form(None),
+        request_note: Optional[str] = Form(None),
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """장바구니의 포트폴리오를 샘플 요청(progress_status)으로 생성"""
-
-    # request_date 문자열을 datetime으로 변환
-    parsed_date = None
-    if request_date:
-        try:
-            parsed_date = datetime.fromisoformat(request_date)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="잘못된 날짜 형식입니다. ISO 형식(YYYY-MM-DDTHH:MM:SS)을 사용하세요."
-            )
 
     success = sample_crud.create_progress_status_from_cart(
         db=db,
@@ -162,7 +140,7 @@ def create_sample_from_portfolio(
         client_name=client_name,
         number=number,
         address=address,
-        request_date=parsed_date
+        request_note=request_note
     )
 
     if not success:
