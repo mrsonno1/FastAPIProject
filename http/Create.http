@@ -54,11 +54,12 @@ Content-Type: application/json
 
 ### 컬러 생성
 POST {{host}}{{api_prefix}}/colors/
+Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-  "color_name": "주황3",
-  "monochrome_type": "컬러",
+  "color_name": "0032",
+  "monochrome_type": "흑",
   "color_values": "255,0,0,0,100,100,0"
 }
 

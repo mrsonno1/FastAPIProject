@@ -8,6 +8,8 @@ from Manager.color.crud import color as color_crud
 from Manager.color.schemas.color import PaginatedColorResponse
 from typing import Optional
 from Manager.portfolio.schemas import portfolio as portfolio_schema
+from db import models
+from core.security import get_current_user
 
 router = APIRouter(prefix="/colors", tags=["Colors"])
 
@@ -17,7 +19,8 @@ def list_all_colors(
         size: int = Query(10, ge=1, le=10000, description="페이지 당 항목 수"),
         orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'color_name asc')"),
         searchText: Optional[str] = Query(None, description="통합 검색어"),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     모든 컬러 목록을 페이지네이션하여 조회합니다.
@@ -39,7 +42,7 @@ def list_all_colors(
     }
 
 @router.post("/", response_model=color_schema.ColorResponse, status_code=status.HTTP_201_CREATED)
-def create_new_color(color: color_schema.ColorCreate, db: Session = Depends(get_db)):
+def create_new_color(color: color_schema.ColorCreate, db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     """
     새로운 컬러를 등록합니다. 이름이 중복되면 에러가 발생합니다.
     """
@@ -52,9 +55,8 @@ def create_new_color(color: color_schema.ColorCreate, db: Session = Depends(get_
 @router.delete("/{color_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
 def delete_single_color(
     color_id: int,
-    db: Session = Depends(get_db)
-    # 필요 시, 인증/권한 검사 추가
-    # current_user: models.AdminUser = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     ID로 특정 컬러 데이터를 삭제합니다.
@@ -72,7 +74,7 @@ def delete_single_color(
 
 
 @router.get("/check/{color_name}", response_model=color_schema.NameCheckResponse)
-def check_color_name(color_name: str, db: Session = Depends(get_db)):
+def check_color_name(color_name: str, db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     """
     컬러 이름이 이미 존재하는지 확인합니다.
     """
@@ -85,7 +87,8 @@ def update_existing_color(
     color_update: color_schema.ColorUpdate,
     # 경로 변수 대신 쿼리 파라미터로 받습니다.
     color_name: str = Query(..., description="수정할 컬러의 정확한 이름"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     기존 컬러의 컬러 값과 흑백 타입을 수정합니다.
@@ -100,7 +103,8 @@ def update_existing_color(
 def search_single_color(
     # 경로 변수 대신 쿼리 파라미터로 받습니다.
     name: str = Query(..., description="검색할 컬러의 정확한 이름"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     컬러 이름으로 특정 컬러의 상세 정보를 조회합니다.
@@ -117,7 +121,8 @@ def fix_color_by_id(
     color_id: int,
     # 요청 본문은 그대로 Pydantic 스키마를 사용합니다.
     color_update: color_schema.ColorUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     ID로 특정 컬러를 찾아, 이름과 값을 수정합니다.

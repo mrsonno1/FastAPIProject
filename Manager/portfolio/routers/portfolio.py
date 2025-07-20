@@ -93,7 +93,8 @@ def create_new_portfolio(
 @router.delete("/{portfolio_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
 def delete_single_portfolio(
     portfolio_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 특정 포트폴리오를 삭제합니다."""
     try:
@@ -117,7 +118,8 @@ def list_all_portfolios(
         exposed_countries: Optional[List[str]] = Query(None, description="노출 국가 ID로 검색"),
         is_fixed_axis: Optional[str] = Query(None, description="고정 축 여부로 검색 (Y/N)"),
         orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'created_at desc', 'views asc')"),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     모든 포트폴리오 목록을 검색 조건과 함께 페이지네이션하여 조회합니다.
@@ -154,7 +156,8 @@ def list_all_portfolios(
 @router.get("/info/{portfolio_id}", response_model=portfolio_schema.PortfolioDetailApiResponse)
 def get_portfolio_detail(
     portfolio_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
     ):
 
     """
@@ -175,7 +178,8 @@ def get_portfolio_detail(
 @router.get("/{design_name}", response_model=portfolio_schema.PortfolioResponse)
 def read_single_portfolio(
         design_name: str,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     db_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, design_name=design_name)
     if db_portfolio is None:

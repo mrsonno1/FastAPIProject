@@ -146,7 +146,8 @@ def update_released_product_details(
 @router.delete("/{product_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
 def delete_single_released_product(
     product_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 특정 출시 제품을 삭제합니다."""
     try:
@@ -169,7 +170,8 @@ def list_all_released_products(
         color_name: Optional[str] = Query(None, description="컬러명으로 검색"),
         brandname: Optional[str] = Query(None, description="브랜드명으로 검색"),
         orderBy: Optional[str] = Query(None, description="정렬 기준 (예: 'created_at desc', 'views asc')"),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     모든 출시 제품 목록을 검색 조건과 함께 페이지네이션하여 조회합니다.
@@ -199,7 +201,8 @@ def list_all_released_products(
 @router.get("/{design_name}", response_model=released_product_schema.ReleasedProductResponse)
 def read_single_released_product(
         design_name: str,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     db_released_product = released_product_CRUD.get_released_product_by_design_name(db, design_name=design_name)
     if db_released_product is None:
@@ -209,7 +212,8 @@ def read_single_released_product(
 @router.get("/info/{id}", response_model=released_product_schema.ReleasedProductDetailResponse)
 def get_released_product_detail(
         id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     ID로 특정 출시 제품의 상세 정보를 조회합니다.

@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from Manager.rank.crud import rank as rank_crud
 from Manager.rank.schemas import rank as rank_schema
+from db import models
+from core.security import get_current_user
 
 router = APIRouter()
 
 @router.get("/v1/rank/", response_model=rank_schema.RankResponse, summary="Get ranking data")
-def get_rank_data(db: Session = Depends(get_db)):
+def get_rank_data(db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     """
     **출시제품, 포트폴리오, 커스텀 디자인, 진행현황에 대한 랭킹 및 상태 정보를 반환합니다.**
 

@@ -9,6 +9,7 @@ from Manager.brand.crud import brand as brand_crud
 from db import models
 from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from services.storage_service import storage_service # S3/MinIO 서비스 임포트
+from core.security import get_current_user
 
 router = APIRouter(prefix="/brands", tags=["Brands"])
 
@@ -18,7 +19,8 @@ def create_new_brand(
         # 이제 Form 데이터와 File 데이터를 함께 받습니다.
         brand_name: str = Form(...),
         file: UploadFile = File(...),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """새로운 브랜드를 등록합니다. 이름과 이미지 파일을 함께 전송받습니다."""
     if brand_crud.get_brand_by_name(db, brand_name=brand_name):
@@ -41,8 +43,8 @@ def create_new_brand(
 @router.delete("/{brand_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_single_brand(
         brand_id: int,
-        db: Session = Depends(get_db)
-        # 필요 시, 인증/권한 검사 추가
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 특정 브랜드를 삭제합니다. (S3 이미지 포함)"""
     try:
@@ -65,7 +67,7 @@ def delete_single_brand(
 
 
 @router.get("/listall", response_model=List[brand_schema.BrandResponse])
-def get_all_brands(db: Session = Depends(get_db)):
+def get_all_brands(db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     """모든 브랜드를 순위 순으로 조회합니다."""
     return brand_crud.get_all_brands_ordered(db)
 
@@ -77,7 +79,8 @@ def update_brand_details(
         brand_name: str = Form(...),
         # 파일은 선택사항(Optional)으로 받습니다.
         file: Optional[UploadFile] = File(None),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """브랜드의 이름이나 이미지를 수정합니다."""
     db_brand = db.query(models.Brand).filter(models.Brand.id == brand_id).first()
@@ -118,7 +121,8 @@ def update_brand_details(
 @router.patch("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
 def update_ranks_in_bulk(
     rank_update: brand_schema.RankUpdateBulk,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     전체 브랜드 순서 목록을 한 번에 업데이트합니다.

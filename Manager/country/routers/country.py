@@ -8,6 +8,7 @@ from Manager.country.schemas import country as country_schema
 from Manager.country.crud import country as country_crud
 from db import models
 from Manager.brand.schemas.brand import RankUpdateBulk as BrandRankUpdateBulk
+from core.security import get_current_user
 
 from Manager.portfolio.schemas import portfolio as portfolio_schema
 
@@ -15,14 +16,14 @@ router = APIRouter(prefix="/countries", tags=["Countries"])
 
 
 @router.post("/", response_model=country_schema.CountryResponse, status_code=status.HTTP_201_CREATED)
-def create_new_country(country: country_schema.CountryCreate, db: Session = Depends(get_db)):
+def create_new_country(country: country_schema.CountryCreate, db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     if country_crud.get_country_by_name(db, country_name=country.country_name):
         raise HTTPException(status_code=409, detail="이미 사용 중인 국가 이름입니다.")
     return country_crud.create_country(db=db, country=country)
 
 
 @router.get("/listall", response_model=List[country_schema.CountryResponse])
-def get_all_countries(db: Session = Depends(get_db)):
+def get_all_countries(db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     """모든 국가를 순위 순으로 조회합니다."""
     return country_crud.get_all_countries_ordered(db)
 
@@ -30,7 +31,8 @@ def get_all_countries(db: Session = Depends(get_db)):
 @router.delete("/{country_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
 def delete_single_country(
         country_id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 특정 국가 데이터를 삭제합니다."""
     try:
@@ -46,7 +48,8 @@ def delete_single_country(
 def update_country_details(
         country_id: int,
         country_update: country_schema.CountryUpdate,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """국가 이름을 수정합니다."""
     db_country = db.query(models.Country).filter(models.Country.id == country_id).first()
@@ -63,7 +66,8 @@ def update_country_details(
 @router.patch("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)
 def update_ranks_in_bulk(
     rank_update: BrandRankUpdateBulk,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     전체 국가 순서 목록을 한 번에 업데이트합니다.
