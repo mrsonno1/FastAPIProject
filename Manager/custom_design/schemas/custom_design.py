@@ -1,3 +1,4 @@
+# Manager/custom_design/schemas/custom_design.py
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -21,6 +22,12 @@ class CustomDesignCreate(BaseModel):
     base2_transparency: Optional[str] = None
     pupil_transparency: Optional[str] = None
 
+    # 새로 추가되는 size 필드들
+    line_size: Optional[str] = None
+    base1_size: Optional[str] = None
+    base2_size: Optional[str] = None
+    pupil_size: Optional[str] = None
+
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
 
@@ -34,6 +41,7 @@ class DesignComponentDetail(BaseModel):
     display_name: Optional[str] = None
     public_url: Optional[str] = None
     opacity: Optional[int] = None  # opacity 필드 추가
+    size: Optional[int] = None  # size 필드 추가
 
 
 class ColorComponentDetail(BaseModel):
@@ -126,4 +134,3 @@ class PaginatedCustomDesignResponse(BaseModel):
 
     class Config:
         from_attributes = True
-

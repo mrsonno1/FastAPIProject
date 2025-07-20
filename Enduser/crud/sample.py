@@ -248,10 +248,12 @@ def create_progress_status_from_cart(
     return True
 
 
+# Enduser/crud/sample.py (get_design_components 함수 부분만)
 def get_design_components(db: Session, design_obj: Any, category: str) -> Dict[str, Any]:
     """디자인 컴포넌트 정보 조회"""
 
-    def get_component_info(image_id: str, color_id: str, transparency: Optional[str] = None):
+    def get_component_info(image_id: str, color_id: str, transparency: Optional[str] = None,
+                           size: Optional[str] = None):
         if not image_id or not color_id:
             return None
 
@@ -261,13 +263,21 @@ def get_design_components(db: Session, design_obj: Any, category: str) -> Dict[s
         if not image or not color:
             return None
 
-        # 커스텀디자인이면 투명도 사용, 포트폴리오면 100 고정
+        # 커스텀디자인이면 투명도와 크기 사용, 포트폴리오면 100 고정
         opacity = 100
-        if category == '커스텀디자인' and transparency:
-            try:
-                opacity = int(transparency)
-            except (ValueError, TypeError):
-                opacity = 100
+        component_size = 100
+
+        if category == '커스텀디자인':
+            if transparency:
+                try:
+                    opacity = int(transparency)
+                except (ValueError, TypeError):
+                    opacity = 100
+            if size:
+                try:
+                    component_size = int(size)
+                except (ValueError, TypeError):
+                    component_size = 100
 
         return {
             "image_id": image_id,
@@ -276,7 +286,7 @@ def get_design_components(db: Session, design_obj: Any, category: str) -> Dict[s
             "RGB_id": color_id,
             "RGB_color": color.color_values,
             "RGB_name": color.color_name,
-            "size": 100,
+            "size": component_size,
             "opacity": opacity
         }
 
@@ -284,21 +294,25 @@ def get_design_components(db: Session, design_obj: Any, category: str) -> Dict[s
         "design_line": get_component_info(
             design_obj.design_line_image_id if hasattr(design_obj, 'design_line_image_id') else None,
             design_obj.design_line_color_id if hasattr(design_obj, 'design_line_color_id') else None,
-            design_obj.line_transparency if hasattr(design_obj, 'line_transparency') else None
+            design_obj.line_transparency if hasattr(design_obj, 'line_transparency') else None,
+            design_obj.line_size if hasattr(design_obj, 'line_size') else None
         ),
         "design_base1": get_component_info(
             design_obj.design_base1_image_id if hasattr(design_obj, 'design_base1_image_id') else None,
             design_obj.design_base1_color_id if hasattr(design_obj, 'design_base1_color_id') else None,
-            design_obj.base1_transparency if hasattr(design_obj, 'base1_transparency') else None
+            design_obj.base1_transparency if hasattr(design_obj, 'base1_transparency') else None,
+            design_obj.base1_size if hasattr(design_obj, 'base1_size') else None
         ),
         "design_base2": get_component_info(
             design_obj.design_base2_image_id if hasattr(design_obj, 'design_base2_image_id') else None,
             design_obj.design_base2_color_id if hasattr(design_obj, 'design_base2_color_id') else None,
-            design_obj.base2_transparency if hasattr(design_obj, 'base2_transparency') else None
+            design_obj.base2_transparency if hasattr(design_obj, 'base2_transparency') else None,
+            design_obj.base2_size if hasattr(design_obj, 'base2_size') else None
         ),
         "design_pupil": get_component_info(
             design_obj.design_pupil_image_id if hasattr(design_obj, 'design_pupil_image_id') else None,
             design_obj.design_pupil_color_id if hasattr(design_obj, 'design_pupil_color_id') else None,
-            design_obj.pupil_transparency if hasattr(design_obj, 'pupil_transparency') else None
+            design_obj.pupil_transparency if hasattr(design_obj, 'pupil_transparency') else None,
+            design_obj.pupil_size if hasattr(design_obj, 'pupil_size') else None
         )
     }

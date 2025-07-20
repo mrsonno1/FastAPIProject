@@ -85,6 +85,12 @@ class CustomDesign(Base):
     base2_transparency = Column(String(6), nullable=True)  # 라인 투명도
     pupil_transparency = Column(String(6), nullable=True)  # 라인 투명도
 
+    # 새로 추가되는 size 필드들
+    line_size = Column(String(6), nullable=True)  # 라인 크기
+    base1_size = Column(String(6), nullable=True)  # 바탕1 크기
+    base2_size = Column(String(6), nullable=True)  # 바탕2 크기
+    pupil_size = Column(String(6), nullable=True)  # 동공 크기
+
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
     created_at = Column(DateTime(timezone=True), server_default=func.now())

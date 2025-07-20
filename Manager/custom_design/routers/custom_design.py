@@ -13,6 +13,8 @@ from services.storage_service import storage_service
 router = APIRouter(prefix="/custom-designs", tags=["Custom Designs"])
 
 
+
+# Manager/custom_design/routers/custom_design.py (일부분만)
 @router.post("/", response_model=custom_design_schema.CustomDesignApiResponse, status_code=status.HTTP_201_CREATED)
 def create_new_custom_design(
     request_message: Optional[str] = Form(None),
@@ -29,6 +31,10 @@ def create_new_custom_design(
     base1_transparency: Optional[str] = Form(None),
     base2_transparency: Optional[str] = Form(None),
     pupil_transparency: Optional[str] = Form(None),
+    line_size: Optional[str] = Form(None),
+    base1_size: Optional[str] = Form(None),
+    base2_size: Optional[str] = Form(None),
+    pupil_size: Optional[str] = Form(None),
     graphic_diameter: Optional[str] = Form(None),
     optic_zone: Optional[str] = Form(None),
     db: Session = Depends(get_db),
@@ -72,6 +78,10 @@ def create_new_custom_design(
             base1_transparency=base1_transparency,
             base2_transparency=base2_transparency,
             pupil_transparency=pupil_transparency,
+            line_size=line_size,
+            base1_size=base1_size,
+            base2_size=base2_size,
+            pupil_size=pupil_size,
             graphic_diameter=graphic_diameter,
             optic_zone=optic_zone
         )
@@ -93,7 +103,6 @@ def create_new_custom_design(
         message="커스텀디자인이 성공적으로 생성되었습니다.",
         data=response_data
     )
-    #return custom_design_CRUD.create_design(db=db, design=design, user_id=current_user.id)
 
 
 @router.patch("/status/{design_id}", response_model=custom_design_schema.CustomDesignApiResponse)

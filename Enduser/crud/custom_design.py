@@ -105,7 +105,7 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
         return None
 
     # 각 컴포넌트 정보 조회
-    def get_component_info(image_id: str, color_id: str, transparency: str):
+    def get_component_info(image_id: str, color_id: str, transparency: str, size: str):
         if not image_id or not color_id:
             return None
 
@@ -122,7 +122,7 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
             "RGB_id": color_id,
             "RGB_color": color.color_values,
             "RGB_name": color.color_name,
-            "size": 100,
+            "size": int(size) if size else 100,
             "opacity": int(transparency) if transparency else 100
         }
 
@@ -131,22 +131,26 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
         "design_line": get_component_info(
             design.design_line_image_id,
             design.design_line_color_id,
-            design.line_transparency
+            design.line_transparency,
+            design.line_size
         ),
         "design_base1": get_component_info(
             design.design_base1_image_id,
             design.design_base1_color_id,
-            design.base1_transparency
+            design.base1_transparency,
+            design.base1_size
         ),
         "design_base2": get_component_info(
             design.design_base2_image_id,
             design.design_base2_color_id,
-            design.base2_transparency
+            design.base2_transparency,
+            design.base2_size
         ),
         "design_pupil": get_component_info(
             design.design_pupil_image_id,
             design.design_pupil_color_id,
-            design.pupil_transparency
+            design.pupil_transparency,
+            design.pupil_size
         ),
         "graphic_diameter": design.graphic_diameter,
         "optic_zone": design.optic_zone
@@ -179,6 +183,10 @@ def create_custom_design(
         base1_transparency=form_data.get("base1_transparency", "100"),
         base2_transparency=form_data.get("base2_transparency", "100"),
         pupil_transparency=form_data.get("pupil_transparency", "100"),
+        line_size=form_data.get("line_size", "100"),
+        base1_size=form_data.get("base1_size", "100"),
+        base2_size=form_data.get("base2_size", "100"),
+        pupil_size=form_data.get("pupil_size", "100"),
         graphic_diameter=form_data.get("graphic_diameter"),
         optic_zone=form_data.get("optic_zone"),
         status="0"  # 기본값 '0' (대기) 상태로 설정

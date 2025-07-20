@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from Manager.progress_status.crud import progress_status as progress_status_crud
 
 
+# Manager/custom_design/crud/custom_design.py (일부분만)
 def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: str):
     db_design = models.CustomDesign(
         item_name=design.item_name,
@@ -23,6 +24,10 @@ def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, 
         base1_transparency=design.base1_transparency,
         base2_transparency=design.base2_transparency,
         pupil_transparency=design.pupil_transparency,
+        line_size=design.line_size,
+        base1_size=design.base1_size,
+        base2_size=design.base2_size,
+        pupil_size=design.pupil_size,
         graphic_diameter=design.graphic_diameter,
         optic_zone=design.optic_zone,
         user_id=user_id
@@ -32,6 +37,7 @@ def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, 
     db.refresh(db_design)
 
     return db_design
+
 
 
 def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict[str, Any]):
@@ -108,7 +114,7 @@ def get_design_detail_formatted(db: Session, design_id: int):
     if not db_design:
         return None
 
-    def get_image_details(image_id: Optional[str], opacity: Optional[str]):
+    def get_image_details(image_id: Optional[str], opacity: Optional[str], size: Optional[str]):
         if not image_id:
             return None
         image = db.query(models.Image).filter(models.Image.id == image_id).first()
@@ -116,13 +122,16 @@ def get_design_detail_formatted(db: Session, design_id: int):
             return None
         try:
             opacity_int = int(opacity) if opacity is not None else None
+            size_int = int(size) if size is not None else None
         except (ValueError, TypeError):
             opacity_int = None
+            size_int = None
         return {
             "id": image.id,
             "display_name": image.display_name,
             "public_url": image.public_url,
-            "opacity": opacity_int
+            "opacity": opacity_int,
+            "size": size_int
         }
 
     def get_color_details(color_id: Optional[str]):
@@ -138,16 +147,16 @@ def get_design_detail_formatted(db: Session, design_id: int):
         }
 
     # 각 컴포넌트 정보 조회
-    design_line_details = get_image_details(db_design.design_line_image_id, db_design.line_transparency)
+    design_line_details = get_image_details(db_design.design_line_image_id, db_design.line_transparency, db_design.line_size)
     design_line_color_details = get_color_details(db_design.design_line_color_id)
 
-    design_base1_details = get_image_details(db_design.design_base1_image_id, db_design.base1_transparency)
+    design_base1_details = get_image_details(db_design.design_base1_image_id, db_design.base1_transparency, db_design.base1_size)
     design_base1_color_details = get_color_details(db_design.design_base1_color_id)
 
-    design_base2_details = get_image_details(db_design.design_base2_image_id, db_design.base2_transparency)
+    design_base2_details = get_image_details(db_design.design_base2_image_id, db_design.base2_transparency, db_design.base2_size)
     design_base2_color_details = get_color_details(db_design.design_base2_color_id)
 
-    design_pupil_details = get_image_details(db_design.design_pupil_image_id, db_design.pupil_transparency)
+    design_pupil_details = get_image_details(db_design.design_pupil_image_id, db_design.pupil_transparency, db_design.pupil_size)
     design_pupil_color_details = get_color_details(db_design.design_pupil_color_id)
 
     # 최종 응답 데이터 구성
@@ -179,7 +188,6 @@ def get_design_detail_formatted(db: Session, design_id: int):
     }
 
     return response_data
-
 
 
 

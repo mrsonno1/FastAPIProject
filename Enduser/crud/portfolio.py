@@ -38,22 +38,51 @@ def get_portfolios_paginated(
     # 전체 카운트
     total_count = query.count()
 
-    # 정렬
-    if orderBy == "latest":
-        # 최신순 정렬 (생성일 기준 내림차순)
-        query = query.order_by(models.Portfolio.created_at.desc())
-    elif orderBy == "popularity" or orderBy is None:
-        # 인기순 정렬 (조회수 기준 내림차순, 동일한 경우 디자인명 ABC순)
-        query = query.order_by(
-            models.Portfolio.views.desc(),
-            models.Portfolio.design_name.asc()
-        )
+
+
+
+
+
+
+
+
+    if orderBy:
+        try:
+            # 1. '컬럼명 방향'으로 문자열을 분리
+            order_column_name, order_direction = orderBy.strip().split()
+
+            # 2. 허용할 컬럼 목록 정의 (보안 및 안정성)
+            allowed_columns = {
+                "design_name": models.Portfolio.design_name,
+                "created_at": models.Portfolio.created_at,
+                "views": models.Portfolio.views,
+                "id": models.Portfolio.id  # 기본 정렬을 위해 id도 포함
+            }
+
+            # 3. 허용된 컬럼인지 확인
+            if order_column_name in allowed_columns:
+                order_column = allowed_columns[order_column_name]
+
+                # 4. 정렬 방향 적용
+                if order_direction.lower() == 'desc':
+                    query = query.order_by(order_column.desc())
+                else:
+                    query = query.order_by(order_column.asc())
+            else:
+                # 허용되지 않은 컬럼명이면 기본 정렬 적용
+                query = query.order_by(models.Portfolio.created_at.desc())
+
+        except (ValueError, AttributeError):
+            # orderBy 형식이 잘못되었거나 존재하지 않는 컬럼일 경우 기본 정렬로 대체
+            query = query.order_by(models.Portfolio.created_at.desc())
     else:
-        # 기본값: 인기순
-        query = query.order_by(
-            models.Portfolio.views.desc(),
-            models.Portfolio.design_name.asc()
-        )
+        # orderBy 파라미터가 없으면 기본 정렬 (최신순)
+        query = query.order_by(models.Portfolio.created_at.desc())
+
+
+
+
+
 
     # 페이지네이션
     offset = (page - 1) * size
