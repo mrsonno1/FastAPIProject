@@ -567,6 +567,7 @@ def get_progress_status_paginated(
         item.update({
             "id": progress_status.id,
             "user_name": user.contact_name or user.username,
+            "account_code": user.account_code,  # account_code 추가
             "expected_shipping_date": progress_status.expected_shipping_date,
             "status": progress_status.status,
             "notes": progress_status.notes,

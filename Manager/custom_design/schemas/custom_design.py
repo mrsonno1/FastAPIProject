@@ -114,6 +114,7 @@ class CustomDesignResponse2(CustomDesignCreate):
 class CustomDesignListItem(BaseModel):
     id: int
     user_name: str  # account 테이블의 contact_name 또는 username
+    account_code: str  # AdminUser의 account_code 추가
     main_image_url: Optional[str] = None
     item_name: str
     user_id: str  # custom_designs 테이블의 user_id (생성자 아이디)

@@ -1,7 +1,9 @@
 # main.py
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.requests import ClientDisconnect
 from Enduser.routers import login as enduser_login_router
 from Enduser.routers import custom_design as enduser_custom_design_router
 from Enduser.routers import portfolio as enduser_portfolio_router
@@ -41,13 +43,6 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
-)
-
-# 요청 크기 제한 설정 (50MB)
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"],
-    # 이 미들웨어는 호스트 검증용이며, 실제 크기 제한은 서버 레벨에서 설정됩니다.
 )
 
 

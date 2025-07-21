@@ -234,6 +234,7 @@ def get_designs_paginated(
             "id": design.id,
             # user_name은 AdminUser의 contact_name을 우선으로, 없으면 username을 사용
             "user_name": user.contact_name or user.username,
+            "account_code": user.account_code,  # account_code 추가
             "main_image_url": design.main_image_url,
             "item_name": design.item_name,
             "user_id": design.user_id,

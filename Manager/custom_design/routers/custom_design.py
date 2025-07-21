@@ -154,7 +154,8 @@ def read_all_custom_designs(
         user_name: Optional[str] = Query(None, description="아이디로 검색"),
         status: Optional[str] = Query(None, description="상태값"),
 
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
 
     """
@@ -186,6 +187,7 @@ def read_all_custom_designs(
 def get_custom_design_detail(
         design_id: int,
         db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 커스텀 디자인의 상세 정보를 포맷에 맞게 조회합니다."""
 
@@ -200,7 +202,8 @@ def get_custom_design_detail(
                status_code=status.HTTP_200_OK)
 def delete_single_custom_design(
     design_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 특정 커스텀 디자인을 삭제합니다."""
     try:
@@ -218,7 +221,10 @@ def delete_single_custom_design(
 
 
 @router.get("/{design_id}", response_model=custom_design_schema.CustomDesignResponse)
-def read_single_custom_design(design_id: int, db: Session = Depends(get_db)):
+def read_single_custom_design(design_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
+):
 
     db_design = custom_design_CRUD.get_design_by_id(db, design_id)
     if db_design is None:

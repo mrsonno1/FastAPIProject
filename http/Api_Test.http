@@ -2,7 +2,7 @@
 
 ### 랭킹 목록
 GET {{host}}{{api_prefix}}/v1/rank/
-
+Authorization: {{superadmin_token}}
 
 ### 커스텀 디자인 목록
 GET {{host}}{{api_prefix}}/custom-designs/list?page=1&size=10&item_name=345
@@ -31,7 +31,7 @@ GET {{host}}{{api_prefix}}/released-product/info/2
 
 ###
 GET {{host}}{{api_prefix}}/released-product/list
-
+Authorization: {{superadmin_token}}
 
 ### 포트폴리오 삭제
 DELETE {{host}}{{api_prefix}}/portfolio/14

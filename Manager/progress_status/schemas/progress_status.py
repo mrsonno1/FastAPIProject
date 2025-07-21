@@ -66,6 +66,7 @@ class ColorComponentDetail(BaseModel):
 class ProgressStatusListItem(BaseModel):
     id: int
     user_name: str  # AdminUser의 contact_name 또는 username
+    account_code: str  # AdminUser의 account_code 추가
     image_url: Optional[str] = None  # main_image_url
     type: int  # 0=custom_design, 1=portfolio
     type_id: int  # custom_design id 또는 portfolio id
