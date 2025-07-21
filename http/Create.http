@@ -15,7 +15,7 @@ username=sontest&password=1234567
 POST {{host}}{{api_prefix}}/auth/login
 Content-Type: application/x-www-form-urlencoded
 
-username=admin&password=123456
+username=test03&password=1234567
 
 > {%
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
@@ -36,17 +36,18 @@ username=sontest&password=1234567
 
 ### 계정 등록
 POST {{host}}{{api_prefix}}/auth/register
+Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-    "permission": "superadmin",
-    "username": "sontest23",
+    "permission": "customer",
+    "username": "test033",
     "password": "1234567",
-    "email": "bba13@gmail.com",
+    "email": "bba123332@gmail.com",
     "company_name": "넷스트림",
     "contact_name": "홍길동",
     "contact_phone": "01022334455",
-    "account_code": "DA22"
+    "account_code": "test33"
 }
 
 

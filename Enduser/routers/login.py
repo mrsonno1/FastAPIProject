@@ -33,12 +33,6 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if user.permission not in ["admin", "superadmin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="로그인 권한이 없습니다."
-        )
-
     # 로그인 성공 시, 마지막 접속 시간 업데이트
     user_crud.update_last_login(db, username=user.username)
 

@@ -1,6 +1,7 @@
 # main.py
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from Enduser.routers import login as enduser_login_router
 from Enduser.routers import custom_design as enduser_custom_design_router
 from Enduser.routers import portfolio as enduser_portfolio_router
@@ -10,6 +11,7 @@ from Enduser.routers import brand as enduser_brand_router  # 추가
 from Enduser.routers import released_product as enduser_released_product_router  # 추가
 from Enduser.routers import share as enduser_share_router  # 추가
 from Enduser.routers import language_setting as enduser_language_setting_router
+from Enduser.routers import country as enduser_country_router
 from Enduser import Email
 from Manager.released_product.routers import released_product
 from Manager.portfolio.routers import portfolio
@@ -39,6 +41,13 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
+)
+
+# 요청 크기 제한 설정 (50MB)
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"],
+    # 이 미들웨어는 호스트 검증용이며, 실제 크기 제한은 서버 레벨에서 설정됩니다.
 )
 
 
@@ -106,6 +115,7 @@ unity_router.include_router(enduser_brand_router.router)  # 추가
 unity_router.include_router(enduser_released_product_router.router)  # 추가
 unity_router.include_router(enduser_share_router.router)  # 추가
 unity_router.include_router(enduser_language_setting_router.router)
+unity_router.include_router(enduser_country_router.router)
 
 unity_router.include_router(Email.router)
 

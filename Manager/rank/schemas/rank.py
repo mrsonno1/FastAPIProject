@@ -8,7 +8,7 @@ class RankItem(BaseModel):
     view: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CustomDesignStatus(BaseModel):
     wait: int

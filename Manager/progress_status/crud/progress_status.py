@@ -467,7 +467,7 @@ def get_progress_status_paginated(
     needs_commit = False
     for progress_status, user, custom_design, portfolio in results:
         # '대기(0)' 또는 '진행중(1)' 상태만 확인
-        if progress_status.status in ['0', '1']:
+        if progress_status.status in ['1']:
             if progress_status.expected_shipping_date and today > progress_status.expected_shipping_date:
                 progress_status.status = '2'  # '지연' 상태로 변경
                 needs_commit = True

@@ -45,45 +45,49 @@ def check_account_code_duplicate(account_code: str, db: Session = Depends(get_db
     return {"exists": user is not None}
 
 @router.post("/register", response_model=user_schema.AdminUserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user: user_schema.AdminUserCreate, db: Session = Depends(get_db)):
-
-    if user.permission not in ["admin", "superadmin"]:
+def register_user(
+    user: user_schema.AdminUserCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.AdminUser = Depends(get_current_user)
+):
+    """관리자 계정 생성 API - admin/superadmin 권한을 가진 사용자만 생성 가능"""
+    
+    # 현재 로그인한 사용자의 권한 확인
+    if current_user.permission not in ["admin", "superadmin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="계정생성 권한이 없습니다."
+            detail="계정 생성 권한이 없습니다. admin 또는 superadmin 권한이 필요합니다."
         )
 
-    """관리자 계정 생성 API"""
+    # 아이디 중복 검사
     db_user_by_name = user_crud.get_user_by_username(db, username=user.username)
     if db_user_by_name:
         raise HTTPException(status_code=400, detail="이미 등록된 아이디입니다.")
 
-
+    # 이메일 중복 검사
     if user.email:
         db_user_by_email = user_crud.get_user_by_email(db, email=user.email)
         if db_user_by_email:
             raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
 
-        # create_user 함수를 try-except로 감싸서 데이터베이스 오류를 처리합니다.
-        try:
-            new_user = user_crud.create_user(db=db, user=user)
-            return new_user
-        except IntegrityError:
-            # 데이터베이스의 UNIQUE 제약 조건 위반 시 실행됩니다.
-            db.rollback()  # 트랜잭션을 롤백하여 세션을 깨끗한 상태로 만듭니다.
-            raise HTTPException(
-                status_code=409,  # 409 Conflict는 리소스 충돌을 의미합니다.
-                detail="이미 등록된 계정 코드입니다."
-            )
-        except Exception as e:
-            # 그 외 예기치 못한 오류 처리
-            db.rollback()
-            raise HTTPException(
-                status_code=500,
-                detail=f"계정 생성 중 예기치 못한 오류가 발생했습니다: {e}"
-            )
-
-    return user_crud.create_user(db=db, user=user)
+    # create_user 함수를 try-except로 감싸서 데이터베이스 오류를 처리합니다.
+    try:
+        new_user = user_crud.create_user(db=db, user=user)
+        return new_user
+    except IntegrityError:
+        # 데이터베이스의 UNIQUE 제약 조건 위반 시 실행됩니다.
+        db.rollback()  # 트랜잭션을 롤백하여 세션을 깨끗한 상태로 만듭니다.
+        raise HTTPException(
+            status_code=409,  # 409 Conflict는 리소스 충돌을 의미합니다.
+            detail="이미 등록된 계정 코드입니다."
+        )
+    except Exception as e:
+        # 그 외 예기치 못한 오류 처리
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"계정 생성 중 예기치 못한 오류가 발생했습니다: {e}"
+        )
 
 
 @router.post("/login", response_model=user_schema.Token)

@@ -16,10 +16,18 @@ def get_color_by_id(db: Session, color_id: int):
 
 def create_color(db: Session, color: color_schema.ColorCreate):
     """새로운 컬러 생성"""
+    
+    # color_name이 숫자로만 이루어져 있는지 확인
+    if color.color_name.isdigit():
+        # 5자리로 맞추고 앞에 0을 채움
+        processed_color_name = color.color_name.zfill(5)
+    else:
+        processed_color_name = color.color_name
+
     db_color = models.Color(
-        color_name=color.color_name,
+        color_name=processed_color_name,
         color_values=color.color_values,
-        monochrome_type = color.monochrome_type
+        monochrome_type=color.monochrome_type
     )
     db.add(db_color)
     db.commit()

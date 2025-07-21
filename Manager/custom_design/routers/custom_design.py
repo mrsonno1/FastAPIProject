@@ -15,7 +15,8 @@ router = APIRouter(prefix="/custom-designs", tags=["Custom Designs"])
 
 
 # Manager/custom_design/routers/custom_design.py (일부분만)
-@router.post("/", response_model=custom_design_schema.CustomDesignApiResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=custom_design_schema.CustomDesignApiResponse,
+             status_code=status.HTTP_201_CREATED)
 def create_new_custom_design(
     request_message: Optional[str] = Form(None),
     main_image_file: Optional[UploadFile] = File(None),  # 파일은 File()로 받음
@@ -105,7 +106,8 @@ def create_new_custom_design(
     )
 
 
-@router.patch("/status/{design_id}", response_model=custom_design_schema.CustomDesignApiResponse)
+@router.patch("/status/{design_id}",
+              response_model=custom_design_schema.CustomDesignApiResponse)
 def update_custom_design_details(
         design_id: int,
         # 폼 필드들
@@ -194,7 +196,8 @@ def get_custom_design_detail(
 
     return detail_data
 
-@router.delete("/{design_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
+@router.delete("/{design_id}", response_model=portfolio_schema.StatusResponse,
+               status_code=status.HTTP_200_OK)
 def delete_single_custom_design(
     design_id: int,
     db: Session = Depends(get_db)
@@ -207,9 +210,11 @@ def delete_single_custom_design(
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"An unexpected error occurred: {e}")
 
-    return portfolio_schema.StatusResponse(status="success", message="커스텀 디자인이 성공적으로 삭제되었습니다.")
+    return portfolio_schema.StatusResponse(status="success",
+                                           message="커스텀 디자인이 성공적으로 삭제되었습니다.")
 
 
 @router.get("/{design_id}", response_model=custom_design_schema.CustomDesignResponse)
