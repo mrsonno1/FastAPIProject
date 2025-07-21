@@ -98,6 +98,7 @@ class ProgressStatusListItem(BaseModel):
 class ProgressStatusDetailResponse(BaseModel):
     id: int
     user_name: str
+    account_code: str  # account_code 추가
     type: int  # 0=custom_design, 1=portfolio
     type_id: int
     status: str

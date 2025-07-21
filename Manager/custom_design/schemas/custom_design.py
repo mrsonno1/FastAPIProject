@@ -54,6 +54,7 @@ class CustomDesignDetailResponse(BaseModel):
     id: int
 
     user_name: str
+    account_code: str  # account_code 추가
 
     item_name: str
     status: str

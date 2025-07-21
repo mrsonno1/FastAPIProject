@@ -350,8 +350,10 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
     user = db.query(models.AdminUser).filter(models.AdminUser.id == progress_status.user_id).first()
     if user:
         result['user_name'] = user.username
+        result['account_code'] = user.account_code  # account_code 추가
     else:
         result['user_name'] = "Unknown"
+        result['account_code'] = "Unknown"
 
     # 예상 배송일
     if hasattr(progress_status, 'expected_shipping_date') and progress_status.expected_shipping_date:

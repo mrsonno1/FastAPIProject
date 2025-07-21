@@ -99,16 +99,27 @@ def get_my_designs_list(
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
+    # 현재 사용자의 카트에 있는 커스텀디자인 item_name 목록 가져오기
+    cart_items = db.query(models.Cart.item_name).filter(
+        models.Cart.user_id == current_user.username,
+        models.Cart.category == "커스텀디자인"
+    ).all()
+    cart_item_names = {item[0] for item in cart_items}  # set으로 변환하여 빠른 검색
+
     # 응답 형식에 맞게 변환 (status에 따른 item_name 표시 처리)
     items = []
     for design in paginated_data["items"]:
         # status가 '1' 또는 '2'일 때 item_name을 "-"로 표시
         display_item_name = "-" if design.status in ['1', '2'] else design.item_name
+        
+        # 카트에 있는지 확인
+        in_cart = design.item_name in cart_item_names
 
         items.append(custom_design_schema.CustomDesignListItem(
             id=design.id,
             item_name=display_item_name,
-            main_image_url=design.main_image_url or ""
+            main_image_url=design.main_image_url or "",
+            in_cart=in_cart  # in_cart 필드 추가
         ))
 
     return custom_design_schema.PaginatedCustomDesignResponse(

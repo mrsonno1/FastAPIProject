@@ -71,6 +71,7 @@ class CustomDesignListItem(BaseModel):
     id: int
     item_name: str
     main_image_url: str
+    in_cart: bool  # 카트에 포함되어 있는지 여부
 
     class Config:
         from_attributes = True

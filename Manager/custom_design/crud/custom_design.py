@@ -159,11 +159,16 @@ def get_design_detail_formatted(db: Session, design_id: int):
     design_pupil_details = get_image_details(db_design.design_pupil_image_id, db_design.pupil_transparency, db_design.pupil_size)
     design_pupil_color_details = get_color_details(db_design.design_pupil_color_id)
 
+    # 사용자 정보 조회하여 account_code 가져오기
+    user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
+    account_code = user.account_code if user else "Unknown"
+
     # 최종 응답 데이터 구성
     response_data = {
         "id": db_design.id,
         "item_name": db_design.item_name,
         "user_name": db_design.user_id,
+        "account_code": account_code,  # account_code 추가
         "status": db_design.status,
         "request_message": db_design.request_message,
         "main_image_url": db_design.main_image_url,
