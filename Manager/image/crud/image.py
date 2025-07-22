@@ -31,11 +31,18 @@ def update_image(
     return db_image
 
 
-def delete_image_by_id(db: Session, image_id: int) -> models.Image:
+def delete_image_by_id(db: Session, image_id: int) -> dict:
     """이미지 ID로 이미지를 삭제합니다. 종속성 검사를 포함합니다."""
+    
+    # 먼저 이미지가 존재하는지 확인
+    image = db.query(models.Image).filter(models.Image.id == image_id).first()
+    if not image:
+        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없거나 이미 삭제되었습니다.")
 
     # 종속성 검사: portfolio 테이블에서 사용 여부 확인
+    # is_deleted=False인 포트폴리오에서만 사용 중인지 확인
     portfolio_usage = db.query(models.Portfolio).filter(
+        models.Portfolio.is_deleted == False,  # is_deleted가 False(또는 N)인 경우만 체크
         or_(
             models.Portfolio.design_line_image_id == str(image_id),
             models.Portfolio.design_base1_image_id == str(image_id),
@@ -47,7 +54,7 @@ def delete_image_by_id(db: Session, image_id: int) -> models.Image:
     if portfolio_usage:
         raise HTTPException(
             status_code=400,
-            detail="이 이미지는 포트폴리오에서 사용 중이므로 삭제할 수 없습니다."
+            detail="이 이미지는 활성 포트폴리오에서 사용 중이므로 삭제할 수 없습니다."
         )
 
     # 종속성 검사: custom_design 테이블에서 사용 여부 확인
@@ -67,13 +74,15 @@ def delete_image_by_id(db: Session, image_id: int) -> models.Image:
         )
 
     # 종속성이 없으면 삭제 진행
-    image = db.query(models.Image).filter(models.Image.id == image_id).first()
-    if not image:
-        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
-
     db.delete(image)
     db.commit()
-    return image
+    
+    return {
+        "message": "삭제 완료",
+        "deleted_image_id": image_id,
+        "deleted_image_name": image.display_name,
+        "deleted_image_category": image.category
+    }
 
 def get_image_by_display_name(db: Session, category: str, display_name: str):
     """category와 display_name의 조합으로 이미지 정보 조회"""

@@ -20,6 +20,7 @@ class CartItem(BaseModel):
 # 장바구니 목록 응답
 class CartListResponse(BaseModel):
     items: List[CartItem]
+    account_code: str  # account_code 추가
 
 
 # 장바구니 추가 요청

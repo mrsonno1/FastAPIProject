@@ -61,12 +61,9 @@ Content-Type: application/json
 POST {{host}}{{api_prefix}}/login/refresh
 refresh-token: {{my_refresh_token}}
 
-
-
 ### 2. 한국어로 설정
 GET {{host}}{{api_prefix}}/locale_kr
 Authorization: {{superadmin_token}}
-
 
 ### 3. 영어로 설정
 GET {{host}}{{api_prefix}}/locale_en

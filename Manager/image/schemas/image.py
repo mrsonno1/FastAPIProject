@@ -9,7 +9,6 @@ class ImageResponse(BaseModel):
     display_name: str = Field(..., min_length=1, description="새로운 표시 이름")
     object_name: str
     public_url: str
-    exposed_users: Optional[str] = None
     uploaded_at: datetime
     created_at: datetime
 
@@ -30,6 +29,7 @@ class ImageInfoResponse(BaseModel):
     image_url: str
     item_name: str
     exposed_users: Optional[str] = None
+    user_name: Optional[str] = None
     
     class Config:
         from_attributes = True

@@ -45,22 +45,26 @@ def list_all_images(
     }
 
 
-@router.delete("/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{image_id}")
 def delete_single_image(
         image_id: int,
         db: Session = Depends(get_db)
         # 필요 시, 인증/권한 검사 추가
 ):
     """ID로 특정 이미지를 삭제합니다. (S3 파일 포함)"""
-    deleted_image = image_crud.delete_image_by_id(db, image_id=image_id)
-
-    if not deleted_image:
-        raise HTTPException(status_code=404, detail="해당 ID의 이미지를 찾을 수 없습니다.")
-
-    if deleted_image.object_name:
-        storage_service.delete_file(deleted_image.object_name)
-
-    return
+    # 삭제 전에 이미지 정보를 먼저 조회
+    image = db.query(models.Image).filter(models.Image.id == image_id).first()
+    if not image:
+        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없거나 이미 삭제되었습니다.")
+    
+    # S3에서 파일 삭제 (삭제 전에 처리)
+    if image.object_name:
+        storage_service.delete_file(image.object_name)
+    
+    # DB에서 이미지 삭제
+    result = image_crud.delete_image_by_id(db, image_id=image_id)
+    
+    return result
 
 
 # 기존 업로드 API (prefix 변경에 따라 경로도 변경됨)
@@ -69,6 +73,7 @@ def upload_image(
         file: UploadFile = File(...),
         category: str = Form(...),  # <-- category를 Form 데이터로 받음
         display_name: str = Form(...),
+        exposed_users: Optional[str] = Form(None, description="노출 사용자 ID 목록 (쉼표로 구분, 예: 1,2,3,4,5)"),
         db: Session = Depends(get_db)
 ):
     """
@@ -89,7 +94,8 @@ def upload_image(
         "category": category,  # <-- DB에 저장할 데이터에 category 추가
         "display_name": display_name,
         "object_name": upload_result["object_name"],
-        "public_url": upload_result["public_url"]
+        "public_url": upload_result["public_url"],
+        "exposed_users": exposed_users
     }
 
     new_image = models.Image(**image_data)
@@ -206,14 +212,28 @@ def get_image_info(
     - image_url: 이미지 URL (public_url)
     - item_name: 이미지 이름 (display_name)
     - exposed_users: 노출 사용자 ID 목록
+    - user_name: 노출 사용자 이름 목록 (username 기준)
     """
     db_image = db.query(models.Image).filter(models.Image.id == image_id).first()
     if not db_image:
         raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
     
+    # exposed_users가 있으면 해당 사용자들의 username 조회
+    user_names = None
+    if db_image.exposed_users:
+        # exposed_users는 "1,2,3,4,5" 형태의 문자열
+        user_ids = [int(uid.strip()) for uid in db_image.exposed_users.split(',') if uid.strip()]
+        
+        # AdminUser 테이블에서 해당 ID들의 username 조회
+        users = db.query(models.AdminUser).filter(models.AdminUser.id.in_(user_ids)).all()
+        
+        # username들을 쉼표로 구분된 문자열로 변환
+        user_names = ','.join([user.username for user in users])
+    
     return {
         "id": db_image.id,
         "image_url": db_image.public_url,
         "item_name": db_image.display_name,
-        "exposed_users": db_image.exposed_users
+        "exposed_users": db_image.exposed_users,
+        "user_name": user_names
     }
