@@ -102,8 +102,7 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-
-  "color_name": "Unity 레드",
+  "color_name": "Unity1 레드",
   "design_line_image_id": "1",
   "design_line_color_id": "10",
   "line_transparency": "85",

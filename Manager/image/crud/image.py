@@ -8,13 +8,18 @@ def update_image(
         db: Session,
         db_image: models.Image,
         display_name: str,
+        exposed_users: Optional[str] = None,
         new_object_name: Optional[str] = None,
         new_public_url: Optional[str] = None
 ):
     """
-    이미지의 정보를 업데이트합니다. (이름, 파일 정보 등)
+    이미지의 정보를 업데이트합니다. (이름, 노출 사용자, 파일 정보 등)
     """
     db_image.display_name = display_name
+    
+    # exposed_users가 제공된 경우 업데이트 (None이나 빈 문자열도 허용)
+    if exposed_users is not None:
+        db_image.exposed_users = exposed_users
 
     # 새로운 파일 정보가 제공된 경우에만 업데이트
     if new_object_name and new_public_url:

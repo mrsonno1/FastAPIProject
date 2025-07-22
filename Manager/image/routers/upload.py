@@ -5,7 +5,7 @@ from typing import Optional
 import math
 from db.database import get_db
 # 수정/검색을 위한 스키마 및 CRUD 함수 임포트
-from Manager.image.schemas.image import ImageResponse, PaginatedImageResponse
+from Manager.image.schemas.image import ImageResponse, PaginatedImageResponse, ImageInfoResponse
 from Manager.image.crud import image as image_crud
 from services.storage_service import storage_service
 from db import models
@@ -143,6 +143,7 @@ def update_image_details(
         image_id: int,
         # 폼 데이터로 이름과 파일을 받습니다.
         display_name: str = Form(..., min_length=1),
+        exposed_users: Optional[str] = Form(None, description="노출 사용자 ID 목록 (쉼표로 구분, 예: 1,2,3,4,5)"),
         file: Optional[UploadFile] = File(None),  # 파일은 선택사항
         db: Session = Depends(get_db)
 ):
@@ -188,6 +189,31 @@ def update_image_details(
         db=db,
         db_image=db_image,
         display_name=display_name,
+        exposed_users=exposed_users,
         new_object_name=new_object_name,
         new_public_url=new_public_url
     )
+
+
+@router.get("/info/{image_id}", response_model=ImageInfoResponse)
+def get_image_info(
+    image_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    ID로 특정 이미지의 정보를 조회합니다.
+    - id: 이미지 ID
+    - image_url: 이미지 URL (public_url)
+    - item_name: 이미지 이름 (display_name)
+    - exposed_users: 노출 사용자 ID 목록
+    """
+    db_image = db.query(models.Image).filter(models.Image.id == image_id).first()
+    if not db_image:
+        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
+    
+    return {
+        "id": db_image.id,
+        "image_url": db_image.public_url,
+        "item_name": db_image.display_name,
+        "exposed_users": db_image.exposed_users
+    }

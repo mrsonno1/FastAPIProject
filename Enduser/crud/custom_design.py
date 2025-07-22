@@ -226,7 +226,12 @@ def get_user_custom_designs_paginated(
             if hasattr(models.CustomDesign, column):
                 query = query.order_by(getattr(models.CustomDesign, column).asc())
     else:
-        query = query.order_by(models.CustomDesign.created_at.desc())
+        # 기본 정렬: item_name을 숫자로 변환하여 오름차순 정렬
+        # item_name이 4자리 숫자 형식 (예: 0001, 0002, 0010)
+        from sqlalchemy import cast, Integer
+        query = query.order_by(
+            cast(models.CustomDesign.item_name, Integer).asc()
+        )
 
     # 전체 카운트
     total_count = query.count()

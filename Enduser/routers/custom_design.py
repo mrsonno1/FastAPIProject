@@ -110,7 +110,7 @@ def get_my_designs_list(
     items = []
     for design in paginated_data["items"]:
         # status가 '1' 또는 '2'일 때 item_name을 ""로 표시
-        display_item_name = "" if design.status in ['1', '2'] else design.item_name
+        display_item_name = "" if design.status in ['0','1', '2'] else design.item_name
         
         # 카트에 있는지 확인
         in_cart = design.item_name in cart_item_names
@@ -317,7 +317,7 @@ def create_my_design_base64(
     try:
         # Form 데이터 구성 (item_name은 자동 생성된 값 사용)
         form_data = {
-            "item_name": new_code,  # 자동 생성된 코드 사용
+            "item_name": formatted_id,  # 자동 생성된 코드 사용
             "request_message": getattr(design_data, 'request_message', None),
             "design_line_image_id": design_data.design_line_image_id,
             "design_line_color_id": design_data.design_line_color_id,

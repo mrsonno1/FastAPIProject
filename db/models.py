@@ -47,6 +47,7 @@ class Image(Base):
     display_name = Column(String, index=True, nullable=False)
     object_name = Column(String, index=True)
     public_url = Column(String, unique=True)
+    exposed_users = Column(String, nullable=True)  # 노출 사용자 ID 목록 (예: "1,2,3,4,5")
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     uploaded_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
