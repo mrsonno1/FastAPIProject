@@ -12,6 +12,7 @@ class CartCountResponse(BaseModel):
 class CartItem(BaseModel):
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
+    account_code: str  # account_code 추가
 
     class Config:
         from_attributes = True
@@ -20,7 +21,6 @@ class CartItem(BaseModel):
 # 장바구니 목록 응답
 class CartListResponse(BaseModel):
     items: List[CartItem]
-    account_code: str  # account_code 추가
 
 
 # 장바구니 추가 요청

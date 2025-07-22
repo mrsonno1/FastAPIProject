@@ -51,15 +51,13 @@ def get_cart_list(
     cart_items = [
         cart_schema.CartItem(
             item_name=item.item_name,
-            main_image_url=item.main_image_url
+            main_image_url=item.main_image_url,
+            account_code=current_user.account_code
         )
         for item in items
     ]
 
-    return cart_schema.CartListResponse(
-        items=cart_items,
-        account_code=current_user.account_code
-    )
+    return cart_schema.CartListResponse(items=cart_items)
 
 
 @router.post("/cart", response_model=cart_schema.CartCountResponse)
