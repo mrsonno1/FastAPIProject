@@ -62,12 +62,19 @@ def get_portfolio_list(
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
+    # items에 account_code 추가
+    items_with_account_code = []
+    for item in paginated_data["items"]:
+        item_dict = item if isinstance(item, dict) else item.__dict__
+        item_dict['account_code'] = current_user.account_code
+        items_with_account_code.append(portfolio_schema.PortfolioListItem(**item_dict))
+    
     return portfolio_schema.PaginatedPortfolioResponse(
         total_count=total_count,
         total_pages=total_pages,
         page=page,
         size=size,
-        items=paginated_data["items"]
+        items=items_with_account_code
     )
 
 
@@ -105,6 +112,9 @@ def get_portfolio_detail(
             source_lang='ko'
         )
         portfolio_detail['exposed_countries'] = ', '.join(translated_countries)
+    
+    # account_code 추가
+    portfolio_detail['account_code'] = current_user.account_code
 
     return portfolio_schema.PortfolioDetailResponse(**portfolio_detail)
 

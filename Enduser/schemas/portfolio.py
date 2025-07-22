@@ -21,6 +21,7 @@ class PortfolioListItem(BaseModel):
     main_image_url: Optional[str] = None  # 메인 이미지 URL
     realtime_users: int = 0  # 실시간 유저수 (인기순 정렬시 사용)
     created_at: datetime  # 생성일시 (최신순 정렬시 사용)
+    account_code: str  # account_code 추가
 
     class Config:
         from_attributes = True
@@ -39,6 +40,7 @@ class PaginatedPortfolioResponse(BaseModel):
 class PortfolioDetailResponse(BaseModel):
     item_name: str  # 디자인 이름
     color_name: str  # 디자인 컬러 이름
+    account_code: str  # account_code 추가
     design_line: Optional[DesignComponent] = None  # 라인 디자인 정보
     design_base1: Optional[DesignComponent] = None  # 바탕1 디자인 정보
     design_base2: Optional[DesignComponent] = None  # 바탕2 디자인 정보

@@ -80,7 +80,7 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/brands/list?page=1&size=10
 Authorization: {{superadmin_token}}
 
-### 5. 포트폴리오 목록 조회 (exposed_countries가 번역됨)
+### 5. 포트폴리오 목록 조회
 GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10
 Authorization: {{superadmin_token}}
 
@@ -346,7 +346,7 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-  "item_name": "",
+  "item_name": "0001",
   "main_image_url": "https://example.com/image1.jpg",
   "category": "커스텀디자인"
 }

@@ -38,8 +38,8 @@ Base.metadata.create_all(bind=engine)
 # docs_url과 redoc_url을 /api 하위 경로로 지정합니다.
 app = FastAPI(
     title="LensGrapick",
-    version="0.6.0",
-    description="LensGrapick API 설명입니다.<br>업데이트 : 2025 07 10 15 00",
+    version="0.8.0",
+    description="LensGrapick API 설명입니다.<br>업데이트 : 2025 07 22 19 00",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
