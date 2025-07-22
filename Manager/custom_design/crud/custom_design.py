@@ -30,6 +30,7 @@ def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, 
         pupil_size=design.pupil_size,
         graphic_diameter=design.graphic_diameter,
         optic_zone=design.optic_zone,
+        dia=design.dia,
         user_id=user_id
     )
     db.add(db_design)
@@ -187,6 +188,7 @@ def get_design_detail_formatted(db: Session, design_id: int):
 
         "graphic_diameter": db_design.graphic_diameter,
         "optic_zone": db_design.optic_zone,
+        "dia": db_design.dia,
 
         "created_at": db_design.created_at,
         "updated_at": db_design.updated_at

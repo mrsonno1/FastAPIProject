@@ -19,6 +19,7 @@ def create_released_product(db: Session, released_product: dict, user_id: int):
         color_pupil_color_id=released_product.color_pupil_color_id,
         graphic_diameter=released_product.graphic_diameter,
         optic_zone=released_product.optic_zone,
+        dia=released_product.dia,
         base_curve=released_product.base_curve,
         user_id=user_id
     )
@@ -166,6 +167,7 @@ def get_released_products_paginated(
             "color_pupil_color": get_color_details(product.color_pupil_color_id),
             "graphic_diameter": product.graphic_diameter,
             "optic": product.optic_zone,
+            "dia": product.dia,
             "base_curve": product.base_curve,
             "view_count": product.views,
             "created_at": product.created_at,
@@ -232,6 +234,7 @@ def get_released_product_detail(db: Session, product_id: int):
         "color_pupil_color": get_color_details(product.color_pupil_color_id),
         "g_dia": product.graphic_diameter,
         "optic": product.optic_zone,
+        "dia": product.dia,
         "base_curve": product.base_curve
     }
 

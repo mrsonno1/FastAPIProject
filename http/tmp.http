@@ -347,7 +347,7 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-  "item_name": "나만의 디자인 0011",
+  "item_name": "",
   "main_image_url": "https://example.com/image1.jpg",
   "category": "커스텀디자인"
 }
@@ -380,6 +380,7 @@ Content-Type: application/json
 {
   "category": "커스텀디자인"
 }
+
 
 
 ### 35-1. 장바구니 커스텀디자인을 Progress Status로 생성

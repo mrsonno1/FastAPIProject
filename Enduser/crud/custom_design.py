@@ -153,7 +153,8 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
             design.pupil_size
         ),
         "graphic_diameter": design.graphic_diameter,
-        "optic_zone": design.optic_zone
+        "optic_zone": design.optic_zone,
+        "dia": design.dia
     }
 
 
@@ -189,6 +190,7 @@ def create_custom_design(
         pupil_size=form_data.get("pupil_size", "100"),
         graphic_diameter=form_data.get("graphic_diameter"),
         optic_zone=form_data.get("optic_zone"),
+        dia=form_data.get("dia"),
         status="0"  # 기본값 '0' (대기) 상태로 설정
     )
 

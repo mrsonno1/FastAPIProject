@@ -41,6 +41,7 @@ class PortfolioCreate(BaseModel):
     design_pupil_color_id: Optional[str] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
 
 
@@ -67,6 +68,7 @@ class PortfolioDetailResponse(BaseModel):
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -97,6 +99,7 @@ class PortfolioDetailData(BaseModel):
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -163,6 +166,7 @@ class PortfolioListItem(BaseModel):
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
     class Config:
         from_attributes = True # ORM 모델과 매핑을 위해 필요

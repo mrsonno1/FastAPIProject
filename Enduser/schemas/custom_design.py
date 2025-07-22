@@ -53,12 +53,14 @@ class DesignComponent(BaseModel):
 # 커스텀 디자인 상세 조회 응답
 class CustomDesignDetailResponse(BaseModel):
     item_name: str
+    account_code: str  # account_code 추가
     design_line: Optional[DesignComponent] = None
     design_base1: Optional[DesignComponent] = None
     design_base2: Optional[DesignComponent] = None
     design_pupil: Optional[DesignComponent] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
 # 커스텀 디자인 생성 응답
 class CustomDesignCreateResponse(BaseModel):
@@ -72,6 +74,7 @@ class CustomDesignListItem(BaseModel):
     item_name: str
     main_image_url: str
     in_cart: bool  # 카트에 포함되어 있는지 여부
+    account_code: str  # account_code 추가
 
     class Config:
         from_attributes = True

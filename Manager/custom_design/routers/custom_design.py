@@ -38,6 +38,7 @@ def create_new_custom_design(
     pupil_size: Optional[str] = Form(None),
     graphic_diameter: Optional[str] = Form(None),
     optic_zone: Optional[str] = Form(None),
+    dia: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
 ):
@@ -84,7 +85,8 @@ def create_new_custom_design(
             base2_size=base2_size,
             pupil_size=pupil_size,
             graphic_diameter=graphic_diameter,
-            optic_zone=optic_zone
+            optic_zone=optic_zone,
+            dia=dia
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")

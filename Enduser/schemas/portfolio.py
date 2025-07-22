@@ -45,6 +45,7 @@ class PortfolioDetailResponse(BaseModel):
     design_pupil: Optional[DesignComponent] = None  # 동공 디자인 정보
     graphic_diameter: Optional[str] = None  # 그래픽 직경
     optic_zone: Optional[str] = None  # 옵틱존
+    dia: Optional[str] = None  # DIA
 
 
 # 실시간 유저수 응답

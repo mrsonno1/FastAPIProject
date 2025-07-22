@@ -67,6 +67,7 @@ class CustomDesignCreateWithBase64(BaseModel):
     pupil_size: Optional[str] = Field("100", description="동공 크기")
     graphic_diameter: Optional[str] = Field(None, description="그래픽 직경")
     optic_zone: Optional[str] = Field(None, description="옵틱 존")
+    dia: Optional[str] = Field(None, description="DIA")
     request_message: Optional[str] = Field(None, description="요청 메시지")
     main_image: Optional[Base64File] = Field(None, description="메인 이미지 (Base64)")
 

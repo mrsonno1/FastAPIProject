@@ -30,6 +30,7 @@ class CustomDesignCreate(BaseModel):
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
 # 상태(status) 수정을 위한 스키마
 class CustomDesignStatusUpdate(BaseModel):
@@ -75,6 +76,7 @@ class CustomDesignDetailResponse(BaseModel):
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None

@@ -35,6 +35,7 @@ Content-Disposition: form-data; name="status"
 
 ### 출시제품 목록
 GET {{host}}{{api_prefix}}/released-product/info/2
+Authorization: {{superadmin_token}}
 
 ###
 GET {{host}}{{api_prefix}}/released-product/list
@@ -42,10 +43,15 @@ Authorization: {{superadmin_token}}
 
 ### 포트폴리오 삭제
 DELETE {{host}}{{api_prefix}}/portfolio/14
+Authorization: {{superadmin_token}}
+
 ### 포트폴리오 목록
-GET {{host}}{{api_prefix}}/portfolio/info/14
+GET {{host}}{{api_prefix}}/portfolio/info/13
+Authorization: {{superadmin_token}}
+
 ###
 GET {{host}}{{api_prefix}}/portfolio/list
+Authorization: {{superadmin_token}}
 
 ### 포트폴리오 축고정 상태 토글 (Y→N, N→Y)
 PATCH {{host}}{{api_prefix}}/portfolio/axis/15

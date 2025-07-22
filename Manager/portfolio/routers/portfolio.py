@@ -31,6 +31,7 @@ def create_new_portfolio(
     design_pupil_color_id: Optional[str] = Form(None),
     graphic_diameter: Optional[str] = Form(None),
     optic_zone: Optional[str] = Form(None),
+    dia: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
@@ -57,7 +58,8 @@ def create_new_portfolio(
             design_pupil_image_id=design_pupil_image_id,
             design_pupil_color_id=design_pupil_color_id,
             graphic_diameter=graphic_diameter,
-            optic_zone=optic_zone
+            optic_zone=optic_zone,
+            dia=dia
         )
     except Exception as e:  # Pydantic 유효성 검사 실패 시
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
@@ -238,6 +240,7 @@ def update_portfolio_details(
     design_pupil_color_id: Optional[str] = Form(None),
     graphic_diameter: Optional[str] = Form(None),
     optic_zone: Optional[str] = Form(None),
+    dia: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
@@ -265,7 +268,8 @@ def update_portfolio_details(
             design_pupil_image_id=design_pupil_image_id,
             design_pupil_color_id=design_pupil_color_id,
             graphic_diameter=graphic_diameter,
-            optic_zone=optic_zone
+            optic_zone=optic_zone,
+            dia=dia
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")

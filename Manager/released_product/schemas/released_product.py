@@ -23,6 +23,7 @@ class ReleasedProductCreate(BaseModel):
     color_pupil_color_id: Optional[str] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
     base_curve: Optional[str] = None
 
 class ReleasedProductResponse(ReleasedProductCreate):
@@ -67,6 +68,7 @@ class ReleasedProductDetailResponse(BaseModel):
 
     g_dia: Optional[str] = None
     optic: Optional[str] = None
+    dia: Optional[str] = None
     base_curve: Optional[str] = None
 
     class Config:
@@ -99,6 +101,7 @@ class ReleasedProductListItem(BaseModel):
     color_pupil_color: Optional[ColorComponentDetail] = None
     graphic_diameter: Optional[str] = None
     optic: Optional[str] = None
+    dia: Optional[str] = None
     base_curve: Optional[str] = None
 
     view_count: int

@@ -187,5 +187,6 @@ def get_portfolio_detail(db: Session, item_name: str) -> Optional[Dict[str, Any]
             portfolio.design_pupil_color_id
         ),
         "graphic_diameter": portfolio.graphic_diameter,
-        "optic_zone": portfolio.optic_zone
+        "optic_zone": portfolio.optic_zone,
+        "dia": portfolio.dia
     }

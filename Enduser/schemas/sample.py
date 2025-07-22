@@ -66,3 +66,11 @@ class SampleCreateRequest(BaseModel):
 # 샘플 요청 결과
 class SampleResultResponse(BaseModel):
     result: str  # 결과 메시지
+
+
+# 일괄 샘플 요청 결과
+class BulkSampleResultResponse(BaseModel):
+    result: str  # 결과 메시지
+    success_count: int  # 성공한 개수
+    failed_count: int  # 실패한 개수
+    failed_items: List[str] = []  # 실패한 아이템 목록

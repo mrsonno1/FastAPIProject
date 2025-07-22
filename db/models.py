@@ -93,6 +93,7 @@ class CustomDesign(Base):
 
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
+    dia = Column(String(20), nullable=True, default="14")  # DIA
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -126,6 +127,7 @@ class Portfolio(Base):
 
     graphic_diameter = Column(String(100), nullable=True)  # 그래픽직경
     optic_zone = Column(String(100), nullable=True)  # 옵틱존
+    dia = Column(String(20), nullable=True, default="14")  # DIA
 
     views = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -149,6 +151,7 @@ class Releasedproduct(Base):
 
     graphic_diameter = Column(String(20), nullable=True)  # 그래픽직경
     optic_zone = Column(String(20), nullable=True)  # 옵틱존
+    dia = Column(String(20), nullable=True, default="14")  # DIA
     base_curve = Column(String(20), nullable=True)  # 베이스커브
 
     views = Column(Integer, nullable=False, default=0)

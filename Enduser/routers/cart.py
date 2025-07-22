@@ -80,7 +80,7 @@ def add_to_cart(
         design = db.query(models.CustomDesign).filter(
             models.CustomDesign.item_name == cart_data.item_name,
             models.CustomDesign.user_id == current_user.username,
-            models.CustomDesign.status == "1"  # 완료된 디자인만
+            models.CustomDesign.status == "3"  # 완료된 디자인만
         ).first()
 
         if not design:

@@ -109,8 +109,8 @@ def get_my_designs_list(
     # 응답 형식에 맞게 변환 (status에 따른 item_name 표시 처리)
     items = []
     for design in paginated_data["items"]:
-        # status가 '1' 또는 '2'일 때 item_name을 "-"로 표시
-        display_item_name = "-" if design.status in ['1', '2'] else design.item_name
+        # status가 '1' 또는 '2'일 때 item_name을 ""로 표시
+        display_item_name = "" if design.status in ['1', '2'] else design.item_name
         
         # 카트에 있는지 확인
         in_cart = design.item_name in cart_item_names
@@ -119,7 +119,8 @@ def get_my_designs_list(
             id=design.id,
             item_name=display_item_name,
             main_image_url=design.main_image_url or "",
-            in_cart=in_cart  # in_cart 필드 추가
+            in_cart=in_cart,  # in_cart 필드 추가
+            account_code=current_user.account_code  # account_code 추가
         ))
 
     return custom_design_schema.PaginatedCustomDesignResponse(
@@ -157,6 +158,9 @@ def get_my_design_detail(
     # status가 '1' 또는 '2'일 때 item_name을 "-"로 표시
     if design and design.status in ['1', '2']:
         design_detail['item_name'] = "-"
+    
+    # account_code 추가
+    design_detail['account_code'] = current_user.account_code
 
     return custom_design_schema.CustomDesignDetailResponse(**design_detail)
 
@@ -183,6 +187,7 @@ def create_my_design(
         pupil_size: Optional[str] = Form("100", description="동공 크기"),
         graphic_diameter: Optional[str] = Form(None, description="그래픽 직경"),
         optic_zone: Optional[str] = Form(None, description="옵틱 존"),
+        dia: Optional[str] = Form(None, description="DIA"),
         request_message: Optional[str] = Form(None, description="요청 메시지"),
         file: Optional[UploadFile] = File(None, description="메인 이미지 파일"),
         db: Session = Depends(get_db),
@@ -197,7 +202,7 @@ def create_my_design(
     new_code = f"{current_user.account_code}-{formatted_id}"
 
     # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
-    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == new_code).first():
+    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == formatted_id).first():
         raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
 
     # 파일 업로드 처리
@@ -219,7 +224,7 @@ def create_my_design(
 
     try:
         form_data = {
-            "item_name": new_code,  # 자동 생성된 코드 사용
+            "item_name": formatted_id,  # 자동 생성된 코드 사용
             "request_message": request_message,
             "design_line_image_id": design_line_image_id,
             "design_line_color_id": design_line_color_id,
@@ -239,6 +244,7 @@ def create_my_design(
             "pupil_size": pupil_size,
             "graphic_diameter": graphic_diameter,
             "optic_zone": optic_zone,
+            "dia": dia,
         }
 
         created_design = custom_design_crud.create_custom_design(
@@ -331,6 +337,7 @@ def create_my_design_base64(
             "pupil_size": design_data.pupil_size,
             "graphic_diameter": design_data.graphic_diameter,
             "optic_zone": design_data.optic_zone,
+            "dia": getattr(design_data, 'dia', None),
         }
 
         # 커스텀 디자인 생성

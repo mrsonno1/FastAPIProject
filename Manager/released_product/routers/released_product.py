@@ -26,6 +26,7 @@ def create_new_released_product(
     color_pupil_color_id: Optional[str] = Form(None),
     graphic_diameter: Optional[str] = Form(None),
     optic_zone: Optional[str] = Form(None),
+    dia: Optional[str] = Form(None),
     base_curve: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -43,6 +44,7 @@ def create_new_released_product(
             color_pupil_color_id=color_pupil_color_id,
             graphic_diameter=graphic_diameter,
             optic_zone=optic_zone,
+            dia=dia,
             base_curve=base_curve
         )
     except Exception as e:
@@ -84,6 +86,7 @@ def update_released_product_details(
     color_pupil_color_id: Optional[str] = Form(None),
     graphic_diameter: Optional[str] = Form(None),
     optic_zone: Optional[str] = Form(None),
+    dia: Optional[str] = Form(None),
     base_curve: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
@@ -106,6 +109,7 @@ def update_released_product_details(
             color_pupil_color_id=color_pupil_color_id,
             graphic_diameter=graphic_diameter,
             optic_zone=optic_zone,
+            dia=dia,
             base_curve=base_curve
         )
     except Exception as e:

@@ -28,6 +28,7 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
         design_pupil_color_id=portfolio.design_pupil_color_id,
         graphic_diameter=portfolio.graphic_diameter,
         optic_zone=portfolio.optic_zone,
+        dia=portfolio.dia,
         user_id=user_id
     )
 
