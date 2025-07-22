@@ -34,7 +34,7 @@ Content-Disposition: form-data; name="status"
 
 
 ### 출시제품 목록
-GET {{host}}{{api_prefix}}/released-product/info/2
+GET {{host}}{{api_prefix}}/released-product/info/13
 Authorization: {{superadmin_token}}
 
 ###
@@ -46,7 +46,7 @@ DELETE {{host}}{{api_prefix}}/portfolio/14
 Authorization: {{superadmin_token}}
 
 ### 포트폴리오 목록
-GET {{host}}{{api_prefix}}/portfolio/info/13
+GET {{host}}{{api_prefix}}/portfolio/info/15
 Authorization: {{superadmin_token}}
 
 ###
@@ -124,7 +124,7 @@ Authorization: {{superadmin_token}}
 
 
 ###
-DELETE {{host}}{{api_prefix}}//progress-status/2
+DELETE {{host}}{{api_prefix}}//progress-status/1
 Authorization: {{superadmin_token}}
 
 ### 진행 상태
@@ -132,11 +132,11 @@ GET {{host}}{{api_prefix}}/progress-status/list?page=1&per=10&status=2
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 기본 정보 조회
-GET {{host}}{{api_prefix}}/progress-status/3
+GET {{host}}{{api_prefix}}/progress-status/7
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 상세 정보 조회
-GET {{host}}{{api_prefix}}/progress-status/info/4
+GET {{host}}{{api_prefix}}/progress-status/info/7
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 업데이트

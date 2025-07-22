@@ -376,6 +376,7 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
             result['image_url'] = portfolio.main_image_url
             result['graphic_diameter'] = portfolio.graphic_diameter
             result['optic_zone'] = portfolio.optic_zone
+            result['dia'] = portfolio.dia
             # 디자인 정보 구성
             process_component_details(db, result, portfolio)
 
@@ -390,6 +391,7 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
             result['image_url'] = custom_design.main_image_url
             result['graphic_diameter'] = custom_design.graphic_diameter
             result['optic_zone'] = custom_design.optic_zone
+            result['dia'] = custom_design.dia
             # 디자인 정보 구성
             process_component_details(db, result, custom_design)
 
@@ -544,6 +546,7 @@ def get_progress_status_paginated(
                 "design_pupil_color": get_color_details(portfolio.design_pupil_color_id),
                 "graphic_diameter": portfolio.graphic_diameter,
                 "optic_zone": portfolio.optic_zone,
+                "dia": portfolio.dia
             }
         elif custom_design:  # custom_design이 있을 때만 처리
             item = {
@@ -561,6 +564,7 @@ def get_progress_status_paginated(
                 "design_pupil_color": get_color_details(custom_design.design_pupil_color_id),
                 "graphic_diameter": custom_design.graphic_diameter,
                 "optic_zone": custom_design.optic_zone,
+                "dia": custom_design.dia
             }
         else:
             continue

@@ -86,6 +86,7 @@ class ProgressStatusListItem(BaseModel):
     notes: Optional[str] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
     expected_shipping_date: Optional[date] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -122,6 +123,7 @@ class ProgressStatusDetailResponse(BaseModel):
 
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
 
     request_date: datetime
     expected_shipping_date: Optional[date] = None

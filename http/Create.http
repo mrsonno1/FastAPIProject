@@ -67,6 +67,7 @@ Content-Type: application/json
 
 ### 브랜드 리스트
 GET {{host}}{{api_prefix}}/brands/listall
+Authorization: {{superadmin_token}}
 
 ### 브랜드 생성
 POST {{host}}{{api_prefix}}/brands/
