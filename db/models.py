@@ -198,6 +198,7 @@ class Progressstatus(Base):
     status_note = Column(Text, nullable=True)  # 진행현황 노트
     request_date = Column(DateTime(timezone=True), server_default=func.now())  # 요청일
     expected_shipping_date = Column(Date, nullable=True)  # 예상 배송일
+    changelog = Column(Text, nullable=True)  # 변경 이력
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

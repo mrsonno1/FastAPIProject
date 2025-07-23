@@ -127,7 +127,79 @@ Content-Type: application/json
 
 
 
+### Progress Status Changelog Test Examples
 
+### 1. Create a new progress status
+POST {{host}}/api/progress-status/
+Content-Type: application/x-www-form-urlencoded
+Authorization: {{superadmin_token}}
+
+user_id=1&custom_design_id=1&status=0&portfolio_id=0&notes=테스트 진행 상태&client_name=홍길동&number=010-1234-5678&address=서울시 강남구 테스트동 123-45
+
+### 2. Get progress status detail (to see current state)
+GET {{host}}/api/progress-status/info/3
+Authorization: {{superadmin_token}}
+
+### 3. Update status from "대기" to "진행중"
+PATCH {{host}}/api/progress-status/3
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "status": "1"
+}
+
+###
+PATCH {{host}}/api/progress-status/3
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "status": "3",
+  "status_note": "우체국택배 123-4567-8901"
+}
+
+### 4. Update expected shipping date
+PATCH {{host}}/api/progress-status/3
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "expected_shipping_date": "2025-06-28"
+}
+
+
+
+### 6. Multiple updates at once
+PATCH {{host}}/api/progress-status/3
+Content-Type: application/json
+Authorization: {{superadmin_token}}
+
+{
+  "status": "2",
+  "expected_shipping_date": "2025-06-30",
+  "notes": "고객 요청으로 배송 지연"
+}
+
+### 7. Get progress status detail to see changelog
+GET {{host}}/api/progress-status/info/4
+Authorization: {{superadmin_token}}
+
+### 8. List all progress statuses with filters
+GET {{host}}/api/progress-status/list?page=1&size=10&status=0
+Authorization: {{superadmin_token}}
+
+### 9. Search by user name
+GET {{host}}/api/progress-status/list?user_name=admin&page=1&size=10
+Authorization: {{superadmin_token}}
+
+### 10. Search by custom design name
+GET {{host}}/api/progress-status/list?custom_design_name=테스트&type=0
+Authorization: {{superadmin_token}}
+
+### 11. Delete progress status
+DELETE {{host}}/api/progress-status/1
+Authorization: {{superadmin_token}}
 
 
 

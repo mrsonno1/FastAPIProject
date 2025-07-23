@@ -127,6 +127,7 @@ class ProgressStatusDetailResponse(BaseModel):
 
     request_date: datetime
     expected_shipping_date: Optional[date] = None
+    changelog: Optional[str] = None  # 변경 이력
 
     class Config:
         from_attributes = True

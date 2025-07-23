@@ -281,7 +281,8 @@ def update_progress_status_details(
     updated_progress_status = progress_status_crud.update_progress_status(
         db,
         db_progress_status=db_progress_status,
-        progress_status_update=progress_status_update
+        progress_status_update=progress_status_update,
+        current_user=current_user
     )
 
     response_data = progress_status_schema.ProgressStatusResponse.model_validate(

@@ -164,12 +164,59 @@ def get_progress_status_by_id(db: Session, progress_status_id: int):
 def update_progress_status(
         db: Session,
         db_progress_status: models.Progressstatus,
-        progress_status_update: progress_status_schema.ProgressStatusUpdate
+        progress_status_update: progress_status_schema.ProgressStatusUpdate,
+        current_user: models.AdminUser
 ):
     """진행 상태 정보를 업데이트합니다."""
+    from datetime import datetime
+    
+    # 변경 이력을 위한 정보
+    changelog_entries = []
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M]")
+    user_info = f"{current_user.username}({current_user.company_name})"
+    
+    # 상태 매핑
+    status_map = {'0': '대기', '1': '진행중', '2': '지연', '3': '발송완료'}
+    
     update_data = progress_status_update.model_dump(exclude_unset=True)
+    
     for key, value in update_data.items():
-        setattr(db_progress_status, key, value)
+        old_value = getattr(db_progress_status, key)
+        
+        # 값이 실제로 변경된 경우에만 처리
+        if old_value != value:
+            if key == 'status':
+                # 상태값 변경
+                old_status = status_map.get(str(old_value), str(old_value))
+                new_status = status_map.get(str(value), str(value))
+                
+                # 발송완료로 변경될 때 status_note 포함
+                if value == '3' and 'status_note' in update_data and update_data['status_note']:
+                    new_status = f"{new_status}({update_data['status_note']})"
+                
+                changelog_entries.append(
+                    f"{timestamp} 진행현황: \"{old_status}\" → \"{new_status}\", {user_info}"
+                )
+            
+            elif key == 'expected_shipping_date':
+                # 발송예정일 변경
+                old_date = old_value.strftime("%y-%m-%d") if old_value else "미정"
+                new_date = value.strftime("%y-%m-%d") if value else "미정"
+                changelog_entries.append(
+                    f"{timestamp} 발송예정일: \"{old_date}\" → \"{new_date}\", {user_info}"
+                )
+            
+            # 실제 값 업데이트
+            setattr(db_progress_status, key, value)
+    
+    # 변경 이력 추가
+    if changelog_entries:
+        current_changelog = db_progress_status.changelog or ""
+        if current_changelog:
+            current_changelog += "\n"
+        current_changelog += "\n".join(changelog_entries)
+        db_progress_status.changelog = current_changelog
+    
     db.commit()
     db.refresh(db_progress_status)
     return db_progress_status
@@ -344,6 +391,7 @@ def get_progress_status_detail(db: Session, progress_status_id: int):
     result['number'] = progress_status.number
     result['address'] = progress_status.address
     result['status_note'] = progress_status.status_note
+    result['changelog'] = progress_status.changelog  # 변경 이력 추가
 
 
     # 사용자 정보 조회
