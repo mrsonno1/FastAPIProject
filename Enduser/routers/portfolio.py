@@ -110,9 +110,6 @@ def get_portfolio_detail(
             source_lang='ko'
         )
         portfolio_detail['exposed_countries'] = ', '.join(translated_countries)
-    
-    # account_code 추가
-    portfolio_detail['account_code'] = current_user.account_code
 
     return portfolio_schema.PortfolioDetailResponse(**portfolio_detail)
 

@@ -174,10 +174,18 @@ def get_portfolio_detail(db: Session, item_name: str) -> Optional[Dict[str, Any]
             "size": 100,
             "opacity": 100  # 포트폴리오는 투명도가 없으므로 100 고정
         }
+    
+    # user_id로 account_code 조회
+    user = db.query(models.AdminUser).filter(
+        models.AdminUser.id == portfolio.user_id
+    ).first()
+    
+    account_code = user.account_code if user else None
 
     return {
         "item_name": portfolio.design_name,
         "color_name": portfolio.color_name,
+        "account_code": account_code,
         "design_line": get_component_info(
             portfolio.design_line_image_id,
             portfolio.design_line_color_id
