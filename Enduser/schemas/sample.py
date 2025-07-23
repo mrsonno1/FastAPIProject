@@ -32,6 +32,7 @@ class SampleListItem(BaseModel):
     status: str  # 진행 현황
     shipped_date: Optional[datetime] = None  # 발송일
     request_note: Optional[str] = None  # 요청사항
+    account_code: Optional[str] = None  # account_code 추가
 
     class Config:
         from_attributes = True

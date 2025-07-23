@@ -62,12 +62,10 @@ def get_portfolio_list(
     total_count = paginated_data["total_count"]
     total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
-    # items에 account_code 추가
+    # items 변환 (account_code는 이미 CRUD에서 포함됨)
     items_with_account_code = []
     for item in paginated_data["items"]:
-        item_dict = item if isinstance(item, dict) else item.__dict__
-        item_dict['account_code'] = current_user.account_code
-        items_with_account_code.append(portfolio_schema.PortfolioListItem(**item_dict))
+        items_with_account_code.append(portfolio_schema.PortfolioListItem(**item))
     
     return portfolio_schema.PaginatedPortfolioResponse(
         total_count=total_count,

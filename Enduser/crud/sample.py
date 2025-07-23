@@ -79,6 +79,18 @@ def get_samples_paginated(
         shipped_date = None
         if progress_status.status == '3' and hasattr(progress_status, 'updated_at'):
             shipped_date = progress_status.updated_at
+        
+        # account_code 설정
+        account_code = None
+        if category == '커스텀디자인':
+            # 커스텀디자인인 경우 현재 로그인한 사용자의 account_code
+            account_code = user.account_code if user else None
+        elif category == '포트폴리오' and portfolio:
+            # 포트폴리오인 경우 portfolio의 user_id로 account_code 조회
+            portfolio_user = db.query(models.AdminUser).filter(
+                models.AdminUser.id == portfolio.user_id
+            ).first()
+            account_code = portfolio_user.account_code if portfolio_user else None
 
         formatted_items.append({
             "id": progress_status.id,
@@ -95,7 +107,8 @@ def get_samples_paginated(
             "estimated_ship_date": progress_status.expected_shipping_date,
             "status": status_text,
             "shipped_date": shipped_date,
-            "request_note": progress_status.notes
+            "request_note": progress_status.notes,
+            "account_code": account_code
         })
 
     return {

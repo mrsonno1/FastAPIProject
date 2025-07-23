@@ -12,6 +12,16 @@ def get_cart_count(db: Session, user_id: str) -> int:
     ).count()
 
 
+def get_cart_count_by_category(db: Session, user_id: str, category: str) -> int:
+    """사용자의 카테고리별 장바구니 개수 조회"""
+    return db.query(models.Cart).filter(
+        and_(
+            models.Cart.user_id == user_id,
+            models.Cart.category == category
+        )
+    ).count()
+
+
 def get_cart_items(
         db: Session,
         user_id: str,
@@ -46,7 +56,7 @@ def add_to_cart(
         main_image_url: Optional[str],
         category: str
 ) -> models.Cart:
-    """장바구니에 상품 추가"""
+    """장바구니에 상품 추가 (카테고리별 최대 20개 제한)"""
 
     # 이미 장바구니에 있는지 확인
     existing_item = db.query(models.Cart).filter(
@@ -63,6 +73,22 @@ def add_to_cart(
         db.commit()
         db.refresh(existing_item)
         return existing_item
+
+    # 해당 카테고리의 현재 개수 확인
+    category_count = db.query(models.Cart).filter(
+        and_(
+            models.Cart.user_id == user_id,
+            models.Cart.category == category
+        )
+    ).count()
+
+    # 카테고리별 20개 제한
+    if category_count >= 20:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=f"{category} 카테고리는 최대 20개까지만 장바구니에 담을 수 있습니다."
+        )
 
     # 새로 추가
     new_cart_item = models.Cart(

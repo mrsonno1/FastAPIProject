@@ -95,12 +95,20 @@ def get_portfolios_paginated(
         realtime_users = realtime_users_crud.get_realtime_users_count(
             db, 'portfolio', portfolio.design_name
         )
+        
+        # user_id로 account_code 조회
+        user = db.query(models.AdminUser).filter(
+            models.AdminUser.id == portfolio.user_id
+        ).first()
+        
+        account_code = user.account_code if user else None
 
         formatted_items.append({
             "item_name": portfolio.design_name,
             "main_image_url": portfolio.main_image_url,
             "realtime_users": realtime_users,
-            "created_at": portfolio.created_at
+            "created_at": portfolio.created_at,
+            "account_code": account_code
         })
 
     return {
