@@ -28,6 +28,7 @@ def get_images_list(
 
     paginated_data = custom_design_crud.get_images_paginated(
         db=db,
+        user_id=current_user.id,  # 현재 사용자 ID 전달
         page=page,
         size=size,
         category=category,

@@ -10,6 +10,7 @@ from fastapi import UploadFile
 
 def get_images_paginated(
         db: Session,
+        user_id: int,
         page: int = 1,
         size: int = 10,
         category: Optional[str] = None,
@@ -19,6 +20,16 @@ def get_images_paginated(
     """이미지 목록을 페이지네이션하여 조회"""
 
     query = db.query(models.Image)
+    
+    # exposed_users 필터링
+    # exposed_users가 비어있거나 현재 사용자 ID가 포함된 이미지만 조회
+    query = query.filter(
+        or_(
+            models.Image.exposed_users == None,  # exposed_users가 NULL인 경우
+            models.Image.exposed_users == '',     # exposed_users가 빈 문자열인 경우
+            models.Image.exposed_users.like(f'%{user_id}%')  # 현재 사용자 ID가 포함된 경우
+        )
+    )
 
     # 필터링
     if category:
