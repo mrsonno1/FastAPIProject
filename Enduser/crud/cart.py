@@ -27,7 +27,7 @@ def get_cart_items(
         user_id: str,
         category: Optional[str] = None,
         orderBy: Optional[str] = None
-) -> List[models.Cart]:
+) -> List[Dict[str, Any]]:
     """사용자의 장바구니 목록 조회 (최대 40개)"""
 
     query = db.query(models.Cart).filter(
@@ -46,7 +46,42 @@ def get_cart_items(
         query = query.order_by(models.Cart.created_at.desc())
 
     # 최대 40개 제한
-    return query.limit(40).all()
+    cart_items = query.limit(40).all()
+    
+    # 현재 사용자 정보 조회
+    current_user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == user_id
+    ).first()
+    
+    # 결과 포맷팅
+    formatted_items = []
+    for item in cart_items:
+        account_code = None
+        
+        if item.category == '커스텀디자인':
+            # 커스텀디자인인 경우 현재 로그인한 사용자의 account_code
+            account_code = current_user.account_code if current_user else None
+        elif item.category == '포트폴리오':
+            # 포트폴리오인 경우 portfolio의 user_id로 account_code 조회
+            portfolio = db.query(models.Portfolio).filter(
+                models.Portfolio.design_name == item.item_name,
+                models.Portfolio.is_deleted == False
+            ).first()
+            
+            if portfolio:
+                portfolio_user = db.query(models.AdminUser).filter(
+                    models.AdminUser.id == portfolio.user_id
+                ).first()
+                account_code = portfolio_user.account_code if portfolio_user else None
+        
+        formatted_items.append({
+            "item_name": item.item_name,
+            "main_image_url": item.main_image_url,
+            "category": item.category,
+            "account_code": account_code
+        })
+    
+    return formatted_items
 
 
 def add_to_cart(

@@ -354,7 +354,7 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-  "item_name": "SIMPLE_BLUE_114",
+  "item_name": "SIMPLE_BLUE_115",
   "main_image_url": "https://example.com/portfolio1.jpg",
   "category": "포트폴리오"
 }

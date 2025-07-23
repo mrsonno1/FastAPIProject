@@ -50,9 +50,10 @@ def get_cart_list(
 
     cart_items = [
         cart_schema.CartItem(
-            item_name=item.item_name,
-            main_image_url=item.main_image_url,
-            account_code=current_user.account_code
+            item_name=item["item_name"],
+            main_image_url=item["main_image_url"],
+            account_code=item["account_code"],
+            category=item["category"]
         )
         for item in items
     ]

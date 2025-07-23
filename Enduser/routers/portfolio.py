@@ -51,6 +51,7 @@ def get_portfolio_list(
 
     paginated_data = portfolio_crud.get_portfolios_paginated(
         db=db,
+        user_id=current_user.username,
         page=page,
         size=size,
         exposed_countries=exposed_countries,

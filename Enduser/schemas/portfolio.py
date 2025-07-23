@@ -22,6 +22,7 @@ class PortfolioListItem(BaseModel):
     realtime_users: int = 0  # 실시간 유저수 (인기순 정렬시 사용)
     created_at: datetime  # 생성일시 (최신순 정렬시 사용)
     account_code: str  # account_code 추가
+    in_cart: bool = False  # 장바구니에 포함 여부
 
     class Config:
         from_attributes = True

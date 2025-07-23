@@ -9,6 +9,7 @@ from Enduser.crud import realtime_users as realtime_users_crud
 
 def get_portfolios_paginated(
         db: Session,
+        user_id: str,
         page: int = 1,
         size: int = 10,
         exposed_countries: Optional[List[str]] = None,
@@ -87,6 +88,13 @@ def get_portfolios_paginated(
     # 페이지네이션
     offset = (page - 1) * size
     items = query.offset(offset).limit(size).all()
+    
+    # 사용자의 장바구니 아이템 조회
+    cart_items = db.query(models.Cart.item_name).filter(
+        models.Cart.user_id == user_id,
+        models.Cart.category == "포트폴리오"
+    ).all()
+    cart_item_names = {item.item_name for item in cart_items}
 
     # 결과 포맷팅
     formatted_items = []
@@ -102,13 +110,17 @@ def get_portfolios_paginated(
         ).first()
         
         account_code = user.account_code if user else None
+        
+        # 장바구니 포함 여부 확인
+        in_cart = portfolio.design_name in cart_item_names
 
         formatted_items.append({
             "item_name": portfolio.design_name,
             "main_image_url": portfolio.main_image_url,
             "realtime_users": realtime_users,
             "created_at": portfolio.created_at,
-            "account_code": account_code
+            "account_code": account_code,
+            "in_cart": in_cart
         })
 
     return {
