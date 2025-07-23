@@ -137,11 +137,11 @@ Authorization: {{superadmin_token}}
 user_id=1&custom_design_id=1&status=0&portfolio_id=0&notes=테스트 진행 상태&client_name=홍길동&number=010-1234-5678&address=서울시 강남구 테스트동 123-45
 
 ### 2. Get progress status detail (to see current state)
-GET {{host}}/api/progress-status/info/3
+GET {{host}}/api/progress-status/info/30
 Authorization: {{superadmin_token}}
 
 ### 3. Update status from "대기" to "진행중"
-PATCH {{host}}/api/progress-status/3
+PATCH {{host}}/api/progress-status/30
 Content-Type: application/json
 Authorization: {{superadmin_token}}
 
@@ -150,7 +150,7 @@ Authorization: {{superadmin_token}}
 }
 
 ###
-PATCH {{host}}/api/progress-status/3
+PATCH {{host}}/api/progress-status/30
 Content-Type: application/json
 Authorization: {{superadmin_token}}
 
@@ -160,7 +160,7 @@ Authorization: {{superadmin_token}}
 }
 
 ### 4. Update expected shipping date
-PATCH {{host}}/api/progress-status/3
+PATCH {{host}}/api/progress-status/30
 Content-Type: application/json
 Authorization: {{superadmin_token}}
 
@@ -171,7 +171,7 @@ Authorization: {{superadmin_token}}
 
 
 ### 6. Multiple updates at once
-PATCH {{host}}/api/progress-status/3
+PATCH {{host}}/api/progress-status/30
 Content-Type: application/json
 Authorization: {{superadmin_token}}
 

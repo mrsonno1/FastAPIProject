@@ -168,11 +168,13 @@ def update_progress_status(
         current_user: models.AdminUser
 ):
     """진행 상태 정보를 업데이트합니다."""
-    from datetime import datetime
+    from datetime import datetime, timezone, timedelta
     
     # 변경 이력을 위한 정보
     changelog_entries = []
-    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M]")
+    # 한국 시간대 (UTC+9) 적용
+    kst = timezone(timedelta(hours=9))
+    timestamp = datetime.now(kst).strftime("[%Y-%m-%d %H:%M]")
     user_info = f"{current_user.username}({current_user.company_name})"
     
     # 상태 매핑

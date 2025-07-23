@@ -20,7 +20,7 @@ def update_user_info(db: Session, user: models.AdminUser, user_update: dict) -> 
     for key, value in user_update.items():
         if key == "new_password" and value:
             # 비밀번호 변경 시 해싱
-            user.password = get_password_hash(value)
+            user.hashed_password = get_password_hash(value)
         elif key != "new_password" and hasattr(user, key):
             setattr(user, key, value)
 
