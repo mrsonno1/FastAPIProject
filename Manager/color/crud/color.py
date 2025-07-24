@@ -121,8 +121,6 @@ def get_colors_paginated(
         query = query.filter(
             or_(
                 models.Color.color_name.like(search_pattern),
-                models.Color.monochrome_type.like(search_pattern),
-                models.Color.color_values.like(search_pattern)
             )
         )
 
