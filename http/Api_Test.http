@@ -151,7 +151,7 @@ Authorization: {{superadmin_token}}
 
 {
   "status": "1",
-  "status_note": "배송 준비 중입니다.",
+  "status_note": "배송 준비 중입니다.2",
   "expected_shipping_date": "2025-07-25T00:00:00+09:00"
 }
 

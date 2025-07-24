@@ -208,6 +208,15 @@ def update_progress_status(
                     f"{timestamp} 발송예정일: \"{old_date}\" → \"{new_date}\", {user_info}"
                 )
             
+            elif key == 'status_note':
+                # status_note 변경 (status가 3일 때만 의미가 있지만, 언제든 변경 가능)
+                old_note = old_value if old_value else ""
+                new_note = value if value else ""
+                if old_note or new_note:  # 둘 중 하나라도 값이 있을 때만 로그 기록
+                    changelog_entries.append(
+                        f"{timestamp} 발송메모: \"{old_note}\" → \"{new_note}\", {user_info}"
+                    )
+            
             # 실제 값 업데이트
             setattr(db_progress_status, key, value)
     
