@@ -172,6 +172,10 @@ DELETE {{host}}{{api_prefix}}/brands/4
 ### 컬러 삭제
 DELETE {{host}}{{api_prefix}}/colors/11
 
+### 컬러 리스트
+GET {{host}}{{api_prefix}}/colors/list?orderBy=color_name=48
+Authorization: {{superadmin_token}}
+
 ### 컬러 생성
 POST {{host}}{{api_prefix}}/colors/
 Content-Type: application/json
