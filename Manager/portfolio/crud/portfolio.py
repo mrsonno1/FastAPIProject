@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from db import models
 from Manager.portfolio.schemas import portfolio as portfolio_schema
 from typing import Optional, List, Dict, Any
@@ -116,9 +117,21 @@ def get_portfolios_paginated(
         query = query.filter(models.Portfolio.color_name.ilike(f"%{color_name}%"))
 
     if exposed_countries:
-        # 각 국가 ID가 콤마로 구분된 리스트에 포함되어 있는지 확인
+        # 각 국가 ID가 정확히 일치하는지 확인 (콤마로 구분된 값에서 정확한 매칭)
         for country_id in exposed_countries:
-            query = query.filter(models.Portfolio.exposed_countries.like(f"%{country_id}%"))
+            # 정확한 매칭을 위한 조건들:
+            # 1. 시작 부분에 있는 경우: "1,2,3" -> "1"로 시작
+            # 2. 중간에 있는 경우: "4,1,2" -> ",1,"
+            # 3. 끝에 있는 경우: "2,3,1" -> ",1"로 끝
+            # 4. 전체가 하나인 경우: "1" -> 정확히 "1"
+            query = query.filter(
+                or_(
+                    models.Portfolio.exposed_countries == country_id,  # 전체가 하나인 경우
+                    models.Portfolio.exposed_countries.like(f"{country_id},%"),  # 시작 부분
+                    models.Portfolio.exposed_countries.like(f"%,{country_id},%"),  # 중간
+                    models.Portfolio.exposed_countries.like(f"%,{country_id}")  # 끝
+                )
+            )
 
     if is_fixed_axis is not None:
         query = query.filter(models.Portfolio.is_fixed_axis == is_fixed_axis)

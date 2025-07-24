@@ -77,9 +77,11 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/brands/list?page=1&size=10
 Authorization: {{superadmin_token}}
 
+
 ### 5. 포트폴리오 목록 조회
-GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&exposed_countries=12
 Authorization: {{superadmin_token}}
+
 
 ### 6. 포트폴리오 상세 조회 (exposed_countries가 번역됨)
 GET {{host}}{{api_prefix}}/portfolio/SIMPLE_BLUE_114

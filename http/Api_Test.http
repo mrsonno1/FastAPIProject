@@ -41,6 +41,11 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/released-product/list
 Authorization: {{superadmin_token}}
 
+###
+GET {{host}}{{api_prefix}}/portfolio/list?page=1&size=10&exposed_countries=1
+Authorization: {{superadmin_token}}
+
+
 ### 포트폴리오 삭제
 DELETE {{host}}{{api_prefix}}/portfolio/14
 Authorization: {{superadmin_token}}
