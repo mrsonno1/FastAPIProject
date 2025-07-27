@@ -613,7 +613,9 @@ Content-Type: application/json
 
 
 
-
+### 54. 출시제품 실시간 유저수 입장
+GET {{host}}{{api_prefix}}/released_product/112
+Authorization: {{superadmin_token}}
 
 ### 54. 출시제품 실시간 유저수 입장
 POST {{host}}{{api_prefix}}/released_product/enter/112

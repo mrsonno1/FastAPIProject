@@ -142,6 +142,7 @@ def get_released_product_detail(db: Session, item_name: str) -> Optional[Dict[st
     return {
         "item_name": product.design_name,
         "color_name": product.color_name,
+        "main_image_url": product.main_image_url,
         "design_line": get_component_info(product.color_line_color_id),
         "design_base1": get_component_info(product.color_base1_color_id),
         "design_base2": get_component_info(product.color_base2_color_id),
