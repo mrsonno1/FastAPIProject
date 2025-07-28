@@ -169,7 +169,8 @@ GET {{host}}{{api_prefix}}/countries/listall
 GET {{host}}{{api_prefix}}/combined-data/
 
 ### 브랜드 목록
-GET {{host}}{{api_prefix}}/brands/listall
+GET {{host}}{{api_prefix}}/brands/listall?brand_name=유니클로
+Authorization: {{superadmin_token}}
 
 ### 브랜드 삭제
 DELETE {{host}}{{api_prefix}}/brands/4

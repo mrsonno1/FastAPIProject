@@ -67,9 +67,13 @@ def delete_single_brand(
 
 
 @router.get("/listall", response_model=List[brand_schema.BrandResponse])
-def get_all_brands(db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
-    """모든 브랜드를 순위 순으로 조회합니다."""
-    return brand_crud.get_all_brands_ordered(db)
+def get_all_brands(
+    brand_name: Optional[str] = None,
+    db: Session = Depends(get_db), 
+    current_user: models.AdminUser = Depends(get_current_user)
+):
+    """모든 브랜드를 순위 순으로 조회합니다. brand_name 파라미터로 검색 가능합니다."""
+    return brand_crud.get_all_brands_ordered(db, brand_name=brand_name)
 
 
 

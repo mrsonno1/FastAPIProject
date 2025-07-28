@@ -45,8 +45,11 @@ def delete_brand_by_id(db: Session, brand_id: int) -> models.Brand:
     return brand
 
 
-def get_all_brands_ordered(db: Session):
-    return db.query(models.Brand).order_by(models.Brand.rank).all()
+def get_all_brands_ordered(db: Session, brand_name: Optional[str] = None):
+    query = db.query(models.Brand)
+    if brand_name:
+        query = query.filter(models.Brand.brand_name.like(f"%{brand_name}%"))
+    return query.order_by(models.Brand.rank).all()
 
 
 def get_brand_by_name(db: Session, brand_name: str):
