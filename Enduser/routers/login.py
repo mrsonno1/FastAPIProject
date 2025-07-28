@@ -111,8 +111,8 @@ def update_my_info(
 ):
     """내 정보 수정"""
 
-    # 이메일 중복 검사 (자신의 이메일이 아닌 경우)
-    if user_update.email != current_user.email:
+    # 이메일 중복 검사 (이메일이 제공되고 자신의 이메일이 아닌 경우)
+    if user_update.email and user_update.email != current_user.email:
         existing_user = login_crud.get_user_by_email(db, email=user_update.email)
         if existing_user:
             raise HTTPException(
@@ -120,14 +120,18 @@ def update_my_info(
                 detail="이미 사용 중인 이메일입니다."
             )
 
-    # 업데이트할 데이터 준비
-    update_data = {
-        "company_name": user_update.company_name,
-        "contact_name": user_update.contact_name,
-        "contact_phone": user_update.contact_phone,
-        "email": user_update.email,
-        "new_password": user_update.new_password
-    }
+    # 업데이트할 데이터 준비 (None이 아닌 값만 포함)
+    update_data = {}
+    if user_update.company_name is not None:
+        update_data["company_name"] = user_update.company_name
+    if user_update.contact_name is not None:
+        update_data["contact_name"] = user_update.contact_name
+    if user_update.contact_phone is not None:
+        update_data["contact_phone"] = user_update.contact_phone
+    if user_update.email is not None:
+        update_data["email"] = user_update.email
+    if user_update.new_password is not None:
+        update_data["new_password"] = user_update.new_password
 
     # 사용자 정보 업데이트
     updated_user = login_crud.update_user_info(db, current_user, update_data)

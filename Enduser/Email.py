@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, File, UploadFile, Form
 from pydantic import BaseModel, EmailStr
 import smtplib
 import ssl
@@ -8,6 +8,7 @@ import base64
 from services.storage_service import storage_service
 
 router = APIRouter(prefix="/mail", tags=["email"])
+email_router = APIRouter(prefix="/email", tags=["email"])
 
 
 # API 요청 본문을 위한 Pydantic 모델
@@ -25,11 +26,9 @@ class EmailBase64Schema(BaseModel):
 
 class ImageUrlSchema(BaseModel):
     base64_image: str  # base64 인코딩된 이미지 데이터
-    filename: str = "image.png"  # 기본 파일명
-    content_type: str = "image/png"  # 기본 content type
 
 
-@router.post("/send-email")
+@router.post("/send-email", include_in_schema=False)
 def send_email_endpoint(email: EmailSchema = Body(...)):
     """제공된 상세 정보를 사용하여 이메일을 전송합니다."""
 
@@ -207,8 +206,8 @@ def upload_base64_image(image_data: ImageUrlSchema = Body(...)):
         # 이미지를 S3로 업로드
         upload_result = storage_service.upload_base64_file(
             file_data=image_bytes,
-            filename=image_data.filename,
-            content_type=image_data.content_type
+            filename="qr_image.png",
+            content_type="image/png"
         )
         
         if not upload_result:
@@ -217,6 +216,121 @@ def upload_base64_image(image_data: ImageUrlSchema = Body(...)):
         return {
             "image_url": upload_result["public_url"],
             "object_name": upload_result["object_name"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"예기치 않은 오류가 발생했습니다: {e}")
+
+
+@email_router.post("/upload", include_in_schema=False)
+async def upload_image(file: UploadFile = File(...)):
+    """이미지를 업로드하고 URL을 반환합니다."""
+    
+    try:
+        # 파일 유효성 검사
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="이미지 파일만 업로드 가능합니다.")
+        
+        # S3/MinIO에 이미지 업로드
+        upload_result = storage_service.upload_file(file)
+        
+        if not upload_result:
+            raise HTTPException(status_code=500, detail="이미지 업로드에 실패했습니다.")
+        
+        return {
+            "image_url": upload_result["public_url"],
+            "object_name": upload_result["object_name"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"예기치 않은 오류가 발생했습니다: {e}")
+
+
+@email_router.post("/send", include_in_schema=False)
+async def send_email_with_image(
+    email_data: EmailBase64Schema = Body(...)
+):
+    """Base64 이미지를 업로드한 후 이메일로 전송합니다."""
+    
+    try:
+        # Base64 이미지 데이터를 디코딩
+        try:
+            # base64 문자열에서 데이터 URI 스킴 제거 (있는 경우)
+            if ',' in email_data.base64_image:
+                decoded_image = email_data.base64_image.split(',')[1]
+            else:
+                decoded_image = email_data.base64_image
+            
+            image_bytes = base64.b64decode(decoded_image)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"유효하지 않은 base64 이미지 데이터입니다: {e}")
+        
+        # 1. 이미지를 S3로 업로드
+        upload_result = storage_service.upload_base64_file(
+            file_data=image_bytes,
+            filename="email_image.png",
+            content_type="image/png"
+        )
+        
+        if not upload_result:
+            raise HTTPException(status_code=500, detail="이미지 업로드에 실패했습니다.")
+        
+        image_url = upload_result["public_url"]
+        
+        # 2. 이메일 전송
+        SMTP_SERVER = "smtp.cafe24.com"
+        SMTP_PORT = 587
+        SMTP_USER = "lensgrapick@dkmv.co.kr"
+        SMTP_PASSWORD = "lgp00100"
+        
+        # 이메일 메시지 생성
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USER
+        msg['To'] = email_data.to_email
+        msg['Subject'] = email_data.subject
+        
+        # HTML 템플릿에 이미지 URL 포함
+        html_content = f"""
+            <html>
+                <body>
+                    <img src="{image_url}" style="max-width: 100%; height: auto;">
+                </body>
+            </html>
+        """
+        
+        msg.attach(MIMEText(html_content, 'html'))
+        
+        # SSL 컨텍스트 설정
+        context = ssl.create_default_context()
+        context.set_ciphers('DEFAULT@SECLEVEL=1')
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        
+        # 이메일 전송
+        try:
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls(context=context)
+                server.login(SMTP_USER, SMTP_PASSWORD)
+                server.sendmail(SMTP_USER, email_data.to_email, msg.as_string())
+        except Exception as e:
+            # 다른 방법으로 재시도
+            try:
+                with smtplib.SMTP_SSL(SMTP_SERVER, 465, context=context) as server:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.sendmail(SMTP_USER, email_data.to_email, msg.as_string())
+            except:
+                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.sendmail(SMTP_USER, email_data.to_email, msg.as_string())
+        
+        return {
+            "message": "이메일이 성공적으로 전송되었습니다.",
+            "image_url": image_url,
+            "to_email": email_data.to_email
         }
         
     except HTTPException:

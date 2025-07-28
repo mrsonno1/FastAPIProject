@@ -21,10 +21,10 @@ class TokenRefreshResponse(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     """내 정보 수정 요청 스키마"""
-    company_name: str
-    contact_name: str
-    contact_phone: str
-    email: EmailStr
+    company_name: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    email: Optional[EmailStr] = None
     new_password: Optional[str] = None
 
 class UserUpdateResponse(BaseModel):

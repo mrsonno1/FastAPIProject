@@ -103,6 +103,7 @@ def get_samples_paginated(
             "design_pupil": design_components.get("design_pupil"),
             "graphic_diameter": design_obj.graphic_diameter if design_obj else None,
             "optic_zone": design_obj.optic_zone if design_obj else None,
+            "dia": design_obj.dia if design_obj else None,
             "created_at": progress_status.created_at,
             "estimated_ship_date": progress_status.expected_shipping_date,
             "status": status_text,

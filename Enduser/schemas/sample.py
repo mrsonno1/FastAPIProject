@@ -27,6 +27,7 @@ class SampleListItem(BaseModel):
     design_pupil: Optional[DesignComponent] = None
     graphic_diameter: Optional[str] = None
     optic_zone: Optional[str] = None
+    dia: Optional[str] = None
     created_at: datetime  # 요청일
     estimated_ship_date: Optional[date] = None  # 발송 예정일
     status: str  # 진행 현황

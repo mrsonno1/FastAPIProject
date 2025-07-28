@@ -14,7 +14,7 @@ from Enduser.routers import released_product as enduser_released_product_router 
 from Enduser.routers import share as enduser_share_router  # 추가
 from Enduser.routers import language_setting as enduser_language_setting_router
 from Enduser.routers import country as enduser_country_router
-from Enduser import Email
+from Enduser.Email import router as email_mail_router, email_router
 from Manager.released_product.routers import released_product
 from Manager.portfolio.routers import portfolio
 from Manager.image.routers import upload
@@ -118,7 +118,8 @@ unity_router.include_router(enduser_share_router.router)  # 추가
 unity_router.include_router(enduser_language_setting_router.router)
 unity_router.include_router(enduser_country_router.router)
 
-unity_router.include_router(Email.router)
+unity_router.include_router(email_mail_router)
+unity_router.include_router(email_router)
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth.router)

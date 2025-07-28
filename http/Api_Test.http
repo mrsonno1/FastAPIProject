@@ -31,7 +31,9 @@ Content-Disposition: form-data; name="status"
 3
 --boundary--
 
-
+### 출시제품 목록
+GET {{host}}{{api_prefix}}/released-product/15
+Authorization: {{superadmin_token}}
 
 ### 출시제품 목록
 GET {{host}}{{api_prefix}}/released-product/info/13
@@ -169,7 +171,7 @@ GET {{host}}{{api_prefix}}/countries/listall
 GET {{host}}{{api_prefix}}/combined-data/
 
 ### 브랜드 목록
-GET {{host}}{{api_prefix}}/brands/listall?brand_name=유니클로
+GET {{host}}{{api_prefix}}/brands/listall?brand_name=영풍
 Authorization: {{superadmin_token}}
 
 ### 브랜드 삭제
