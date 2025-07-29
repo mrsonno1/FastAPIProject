@@ -237,11 +237,20 @@ def get_user_custom_designs_paginated(
             if hasattr(models.CustomDesign, column):
                 query = query.order_by(getattr(models.CustomDesign, column).asc())
     else:
-        # 기본 정렬: item_name을 숫자로 변환하여 오름차순 정렬
-        # item_name이 4자리 숫자 형식 (예: 0001, 0002, 0010)
-        from sqlalchemy import cast, Integer
+        # 기본 정렬: status가 3인 경우를 우선으로 정렬
+        # status 3: updated_at 내림차순
+        # 나머지: created_at 내림차순
+        from sqlalchemy import case
         query = query.order_by(
-            cast(models.CustomDesign.item_name, Integer).asc()
+            case(
+                (models.CustomDesign.status == '3', 0),
+                else_=1
+            ),
+            case(
+                (models.CustomDesign.status == '3', models.CustomDesign.updated_at),
+                else_=None
+            ).desc(),
+            models.CustomDesign.created_at.desc()
         )
 
     # 전체 카운트
