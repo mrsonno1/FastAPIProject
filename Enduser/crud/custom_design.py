@@ -39,13 +39,20 @@ def get_images_paginated(
 
     # 정렬
     if orderBy:
+        from sqlalchemy import cast, Integer
         if orderBy.lower().endswith(' desc'):
             column = orderBy.replace(' desc', '').strip()
-            if hasattr(models.Image, column):
+            if column == 'display_name':
+                # display_name이 숫자로만 이루어진 경우 숫자로 변환하여 정렬
+                query = query.order_by(cast(models.Image.display_name, Integer).desc())
+            elif hasattr(models.Image, column):
                 query = query.order_by(getattr(models.Image, column).desc())
         elif orderBy.lower().endswith(' asc'):
             column = orderBy.replace(' asc', '').strip()
-            if hasattr(models.Image, column):
+            if column == 'display_name':
+                # display_name이 숫자로만 이루어진 경우 숫자로 변환하여 정렬
+                query = query.order_by(cast(models.Image.display_name, Integer).asc())
+            elif hasattr(models.Image, column):
                 query = query.order_by(getattr(models.Image, column).asc())
     else:
         query = query.order_by(models.Image.uploaded_at.desc())
