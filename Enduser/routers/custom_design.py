@@ -10,6 +10,7 @@ from Enduser.schemas import base64_upload as base64_schema  # 추가
 from Enduser.crud import custom_design as custom_design_crud
 import math
 from services.storage_service import storage_service
+from services.thumbnail_service import thumbnail_service
 
 router = APIRouter(tags=["Custom Design"])
 
@@ -208,6 +209,7 @@ def create_my_design(
 
     # 파일 업로드 처리
     main_image_url = None
+    thumbnail_url = None
     if file:
         try:
             upload_result = storage_service.upload_file(file)
@@ -217,6 +219,11 @@ def create_my_design(
                     detail="이미지 업로드에 실패했습니다."
                 )
             main_image_url = upload_result["public_url"]
+            
+            # Generate thumbnail
+            file.file.seek(0)
+            file_content = file.file.read()
+            thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -252,7 +259,8 @@ def create_my_design(
             db=db,
             form_data=form_data,
             user_id=current_user.username,
-            main_image_url=main_image_url
+            main_image_url=main_image_url,
+            thumbnail_url=thumbnail_url
         )
 
         return custom_design_schema.CustomDesignCreateResponse(
@@ -289,6 +297,7 @@ def create_my_design_base64(
 
     # Base64 이미지 업로드 처리
     main_image_url = None
+    thumbnail_url = None
     if design_data.main_image:
         try:
             # Base64 데이터를 바이트로 변환
@@ -308,6 +317,12 @@ def create_my_design_base64(
                 )
 
             main_image_url = upload_result["public_url"]
+            
+            # Generate thumbnail
+            thumbnail_url = thumbnail_service.create_and_upload_thumbnail(
+                image_bytes, 
+                design_data.main_image.filename
+            )
 
         except Exception as e:
             raise HTTPException(
@@ -346,7 +361,8 @@ def create_my_design_base64(
             db=db,
             form_data=form_data,
             user_id=current_user.username,
-            main_image_url=main_image_url
+            main_image_url=main_image_url,
+            thumbnail_url=thumbnail_url
         )
 
         return custom_design_schema.CustomDesignCreateResponse(

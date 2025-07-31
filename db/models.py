@@ -27,6 +27,7 @@ class Brand(Base):
     id = Column(Integer, primary_key=True, index=True)
     brand_name = Column(String, unique=True, index=True, nullable=False)
     brand_image_url = Column(String)
+    thumbnail_url = Column(String, nullable=True)  # 썸네일 URL
     object_name = Column(String, nullable=True)
     rank = Column(Integer, nullable=False, index=True)
 
@@ -47,6 +48,7 @@ class Image(Base):
     display_name = Column(String, index=True, nullable=False)
     object_name = Column(String, index=True)
     public_url = Column(String, unique=True)
+    thumbnail_url = Column(String, nullable=True)  # 썸네일 URL
     exposed_users = Column(String, nullable=True)  # 노출 사용자 ID 목록 (예: "1,2,3,4,5")
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     uploaded_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
@@ -71,6 +73,7 @@ class CustomDesign(Base):
     status = Column(String(20), default="0") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=True)
+    thumbnail_url = Column(String, nullable=True)  # 썸네일 URL
 
     design_line_image_id = Column(String(6), nullable=True)  # 라인 테이블의 id (FK키)
     design_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
@@ -113,6 +116,7 @@ class Portfolio(Base):
     exposed_countries = Column(String(100), nullable=True)  # 노출국가 (국가 id , 기준 ex-> 1,2,3,4)
     is_fixed_axis = Column(String(1), nullable=False, default='N')  # 축고정 (Y/N)
     main_image_url = Column(String, nullable=False)
+    thumbnail_url = Column(String, nullable=True)  # 썸네일 URL
 
     design_line_image_id = Column(String(6), nullable=True)  # 라인 테이블의 id (FK키)
     design_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)

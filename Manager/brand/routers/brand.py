@@ -9,6 +9,7 @@ from Manager.brand.crud import brand as brand_crud
 from db import models
 from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from services.storage_service import storage_service # S3/MinIO 서비스 임포트
+from services.thumbnail_service import thumbnail_service
 from core.security import get_current_user
 
 router = APIRouter(prefix="/brands", tags=["Brands"])
@@ -30,12 +31,18 @@ def create_new_brand(
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="이미지 업로드에 실패했습니다.")
+    
+    # Generate thumbnail
+    file.file.seek(0)  # Reset file pointer
+    file_content = file.file.read()
+    thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     # 2. CRUD 함수를 호출하여 DB에 저장
     return brand_crud.create_brand(
         db=db,
         brand_name=brand_name,
         brand_image_url=upload_result["public_url"],
+        thumbnail_url=thumbnail_url,
         object_name = upload_result["object_name"]
     )
 
@@ -98,6 +105,7 @@ def update_brand_details(
 
     new_image_url = db_brand.brand_image_url  # 기본값은 기존 URL
     new_object_name = db_brand.object_name
+    new_thumbnail_url = db_brand.thumbnail_url
 
     if file:  # 만약 새로운 파일이 함께 전송되었다면
         # 1. 기존 S3 파일 삭제
@@ -111,7 +119,11 @@ def update_brand_details(
 
         new_image_url = upload_result["public_url"]
         new_object_name = upload_result["object_name"]
-        # TODO: 새로운 object_name도 DB에 저장해야 함
+        
+        # Generate new thumbnail
+        file.file.seek(0)
+        file_content = file.file.read()
+        new_thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     # CRUD 함수를 호출하여 DB 업데이트
     return brand_crud.update_brand_info(
@@ -119,7 +131,8 @@ def update_brand_details(
         db_brand=db_brand,
         brand_name=brand_name,
         brand_image_url=new_image_url,
-        object_name=new_object_name
+        object_name=new_object_name,
+        thumbnail_url=new_thumbnail_url
     )
 
 @router.patch("/rank/bulk", status_code=status.HTTP_204_NO_CONTENT)

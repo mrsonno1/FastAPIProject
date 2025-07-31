@@ -8,6 +8,7 @@ from db.database import get_db
 from Manager.image.schemas.image import ImageResponse, PaginatedImageResponse, ImageInfoResponse
 from Manager.image.crud import image as image_crud
 from services.storage_service import storage_service
+from services.thumbnail_service import thumbnail_service
 from db import models
 from Manager.color.schemas.color import NameCheckResponse
 
@@ -88,13 +89,22 @@ def upload_image(
 
     upload_result = storage_service.upload_file(file)
     if not upload_result:
-        raise HTTPException(...)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="파일 업로드에 실패했습니다."
+        )
+    
+    # Generate thumbnail
+    file.file.seek(0)  # Reset file pointer
+    file_content = file.file.read()
+    thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     image_data = {
         "category": category,  # <-- DB에 저장할 데이터에 category 추가
         "display_name": display_name,
         "object_name": upload_result["object_name"],
         "public_url": upload_result["public_url"],
+        "thumbnail_url": thumbnail_url,
         "exposed_users": exposed_users
     }
 

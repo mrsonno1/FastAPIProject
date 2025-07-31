@@ -180,7 +180,8 @@ def create_custom_design(
         db: Session,
         form_data: Dict[str, Any],
         user_id: str,
-        main_image_url: Optional[str] = None
+        main_image_url: Optional[str] = None,
+        thumbnail_url: Optional[str] = None
 ) -> models.CustomDesign:
     """커스텀 디자인 생성 - Form 데이터와 업로드된 이미지 URL 방식"""
 
@@ -189,6 +190,7 @@ def create_custom_design(
         user_id=user_id,
         item_name=form_data["item_name"],
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
+        thumbnail_url=thumbnail_url,  # 썸네일 URL
         request_message=form_data.get("request_message"),
         design_line_image_id=form_data.get("design_line_image_id"),
         design_line_color_id=form_data.get("design_line_color_id"),

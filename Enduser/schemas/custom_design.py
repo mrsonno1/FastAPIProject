@@ -9,6 +9,7 @@ class ImageListItem(BaseModel):
     display_name: str
     object_name: str
     public_url: str
+    thumbnail_url: Optional[str] = None
     uploaded_at: datetime
 
     class Config:
@@ -73,6 +74,7 @@ class CustomDesignListItem(BaseModel):
     id: int
     item_name: str
     main_image_url: str
+    thumbnail_url: Optional[str] = None
     in_cart: bool  # 카트에 포함되어 있는지 여부
     account_code: str  # account_code 추가
 

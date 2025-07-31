@@ -90,13 +90,14 @@ def get_brands_paginated(
 
 
 
-def create_brand(db: Session, brand_name: str, brand_image_url: str, object_name: str):
+def create_brand(db: Session, brand_name: str, brand_image_url: str, object_name: str, thumbnail_url: Optional[str] = None):
     """새로운 브랜드를 가장 낮은 순위로 생성합니다."""
     max_rank = db.query(func.max(models.Brand.rank)).scalar() or 0
 
     db_brand = models.Brand(
         brand_name=brand_name,
         brand_image_url=brand_image_url,
+        thumbnail_url=thumbnail_url,
         object_name=object_name,
         rank=max_rank + 1
     )
@@ -111,13 +112,16 @@ def update_brand_info(
         db_brand: models.Brand,
         brand_name: str,
         brand_image_url: str,
-        object_name: Optional[str]
+        object_name: Optional[str],
+        thumbnail_url: Optional[str] = None
 ):
     """브랜드의 이름과 이미지 URL을 수정합니다."""
     db_brand.brand_name = brand_name
     db_brand.brand_image_url = brand_image_url
     if object_name: # 새 파일로 교체된 경우 object_name도 업데이트
         db_brand.object_name = object_name
+    if thumbnail_url is not None:
+        db_brand.thumbnail_url = thumbnail_url
     db.commit()
     db.refresh(db_brand)
     return db_brand
