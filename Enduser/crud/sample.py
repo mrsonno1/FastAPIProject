@@ -229,6 +229,10 @@ def create_progress_status_from_cart(
 
         if custom_design:
             custom_design_id = custom_design.id
+            # Case 122: 커스텀 디자인의 완료 시 저장된 요청사항 사용
+            final_request_note = custom_design.request_message or request_note or f"{category} 샘플 제작 요청"
+        else:
+            final_request_note = request_note or f"{category} 샘플 제작 요청"
     else:  # 포트폴리오
         portfolio = db.query(models.Portfolio).filter(
             models.Portfolio.design_name == item_name,
@@ -237,6 +241,7 @@ def create_progress_status_from_cart(
 
         if portfolio:
             portfolio_id = portfolio.id
+        final_request_note = request_note or f"{category} 샘플 제작 요청"
 
     # progress_status 생성
     progress_status = models.Progressstatus(
@@ -244,7 +249,7 @@ def create_progress_status_from_cart(
         custom_design_id=custom_design_id,
         portfolio_id=portfolio_id,
         status='0',  # 대기 상태
-        notes=request_note or f"{category} 샘플 제작 요청",
+        notes=final_request_note,  # 커스텀 디자인의 경우 완료 시의 요청사항 사용
         client_name=client_name,
         number=number,
         address=address,

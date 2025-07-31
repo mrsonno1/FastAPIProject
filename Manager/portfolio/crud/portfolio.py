@@ -5,7 +5,7 @@ from Manager.portfolio.schemas import portfolio as portfolio_schema
 from typing import Optional, List, Dict, Any
 from fastapi import HTTPException
 from datetime import date
-from Manager.progress_status.crud import progress_status as progress_status_crud
+# from Manager.progress_status.crud import progress_status as progress_status_crud  # Case 131: 자동 생성 제거
 
 
 def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, user_id: int):
@@ -37,21 +37,8 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
     db.commit()
     db.refresh(db_portfolio)
 
-    # 포트폴리오 생성 후 progress_status 생성/업데이트
-    # 해당 사용자의 가장 최근 custom_design 찾기
-    user = db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
-    if user:
-        latest_design = db.query(models.CustomDesign).filter(
-            models.CustomDesign.user_id == user.username
-        ).order_by(models.CustomDesign.created_at.desc()).first()
-
-        if latest_design:
-            progress_status_crud.create_progress_status_for_portfolio(
-                db=db,
-                portfolio_id=db_portfolio.id,
-                custom_design_id=latest_design.id,
-                user_id=user_id
-            )
+    # Case 131: 포트폴리오 생성 시 progress_status 자동 생성 제거
+    # progress_status는 장바구니에서 샘플 요청 시에만 생성되어야 함
 
     return db_portfolio
 

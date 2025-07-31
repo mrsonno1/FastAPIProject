@@ -3,7 +3,7 @@ from Manager.custom_design.schemas import custom_design as custom_design_schema
 from db import models
 from typing import Optional, Dict, Any
 from fastapi import HTTPException
-from Manager.progress_status.crud import progress_status as progress_status_crud
+# from Manager.progress_status.crud import progress_status as progress_status_crud  # Case 131: 자동 생성 제거
 
 
 # Manager/custom_design/crud/custom_design.py (일부분만)
@@ -54,19 +54,8 @@ def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict
     db.commit()
     db.refresh(db_design)
 
-    # status가 '3'으로 변경되었으면 progress_status 생성
-    if 'status' in update_data and update_data['status'] == '3' and old_status != '3':
-        # AdminUser에서 user_id 가져오기
-        user = db.query(models.AdminUser).filter(
-            models.AdminUser.username == db_design.user_id
-        ).first()
-
-        if user:
-            progress_status_crud.check_and_create_progress_status_for_custom_design(
-                db=db,
-                custom_design_id=db_design.id,
-                user_id=user.id
-            )
+    # Case 131: 커스텀 디자인 상태 변경 시 progress_status 자동 생성 제거
+    # progress_status는 장바구니에서 샘플 요청 시에만 생성되어야 함
 
     return db_design
 
