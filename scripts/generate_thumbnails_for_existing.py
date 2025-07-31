@@ -7,6 +7,10 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from db import models
