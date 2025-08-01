@@ -82,11 +82,11 @@ def send_email_with_base64_image(email_data: EmailBase64Schema = Body(...)):
                                             <table width="500" height="500" border="0" cellspacing="0" cellpadding="0" align="center">
                                                 <tr>
                                                     <td align="center">
-                                                        <img src="{image_url}" width="500" height="500" style="display: block;" alt="LENS GRAPICK Image">
+                                                        <img src="{image_url}" width="500" height="500" style="display: block;" >
                                                     </td>
                                                 </tr>
                                             </table>
-                                            <table width="500" border="0" cellspacing="0" cellpadding="0" align="center" style="position: relative; top: -500px;">
+                                            <table width="500" border="0" cellspacing="0" cellpadding="0" align="center" style="position: relative; top: -30px;">
                                                 <tr>
                                                     <td align="center" style="color: #1a73e8; font-size: 12px; font-weight: bold;">
                                                         © Lensgrapick. 이미지 무단 사용 금지
