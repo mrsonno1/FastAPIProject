@@ -63,6 +63,7 @@ def get_released_products_paginated(
         formatted_items.append({
             "item_name": product.design_name,
             "main_image_url": product.main_image_url,
+            "thumbnail_url": product.thumbnail_url,
             "brand_name": brand.brand_name,
             "realtime_users": realtime_users
         })

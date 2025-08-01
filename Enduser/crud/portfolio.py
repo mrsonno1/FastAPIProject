@@ -113,6 +113,7 @@ def get_portfolios_paginated(
         formatted_items.append({
             "item_name": portfolio.design_name,
             "main_image_url": portfolio.main_image_url,
+            "thumbnail_url": portfolio.thumbnail_url,
             "realtime_users": realtime_users,
             "created_at": portfolio.created_at,
             "account_code": account_code,

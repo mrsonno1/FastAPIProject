@@ -19,6 +19,7 @@ class DesignComponent(BaseModel):
 class ReleasedProductListItem(BaseModel):
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
+    thumbnail_url: Optional[str] = None  # 썸네일 URL
     brand_name: str  # 브랜드 이름
     realtime_users: int = 0  # 실시간 유저수
 

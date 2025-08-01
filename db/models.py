@@ -148,6 +148,7 @@ class Releasedproduct(Base):
     brand_id = Column(Integer, nullable=False)
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=False)
+    thumbnail_url = Column(String, nullable=True)  # 썸네일 URL
 
     color_line_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
     color_base1_color_id = Column(String(6), nullable=True)  # 컬러 테이블 id (FK키)
