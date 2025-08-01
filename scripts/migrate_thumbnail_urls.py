@@ -1,6 +1,18 @@
 """
 데이터베이스에 thumbnail_url 컬럼을 추가하는 마이그레이션 스크립트
 """
+import os
+import sys
+from pathlib import Path
+
+# 프로젝트 루트 디렉토리를 Python 경로에 추가
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# .env 파일 로드
+from dotenv import load_dotenv
+load_dotenv()
+
 from sqlalchemy import text
 from db.database import engine
 
