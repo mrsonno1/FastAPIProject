@@ -8,6 +8,7 @@ from db.database import get_db
 from core.security import get_current_user
 import math
 from services.storage_service import storage_service
+from services.thumbnail_service import thumbnail_service
 # 새로운 형식의 포트폴리오 관련 API
 
 
@@ -72,8 +73,14 @@ def create_new_portfolio(
     if not upload_result:
         raise HTTPException(status_code=500, detail="메인 이미지 업로드에 실패했습니다.")
 
+    # 썸네일 생성
+    file.file.seek(0)  # 파일 포인터 리셋
+    file_content = file.file.read()
+    thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
+
     # 이미지 업로드 url 적용
     portfolio_data.main_image_url = upload_result["public_url"]
+    portfolio_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
 
     # 데이터베이스 적용
     created_portfolio = portfolio_CRUD.create_portfolio(
@@ -290,6 +297,12 @@ def update_portfolio_details(
         if not upload_result:
             raise HTTPException(status_code=500, detail="새 이미지 업로드에 실패했습니다.")
         portfolio_update_data.main_image_url = upload_result["public_url"]
+        
+        # 썸네일 생성
+        file.file.seek(0)  # 파일 포인터 리셋
+        file_content = file.file.read()
+        thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
+        portfolio_update_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
 
     updated_portfolio = portfolio_CRUD.update_portfolio(
         db=db,

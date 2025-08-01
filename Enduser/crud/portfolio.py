@@ -195,6 +195,7 @@ def get_portfolio_detail(db: Session, item_name: str) -> Optional[Dict[str, Any]
         "item_name": portfolio.design_name,
         "color_name": portfolio.color_name,
         "account_code": account_code,
+        "main_image_url": portfolio.main_image_url,  # main_image_url 추가
         "design_line": get_component_info(
             portfolio.design_line_image_id,
             portfolio.design_line_color_id

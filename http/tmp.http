@@ -344,6 +344,20 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/portfolio/list
 Authorization: {{superadmin_token}}
 
+### 14. 포트폴리오 목록 조회 (기본 - 인기순)
+GET {{host}}{{api_prefix}}/images/list
+Authorization: {{superadmin_token}}
+
+### 14. 포트폴리오 목록 조회 (기본 - 인기순)
+GET {{host}}{{api_prefix}}/brands/list
+Authorization: {{superadmin_token}}
+
+
+
+### 14. 포트폴리오 목록 조회 (기본 - 인기순)
+GET {{host}}{{api_prefix}}/portfolio/SIMPLE_BLUE_128
+Authorization: {{superadmin_token}}
+
 
 
 ### 15. 포트폴리오 목록 조회 (최신순)
