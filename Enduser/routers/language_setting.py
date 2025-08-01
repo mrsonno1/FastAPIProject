@@ -15,6 +15,9 @@ class LanguageResponse(BaseModel):
 def set_korean(current_user: models.AdminUser = Depends(get_current_user)):
     """사용자 언어를 한국어로 설정합니다."""
     set_user_language(current_user.username, 'ko')
+    # 번역 캐시 비우기
+    from services.translate_service import translate_service
+    translate_service.clear_cache()
     return LanguageResponse(
         language='ko',
         message='언어가 한국어로 설정되었습니다.'
@@ -24,6 +27,9 @@ def set_korean(current_user: models.AdminUser = Depends(get_current_user)):
 def set_english(current_user: models.AdminUser = Depends(get_current_user)):
     """사용자 언어를 영어로 설정합니다."""
     set_user_language(current_user.username, 'en')
+    # 번역 캐시 비우기
+    from services.translate_service import translate_service
+    translate_service.clear_cache()
     return LanguageResponse(
         language='en',
         message='Language has been set to English.'

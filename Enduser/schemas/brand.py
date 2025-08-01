@@ -6,7 +6,6 @@ from typing import List, Optional
 class BrandListItem(BaseModel):
     brand_name: str  # 브랜드 이름
     brand_image_url: Optional[str] = None  # 브랜드 이미지 URL
-    thumbnail_url: Optional[str] = None  # 썸네일 URL
 
     class Config:
         from_attributes = True
