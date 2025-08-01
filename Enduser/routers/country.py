@@ -27,11 +27,11 @@ def get_sorted_countries(
         language: str = Depends(get_current_language_dependency)
 ):
     """
-    포트폴리오에 노출된 국가들을 정렬하여 반환합니다.
+    포트폴리오에 노출된 국가들을 rank 순으로 정렬하여 반환합니다.
     
     - portfolios 테이블의 exposed_countries 필드에 있는 국가 ID들만 추출
-    - language_setting에 따라 국가명을 번역 후 정렬
-    - 한국어: 가나다순, 영어: ABC순
+    - language_setting에 따라 국가명을 번역
+    - rank 필드 순으로 정렬
     """
     
     # 모든 포트폴리오에서 exposed_countries 수집
@@ -53,10 +53,10 @@ def get_sorted_countries(
     if not exposed_country_ids:
         return []
     
-    # 해당 ID의 국가들을 조회
+    # 해당 ID의 국가들을 rank 순으로 조회
     countries = db.query(models.Country).filter(
         models.Country.id.in_([int(id) for id in exposed_country_ids])
-    ).all()
+    ).order_by(models.Country.rank).all()
     
     # 국가 정보를 (id, 원본명, 번역명) 형태로 저장
     country_data = []
@@ -79,13 +79,7 @@ def get_sorted_countries(
             'country_name': translated_name
         })
     
-    # 번역된 이름으로 정렬
-    if language == 'ko':
-        # 한국어: 가나다순
-        sorted_countries = sorted(country_data, key=lambda x: x['country_name'])
-    else:
-        # 영어: ABC순 (대소문자 구분 없이)
-        sorted_countries = sorted(country_data, key=lambda x: x['country_name'].lower())
-    
+    # rank 순으로 이미 정렬되어 있으므로 별도 정렬 불필요
+    # country_data를 그대로 반환
     return [CountryResponse(id=country['id'], country_name=country['country_name']) 
-            for country in sorted_countries]
+            for country in country_data]
