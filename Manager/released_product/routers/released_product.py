@@ -8,6 +8,7 @@ from db import models
 from db.database import get_db
 from Manager.released_product.crud import released_product as released_product_CRUD
 from services.storage_service import storage_service
+from services.thumbnail_service import thumbnail_service
 from core.security import get_current_user
 from Manager.portfolio.schemas import portfolio as portfolio_schema
 
@@ -57,7 +58,13 @@ def create_new_released_product(
     if not upload_result:
         raise HTTPException(status_code=500, detail="메인 이미지 업로드에 실패했습니다.")
 
+    # 썸네일 생성
+    file.file.seek(0)  # 파일 포인터 리셋
+    file_content = file.file.read()
+    thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
+
     released_product_data.main_image_url = upload_result["public_url"]
+    released_product_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
 
     created_released_product = released_product_CRUD.create_released_product(
         db=db,
@@ -131,6 +138,12 @@ def update_released_product_details(
         if not upload_result:
             raise HTTPException(status_code=500, detail="새 이미지 업로드에 실패했습니다.")
         released_product_update_data.main_image_url = upload_result["public_url"]
+        
+        # 썸네일 생성
+        file.file.seek(0)  # 파일 포인터 리셋
+        file_content = file.file.read()
+        thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
+        released_product_update_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
 
     updated_released_product = released_product_CRUD.update_released_product(
         db=db,
