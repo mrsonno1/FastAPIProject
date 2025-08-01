@@ -54,13 +54,15 @@ def create_new_released_product(
     if released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_data.design_name):
         raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
+    # 파일 내용을 먼저 읽어서 저장
+    file_content = file.file.read()
+    file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
+    
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="메인 이미지 업로드에 실패했습니다.")
 
     # 썸네일 생성
-    file.file.seek(0)  # 파일 포인터 리셋
-    file_content = file.file.read()
     thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     released_product_data.main_image_url = upload_result["public_url"]
@@ -134,14 +136,16 @@ def update_released_product_details(
             # storage_service.delete_file(db_released_product.object_name) # object_name이 필요
             pass # 현재 object_name이 없으므로 삭제 로직은 생략
 
+        # 파일 내용을 먼저 읽어서 저장
+        file_content = file.file.read()
+        file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
+        
         upload_result = storage_service.upload_file(file)
         if not upload_result:
             raise HTTPException(status_code=500, detail="새 이미지 업로드에 실패했습니다.")
         released_product_update_data.main_image_url = upload_result["public_url"]
         
         # 썸네일 생성
-        file.file.seek(0)  # 파일 포인터 리셋
-        file_content = file.file.read()
         thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
         released_product_update_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
 

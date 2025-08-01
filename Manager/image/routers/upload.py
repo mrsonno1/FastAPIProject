@@ -87,6 +87,10 @@ def upload_image(
             detail=f"'{category}' 종류에 해당 표시 이름이 이미 존재합니다."
         )
 
+    # 파일 내용을 먼저 읽어서 저장
+    file_content = file.file.read()
+    file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
+    
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(
@@ -95,8 +99,6 @@ def upload_image(
         )
     
     # Generate thumbnail
-    file.file.seek(0)  # Reset file pointer
-    file_content = file.file.read()
     thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     image_data = {

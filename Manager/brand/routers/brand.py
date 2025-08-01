@@ -27,14 +27,16 @@ def create_new_brand(
     if brand_crud.get_brand_by_name(db, brand_name=brand_name):
         raise HTTPException(status_code=409, detail="이미 사용 중인 브랜드 이름입니다.")
 
+    # 파일 내용을 먼저 읽어서 저장
+    file_content = file.file.read()
+    file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
+    
     # 1. S3(MinIO)에 이미지 업로드
     upload_result = storage_service.upload_file(file)
     if not upload_result:
         raise HTTPException(status_code=500, detail="이미지 업로드에 실패했습니다.")
     
     # Generate thumbnail
-    file.file.seek(0)  # Reset file pointer
-    file_content = file.file.read()
     thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     # 2. CRUD 함수를 호출하여 DB에 저장
@@ -112,6 +114,10 @@ def update_brand_details(
         if db_brand.object_name:  # object_name이 DB에 저장되어 있어야 함
             storage_service.delete_file(db_brand.object_name)
 
+        # 파일 내용을 먼저 읽어서 저장
+        file_content = file.file.read()
+        file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
+        
         # 2. 새 파일 업로드
         upload_result = storage_service.upload_file(file)
         if not upload_result:
@@ -121,8 +127,6 @@ def update_brand_details(
         new_object_name = upload_result["object_name"]
         
         # Generate new thumbnail
-        file.file.seek(0)
-        file_content = file.file.read()
         new_thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
     # CRUD 함수를 호출하여 DB 업데이트
