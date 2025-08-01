@@ -212,7 +212,7 @@ def get_portfolios_paginated(
     return {"items": formatted_items, "total_count": total_count}
 
 # --- [새로운 상세 정보 조회 함수 추가] ---
-def get_portfolio_detail(db: Session, portfolio_id: int) -> Optional[Dict[str, Any]]:
+def get_portfolio_detail(db: Session, portfolio_id: int, is_admin: bool = True) -> Optional[Dict[str, Any]]:
     """ID로 단일 포트폴리오의 상세 정보를 조회합니다."""
     result = db.query(models.Portfolio, models.AdminUser).join(
         models.AdminUser, models.Portfolio.user_id == models.AdminUser.id
@@ -226,36 +226,37 @@ def get_portfolio_detail(db: Session, portfolio_id: int) -> Optional[Dict[str, A
     portfolio, user = result
 
 
-    # 조회수 증가 로직
-    db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).update(
-        {models.Portfolio.views: models.Portfolio.views + 1},
-        synchronize_session=False,
+    # 조회수 증가 로직 - 관리자가 아닌 경우에만 증가
+    if not is_admin:
+        db.query(models.Portfolio).filter(models.Portfolio.id == portfolio_id).update(
+            {models.Portfolio.views: models.Portfolio.views + 1},
+            synchronize_session=False,
 
-    )
-    # DailyView 기록 로직
-    today = date.today()
-
-    daily_view = db.query(models.DailyView).filter(
-        models.DailyView.view_date == today,
-        models.DailyView.content_type == 'portfolio',
-        models.DailyView.content_id == portfolio_id
-    ).first()
-
-    if daily_view:
-        # 데이터가 있으면 view_count를 1 증가
-        daily_view.view_count += 1
-    else:
-        # 데이터가 없으면 새로 생성
-        new_daily_view = models.DailyView(
-            view_date=today,
-            content_type='portfolio',
-            content_id=portfolio_id,
-            view_count=1
         )
-        db.add(new_daily_view)
+        # DailyView 기록 로직
+        today = date.today()
 
-    db.commit()
-    db.refresh(portfolio)
+        daily_view = db.query(models.DailyView).filter(
+            models.DailyView.view_date == today,
+            models.DailyView.content_type == 'portfolio',
+            models.DailyView.content_id == portfolio_id
+        ).first()
+
+        if daily_view:
+            # 데이터가 있으면 view_count를 1 증가
+            daily_view.view_count += 1
+        else:
+            # 데이터가 없으면 새로 생성
+            new_daily_view = models.DailyView(
+                view_date=today,
+                content_type='portfolio',
+                content_id=portfolio_id,
+                view_count=1
+            )
+            db.add(new_daily_view)
+
+        db.commit()
+        db.refresh(portfolio)
 
     # 헬퍼 함수 정의
     def get_image_details(image_id: Optional[str]):

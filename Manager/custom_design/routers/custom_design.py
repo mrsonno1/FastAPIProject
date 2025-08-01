@@ -42,17 +42,9 @@ def create_new_custom_design(
     db: Session = Depends(get_db),
     current_user: models.AdminUser = Depends(get_current_user)
 ):
-    """사용하지 않음."""
-    last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
-    next_id = (last.id + 1) if last else 1
-    formatted_id = str(next_id).zfill(4)
-    new_code = f"{current_user.account_code}-{formatted_id}"
-
-    # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
-    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == new_code).first():
-        # 이 경우는 동시성 문제 등으로 발생할 수 있으며, 더 정교한 처리가 필요할 수 있습니다.
-        # 간단하게는 에러를 발생시킵니다.
-        raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
+    """커스텀 디자인 요청 생성 - 요청 시에는 코드를 생성하지 않음"""
+    # 코드 생성 없이 None으로 설정
+    new_code = None
 
     # --- 메인 이미지 파일 처리 ---
     main_image_url = None

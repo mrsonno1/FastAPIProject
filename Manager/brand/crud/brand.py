@@ -25,8 +25,8 @@ def delete_brand_by_id(db: Session, brand_id: int) -> models.Brand:
     """브랜드 ID로 브랜드를 삭제합니다. 종속성 검사를 포함합니다."""
 
     # 종속성 검사: released_product 테이블에서 사용 여부 확인
-    released_product_usage = db.query(models.ReleasedProduct).filter(
-        models.ReleasedProduct.brand_id == brand_id
+    released_product_usage = db.query(models.ReleasedProducts).filter(
+        models.ReleasedProducts.brand_id == brand_id
     ).first()
 
     if released_product_usage:

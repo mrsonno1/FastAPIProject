@@ -167,7 +167,7 @@ def get_portfolio_detail(
     ID로 특정 포트폴리오를 찾아 상세 정보를 반환합니다.
     """
 
-    detail_data  = portfolio_CRUD.get_portfolio_detail(db, portfolio_id)
+    detail_data  = portfolio_CRUD.get_portfolio_detail(db, portfolio_id, is_admin=True)
     if not detail_data :
         raise HTTPException(status_code=404, detail="해당 ID의 포트폴리오를 찾을 수 없습니다.")
 

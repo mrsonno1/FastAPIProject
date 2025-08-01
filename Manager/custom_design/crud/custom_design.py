@@ -48,6 +48,32 @@ def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict
     # 기존 상태 저장
     old_status = db_design.status
 
+    # 상태가 '1'(완료)로 변경되고 item_name이 없는 경우 코드 생성
+    if update_data.get('status') == '1' and db_design.item_name is None:
+        # 사용자 정보 조회
+        user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
+        if user and user.account_code:
+            # 해당 계정의 커스텀 디자인 중 마지막 순번 찾기
+            last_design = db.query(models.CustomDesign).filter(
+                models.CustomDesign.user_id == db_design.user_id,
+                models.CustomDesign.item_name.like(f"{user.account_code}-%")
+            ).order_by(models.CustomDesign.id.desc()).first()
+            
+            if last_design and last_design.item_name:
+                # 마지막 코드에서 순번 추출
+                try:
+                    last_number = int(last_design.item_name.split('-')[-1])
+                    next_number = last_number + 1
+                except:
+                    next_number = 1
+            else:
+                next_number = 1
+            
+            # 새 코드 생성
+            formatted_id = str(next_number).zfill(4)
+            new_code = f"{user.account_code}-{formatted_id}"
+            update_data['item_name'] = new_code
+
     for key, value in update_data.items():
         setattr(db_design, key, value)
 
@@ -204,6 +230,7 @@ def get_designs_paginated(
 
     # --- [수정 2] 필터링 로직 수정 ---
     if item_name:
+        # 전체 코드명(예: two-0096)을 검색할 수 있도록 수정
         query = query.filter(models.CustomDesign.item_name.ilike(f"%{item_name}%"))
 
     if user_name:
