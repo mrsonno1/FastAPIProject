@@ -191,12 +191,16 @@ Authorization: {{superadmin_token}}
 GET {{host}}/api/progress-status/list?page=1&size=10&status=0
 Authorization: {{superadmin_token}}
 
+### 8. List all progress statuses with filters
+GET {{host}}/api/progress-status/list
+Authorization: {{superadmin_token}}
+
 ### 9. Search by user name
 GET {{host}}/api/progress-status/list?user_name=admin&page=1&size=10
 Authorization: {{superadmin_token}}
 
 ### 10. Search by custom design name
-GET {{host}}/api/progress-status/list?custom_design_name=테스트&type=0
+GET {{host}}/api/progress-status/list?custom_design_name=4&type=0
 Authorization: {{superadmin_token}}
 
 ### 11. Delete progress status

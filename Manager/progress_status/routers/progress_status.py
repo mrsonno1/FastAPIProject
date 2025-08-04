@@ -95,7 +95,7 @@ def create_new_progress_status(
 def list_all_progress_status(
         # 페이지네이션 파라미터
         page: int = Query(1, ge=1, description="페이지 번호"),
-        size: int = Query(10, ge=1, le=100, description="페이지 당 항목 수"),
+        size: int = Query(10, ge=1, le=999999, description="페이지 당 항목 수"),
 
         # 검색 필터 파라미터
         user_name: Optional[str] = Query(None, description="아이디 검색"),

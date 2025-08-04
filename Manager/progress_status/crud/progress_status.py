@@ -491,15 +491,22 @@ def get_progress_status_paginated(
 
     if custom_design_name:
         if type is None:
+            # account_code와 함께 검색하도록 수정
             query = query.filter(
                 or_(
                     models.CustomDesign.item_name.ilike(f"%{custom_design_name}%"),
-                    models.Portfolio.design_name.ilike(f"%{custom_design_name}%")
+                    models.Portfolio.design_name.ilike(f"%{custom_design_name}%"),
+                    # account_code와 item_name을 조합한 검색 추가
+                    (models.AdminUser.account_code + '-' + models.CustomDesign.item_name).ilike(f"%{custom_design_name}%")
                 )
             )
         elif type == 0:
+            # 커스텀 디자인의 경우 account_code와 함께 검색
             query = query.filter(
-                models.CustomDesign.item_name.ilike(f"%{custom_design_name}%")
+                or_(
+                    models.CustomDesign.item_name.ilike(f"%{custom_design_name}%"),
+                    (models.AdminUser.account_code + '-' + models.CustomDesign.item_name).ilike(f"%{custom_design_name}%")
+                )
             )
         elif type == 1:
             query = query.filter(
@@ -529,8 +536,8 @@ def get_progress_status_paginated(
     today = date.today()
     needs_commit = False
     for progress_status, user, custom_design, portfolio in results:
-        # Case 131: '대기(0)' 또는 '진행중(1)' 상태에서 발송 예정일이 지난 경우 '지연(2)' 상태로 변경
-        if progress_status.status in ['0', '1']:
+        # '진행중(1)' 상태에서만 발송 예정일이 지난 경우 '지연(2)' 상태로 변경
+        if progress_status.status == '1':
             if progress_status.expected_shipping_date and today > progress_status.expected_shipping_date:
                 progress_status.status = '2'  # '지연' 상태로 변경
                 needs_commit = True
