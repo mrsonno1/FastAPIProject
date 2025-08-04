@@ -65,6 +65,8 @@ class StorageService:
 
     def upload_base64_file(self, file_data: bytes, filename: str, content_type: str) -> Optional[Dict[str, str]]:
         """Base64 디코딩된 파일 데이터를 업로드합니다."""
+        print(f"DEBUG storage_service: upload_base64_file called - filename: {filename}, content_type: {content_type}, data_size: {len(file_data)}")
+        
         file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
         object_name = f"uploads/{uuid.uuid4()}.{file_extension}"
 
@@ -76,6 +78,8 @@ class StorageService:
             # 바이트 데이터를 BytesIO 객체로 변환
             file_obj = io.BytesIO(file_data)
 
+            print(f"DEBUG storage_service: Uploading to bucket: {self.bucket_name}, object: {object_name}")
+            
             self.s3_client.upload_fileobj(
                 file_obj,
                 self.bucket_name,
@@ -89,9 +93,12 @@ class StorageService:
             else:  # local
                 public_url = f"http://{settings.MINIO_ENDPOINT}/{self.bucket_name}/{object_name}"
 
+            print(f"DEBUG storage_service: Upload successful - URL: {public_url}")
             return {"object_name": object_name, "public_url": public_url}
         except ClientError as e:
-            print(f"Error uploading base64 file: {e}")
+            print(f"ERROR storage_service: Error uploading base64 file: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def delete_file(self, object_name: str) -> bool:

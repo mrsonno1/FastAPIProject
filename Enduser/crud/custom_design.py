@@ -281,3 +281,50 @@ def get_design_by_id(db: Session, design_id: int, user_id: str) -> Optional[mode
         models.CustomDesign.id == design_id,
         models.CustomDesign.user_id == user_id
     ).first()
+
+
+def update_design_status(db: Session, design_id: int, user_id: str, status: str) -> Optional[models.CustomDesign]:
+    """커스텀 디자인 상태 업데이트 - status가 3일 때 item_name 자동 생성"""
+    
+    # 디자인 조회
+    db_design = get_design_by_id(db, design_id, user_id)
+    if not db_design:
+        return None
+    
+    # 기존 상태 저장
+    old_status = db_design.status
+    
+    # 상태가 '3'(완료)로 변경되고 item_name이 없는 경우 코드 생성
+    if status == '3' and (db_design.item_name is None or db_design.item_name == ''):
+        # 사용자 정보 조회
+        user = db.query(models.AdminUser).filter(models.AdminUser.username == user_id).first()
+        if user and user.account_code:
+            # 해당 계정의 커스텀 디자인 중 마지막 순번 찾기
+            # item_name이 숫자로만 이루어진 것들 중에서 찾기
+            last_design = db.query(models.CustomDesign).filter(
+                models.CustomDesign.user_id == user_id,
+                models.CustomDesign.item_name != None,
+                models.CustomDesign.item_name.op('~')('^[0-9]+$')  # 숫자만으로 이루어진 item_name
+            ).order_by(models.CustomDesign.id.desc()).first()
+            
+            if last_design and last_design.item_name:
+                # 마지막 번호에서 다음 번호 계산
+                try:
+                    last_number = int(last_design.item_name)
+                    next_number = last_number + 1
+                except:
+                    next_number = 1
+            else:
+                next_number = 1
+            
+            # 새 코드 생성 (숫자만)
+            new_code = str(next_number).zfill(4)
+            db_design.item_name = new_code
+    
+    # 상태 업데이트
+    db_design.status = status
+    
+    db.commit()
+    db.refresh(db_design)
+    
+    return db_design

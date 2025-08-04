@@ -53,7 +53,7 @@ class DesignComponent(BaseModel):
 
 # 커스텀 디자인 상세 조회 응답
 class CustomDesignDetailResponse(BaseModel):
-    item_name: str
+    item_name: Optional[str] = None
     account_code: str  # account_code 추가
     design_line: Optional[DesignComponent] = None
     design_base1: Optional[DesignComponent] = None
@@ -66,8 +66,8 @@ class CustomDesignDetailResponse(BaseModel):
 # 커스텀 디자인 생성 응답
 class CustomDesignCreateResponse(BaseModel):
     id: int
-    item_name: str
-    main_image_url: str
+    item_name: Optional[str] = None
+    main_image_url: Optional[str] = None
 
 # 커스텀 디자인 목록 아이템
 class CustomDesignListItem(BaseModel):

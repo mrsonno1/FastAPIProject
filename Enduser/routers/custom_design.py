@@ -158,9 +158,12 @@ def get_my_design_detail(
     # design 상태 확인을 위해 DB에서 디자인 정보 가져오기
     design = custom_design_crud.get_design_by_id(db, design_id, current_user.username)
 
-    # status가 '1' 또는 '2'일 때 item_name을 "-"로 표시
-    if design and design.status in ['1', '2']:
+    # status가 '0', '1' 또는 '2'일 때 item_name을 "-"로 표시
+    # status가 '3'이고 item_name이 있을 때만 실제 값 표시
+    if design and design.status in ['0', '1', '2']:
         design_detail['item_name'] = "-"
+    elif design and design.status == '3' and not design.item_name:
+        design_detail['item_name'] = "-"  # status 3이지만 아직 item_name이 없는 경우
     
     # account_code 추가
     design_detail['account_code'] = current_user.account_code
@@ -198,31 +201,21 @@ def create_my_design(
 ):
     """커스텀디자인 완료 목록 추가 - File 업로드 방식"""
 
-    # Manager/custom_design의 로직을 참고하여 item_name 자동 생성
-    # 중복되지 않는 번호를 찾을 때까지 반복
-    formatted_id = None
-    attempt = 0
-    while attempt < 100:  # 최대 100번 시도
-        last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
-        next_id = (last.id + 1) if last else 1
-        next_id += attempt  # 충돌 시 다음 번호 시도
-        formatted_id = str(next_id).zfill(4)
-        
-        # 중복 확인
-        if not db.query(models.CustomDesign).filter(models.CustomDesign.item_name == formatted_id).first():
-            break
-        attempt += 1
-    
-    if formatted_id is None or attempt >= 100:
-        raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
+    # 초기 생성 시에는 item_name을 null로 설정
+    # status가 3(완료)로 변경될 때 account_code 기반으로 생성
+    item_name = None
 
     # 파일 업로드 처리
     main_image_url = None
     thumbnail_url = None
     if file:
         try:
+            print(f"DEBUG: File received - filename: {file.filename}, content_type: {file.content_type}")
+            
             # 파일 내용을 먼저 읽어서 저장
             file_content = file.file.read()
+            print(f"DEBUG: File content read - size: {len(file_content)} bytes")
+            
             file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
             
             upload_result = storage_service.upload_file(file)
@@ -232,18 +225,32 @@ def create_my_design(
                     detail="이미지 업로드에 실패했습니다."
                 )
             main_image_url = upload_result["public_url"]
+            print(f"DEBUG: Main image uploaded - URL: {main_image_url}")
             
             # Generate thumbnail
-            thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
+            if file_content:
+                print(f"DEBUG: Creating thumbnail for {file.filename}")
+                thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
+                print(f"DEBUG: Thumbnail result - URL: {thumbnail_url}")
+            else:
+                print("ERROR: File content is empty, cannot create thumbnail")
+            
+            # 디버깅을 위한 로그
+            print(f"DEBUG: Final results - main_image_url: {main_image_url}, thumbnail_url: {thumbnail_url}")
         except Exception as e:
+            print(f"ERROR: File upload failed - {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"이미지 업로드 중 오류가 발생했습니다: {str(e)}"
             )
+    else:
+        print("DEBUG: No file provided in request")
 
     try:
         form_data = {
-            "item_name": formatted_id,  # 자동 생성된 코드 사용
+            "item_name": item_name,  # null로 설정
             "request_message": request_message,
             "design_line_image_id": design_line_image_id,
             "design_line_color_id": design_line_color_id,
@@ -296,23 +303,9 @@ def create_my_design_base64(
 ):
     """커스텀디자인 완료 목록 추가 - Base64 업로드 방식 (Unity용)"""
 
-    # Manager/custom_design의 로직을 참고하여 item_name 자동 생성
-    # 중복되지 않는 번호를 찾을 때까지 반복
-    formatted_id = None
-    attempt = 0
-    while attempt < 100:  # 최대 100번 시도
-        last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
-        next_id = (last.id + 1) if last else 1
-        next_id += attempt  # 충돌 시 다음 번호 시도
-        formatted_id = str(next_id).zfill(4)
-        
-        # 중복 확인
-        if not db.query(models.CustomDesign).filter(models.CustomDesign.item_name == formatted_id).first():
-            break
-        attempt += 1
-    
-    if formatted_id is None or attempt >= 100:
-        raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
+    # 초기 생성 시에는 item_name을 null로 설정
+    # status가 3(완료)로 변경될 때 account_code 기반으로 생성
+    item_name = None
 
     # Base64 이미지 업로드 처리
     main_image_url = None
@@ -350,9 +343,9 @@ def create_my_design_base64(
             )
 
     try:
-        # Form 데이터 구성 (item_name은 자동 생성된 값 사용)
+        # Form 데이터 구성
         form_data = {
-            "item_name": formatted_id,  # 자동 생성된 코드 사용
+            "item_name": item_name,  # null로 설정
             "request_message": getattr(design_data, 'request_message', None),
             "design_line_image_id": design_data.design_line_image_id,
             "design_line_color_id": design_data.design_line_color_id,
@@ -395,3 +388,45 @@ def create_my_design_base64(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"커스텀 디자인 생성 중 오류가 발생했습니다: {str(e)}"
         )
+
+
+@router.patch("/my-designs/{design_id}/status")
+def update_design_status(
+        design_id: int,
+        status: str = Form(..., description="상태값 (0: 대기, 1: 진행중, 2: 보류, 3: 완료)"),
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """커스텀 디자인 상태 업데이트 - status가 3일 때 item_name 자동 생성"""
+    
+    # 상태값 유효성 검사
+    valid_statuses = ['0', '1', '2', '3']
+    if status not in valid_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"유효하지 않은 상태값입니다. 가능한 값: {', '.join(valid_statuses)}"
+        )
+    
+    # 상태 업데이트
+    updated_design = custom_design_crud.update_design_status(
+        db=db,
+        design_id=design_id,
+        user_id=current_user.username,
+        status=status
+    )
+    
+    if not updated_design:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="커스텀 디자인을 찾을 수 없습니다."
+        )
+    
+    return {
+        "success": True,
+        "message": f"상태가 {status}로 업데이트되었습니다.",
+        "data": {
+            "id": updated_design.id,
+            "item_name": updated_design.item_name,
+            "status": updated_design.status
+        }
+    }

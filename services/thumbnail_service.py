@@ -70,11 +70,16 @@ class ThumbnailService:
             URL of the uploaded thumbnail or None if failed
         """
         try:
+            print(f"DEBUG: Starting thumbnail creation for {original_filename}")
+            print(f"DEBUG: Image data size: {len(image_data)} bytes")
+            
             # Generate thumbnail
             thumbnail_data, extension = self.generate_thumbnail(image_data, original_filename)
+            print(f"DEBUG: Thumbnail generated - size: {len(thumbnail_data)} bytes, extension: {extension}")
             
             # Generate unique filename for thumbnail
             thumbnail_filename = f"thumbnail_{uuid.uuid4()}.{extension}"
+            print(f"DEBUG: Thumbnail filename: {thumbnail_filename}")
             
             # Determine content type
             content_type = 'image/jpeg' if extension in ['jpg', 'jpeg'] else 'image/png'
@@ -86,10 +91,17 @@ class ThumbnailService:
                 content_type=content_type
             )
             
-            return result['public_url'] if result else None
+            if result:
+                print(f"DEBUG: Thumbnail uploaded successfully - URL: {result.get('public_url')}")
+                return result['public_url']
+            else:
+                print("ERROR: Thumbnail upload failed - no result returned")
+                return None
             
         except Exception as e:
-            print(f"Error creating thumbnail: {str(e)}")
+            print(f"ERROR: Error creating thumbnail: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def create_thumbnail_from_url(self, image_url: str) -> Optional[str]:
