@@ -203,6 +203,11 @@ Authorization: {{superadmin_token}}
 GET {{host}}/api/progress-status/list?custom_design_name=4&type=0
 Authorization: {{superadmin_token}}
 
+
+### 10. Search by custom design name
+GET {{host}}/api/custom-designs/list?item_name=5
+Authorization: {{superadmin_token}}
+
 ### 11. Delete progress status
 DELETE {{host}}/api/progress-status/1
 Authorization: {{superadmin_token}}

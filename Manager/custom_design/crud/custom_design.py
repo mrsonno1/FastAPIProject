@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from Manager.custom_design.schemas import custom_design as custom_design_schema
 from db import models
 from typing import Optional, Dict, Any
@@ -231,14 +232,22 @@ def get_designs_paginated(
 
     # --- [수정 2] 필터링 로직 수정 ---
     if item_name:
-        # 전체 코드명(예: two-0096)을 검색할 수 있도록 수정
-        query = query.filter(models.CustomDesign.item_name.ilike(f"%{item_name}%"))
+        # item_name 파라미터로 item_name 또는 account_code를 검색
+        # item_name이 NULL인 경우를 고려하여 수정
+        query = query.filter(
+            or_(
+                models.CustomDesign.item_name.ilike(f"%{item_name}%"),
+                models.AdminUser.account_code.ilike(f"%{item_name}%")
+            )
+        )
 
     if user_name:
         # user_name 파라미터로 AdminUser의 username 또는 contact_name을 검색
         query = query.filter(
-            (models.AdminUser.username.ilike(f"%{user_name}%")) |
-            (models.AdminUser.contact_name.ilike(f"%{user_name}%"))
+            or_(
+                models.AdminUser.username.ilike(f"%{user_name}%"),
+                models.AdminUser.contact_name.ilike(f"%{user_name}%")
+            )
         )
 
     if status:
