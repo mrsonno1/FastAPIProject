@@ -12,7 +12,7 @@ class CartCountResponse(BaseModel):
 class CartItem(BaseModel):
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
-    account_code: str  # account_code 추가
+    account_code: Optional[str] = None  # account_code 추가 - NULL일 수 있음
     category: str  # 카테고리 (커스텀디자인, 포트폴리오)
 
     class Config:

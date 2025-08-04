@@ -9,21 +9,30 @@ from typing import Optional
 
 
 def get_user_by_username(db: Session, username: str):
-    """아이디로 사용자 정보 조회"""
-    return db.query(models.AdminUser).filter(models.AdminUser.username == username).first()
+    """아이디로 사용자 정보 조회 (삭제되지 않은 사용자만)"""
+    return db.query(models.AdminUser).filter(
+        models.AdminUser.username == username,
+        models.AdminUser.is_deleted == False
+    ).first()
 
 
 def get_user_by_account_code(db: Session, account_code: str):
-    """계정코드로 사용자 정보 조회"""
+    """계정코드로 사용자 정보 조회 (삭제되지 않은 사용자만)"""
     # 계정코드는 NULL일 수 있으므로, 비어있지 않은 경우에만 조회합니다.
     if not account_code:
         return None
-    return db.query(models.AdminUser).filter(models.AdminUser.account_code == account_code).first()
+    return db.query(models.AdminUser).filter(
+        models.AdminUser.account_code == account_code,
+        models.AdminUser.is_deleted == False
+    ).first()
 
 
 def get_user_by_email(db: Session, email: str):
-    """이메일로 사용자 정보 조회"""
-    return db.query(models.AdminUser).filter(models.AdminUser.email == email).first()
+    """이메일로 사용자 정보 조회 (삭제되지 않은 사용자만)"""
+    return db.query(models.AdminUser).filter(
+        models.AdminUser.email == email,
+        models.AdminUser.is_deleted == False
+    ).first()
 
 
 def create_user(db: Session, user: user_schema.AdminUserCreate):
@@ -48,12 +57,15 @@ def create_user(db: Session, user: user_schema.AdminUserCreate):
 
 def delete_admin_user_by_id(db: Session, user_id: int) -> bool:
     """
-    ID로 관리자 계정을 찾아 삭제합니다.
+    ID로 관리자 계정을 찾아 소프트 삭제합니다.
     :return: 삭제 성공 시 True, 해당 객체가 없을 시 False
     """
-    db_user = db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+    db_user = db.query(models.AdminUser).filter(
+        models.AdminUser.id == user_id,
+        models.AdminUser.is_deleted == False  # 이미 삭제되지 않은 사용자만
+    ).first()
     if db_user:
-        db.delete(db_user)
+        db_user.is_deleted = True  # 소프트 삭제
         db.commit()
         return True
     return False
@@ -94,16 +106,22 @@ def update_last_login(db: Session, username: str):
 
 
 def get_user_by_id(db: Session, user_id: int):
-    """사용자 PK(index)로 사용자 정보 조회"""
-    return db.query(models.AdminUser).filter(models.AdminUser.id == user_id).first()
+    """사용자 PK(index)로 사용자 정보 조회 (삭제되지 않은 사용자만)"""
+    return db.query(models.AdminUser).filter(
+        models.AdminUser.id == user_id,
+        models.AdminUser.is_deleted == False
+    ).first()
 
 
 def get_users_by_contact_name(db: Session, name: str):
     """
-    담당자명(contact_name)으로 사용자 목록을 검색 (LIKE 검색)
+    담당자명(contact_name)으로 사용자 목록을 검색 (LIKE 검색) - 삭제되지 않은 사용자만
     """
     search_pattern = f"%{name}%"
-    return db.query(models.AdminUser).filter(models.AdminUser.contact_name.like(search_pattern)).all()
+    return db.query(models.AdminUser).filter(
+        models.AdminUser.contact_name.like(search_pattern),
+        models.AdminUser.is_deleted == False
+    ).all()
 
 
 def get_admin_users_paginated(
@@ -118,9 +136,9 @@ def get_admin_users_paginated(
         contact_phone: Optional[str] = None  # <-- 이 파라미터를 처리하는 로직 변경
 ):
     """
-    관리자 계정 목록을 검색 조건과 함께 페이지네이션하여 가져옵니다.
+    관리자 계정 목록을 검색 조건과 함께 페이지네이션하여 가져옵니다. (삭제되지 않은 사용자만)
     """
-    query = db.query(models.AdminUser)
+    query = db.query(models.AdminUser).filter(models.AdminUser.is_deleted == False)
 
     if id is not None:
         query = query.filter(models.AdminUser.id == id)
