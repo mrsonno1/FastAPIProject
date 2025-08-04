@@ -199,13 +199,21 @@ def create_my_design(
     """커스텀디자인 완료 목록 추가 - File 업로드 방식"""
 
     # Manager/custom_design의 로직을 참고하여 item_name 자동 생성
-    last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
-    next_id = (last.id + 1) if last else 1
-    formatted_id = str(next_id).zfill(4)
-    new_code = f"{current_user.account_code}-{formatted_id}"
-
-    # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
-    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == formatted_id).first():
+    # 중복되지 않는 번호를 찾을 때까지 반복
+    formatted_id = None
+    attempt = 0
+    while attempt < 100:  # 최대 100번 시도
+        last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
+        next_id = (last.id + 1) if last else 1
+        next_id += attempt  # 충돌 시 다음 번호 시도
+        formatted_id = str(next_id).zfill(4)
+        
+        # 중복 확인
+        if not db.query(models.CustomDesign).filter(models.CustomDesign.item_name == formatted_id).first():
+            break
+        attempt += 1
+    
+    if formatted_id is None or attempt >= 100:
         raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
 
     # 파일 업로드 처리
@@ -213,6 +221,10 @@ def create_my_design(
     thumbnail_url = None
     if file:
         try:
+            # 파일 내용을 먼저 읽어서 저장
+            file_content = file.file.read()
+            file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
+            
             upload_result = storage_service.upload_file(file)
             if not upload_result:
                 raise HTTPException(
@@ -222,8 +234,6 @@ def create_my_design(
             main_image_url = upload_result["public_url"]
             
             # Generate thumbnail
-            file.file.seek(0)
-            file_content = file.file.read()
             thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
         except Exception as e:
             raise HTTPException(
@@ -287,13 +297,21 @@ def create_my_design_base64(
     """커스텀디자인 완료 목록 추가 - Base64 업로드 방식 (Unity용)"""
 
     # Manager/custom_design의 로직을 참고하여 item_name 자동 생성
-    last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
-    next_id = (last.id + 1) if last else 1
-    formatted_id = str(next_id).zfill(4)
-    new_code = f"{current_user.account_code}-{formatted_id}"
-
-    # 생성된 코드가 혹시라도 중복되는지 최종 확인 (안전장치)
-    if db.query(models.CustomDesign).filter(models.CustomDesign.item_name == new_code).first():
+    # 중복되지 않는 번호를 찾을 때까지 반복
+    formatted_id = None
+    attempt = 0
+    while attempt < 100:  # 최대 100번 시도
+        last = db.query(models.CustomDesign).order_by(models.CustomDesign.id.desc()).first()
+        next_id = (last.id + 1) if last else 1
+        next_id += attempt  # 충돌 시 다음 번호 시도
+        formatted_id = str(next_id).zfill(4)
+        
+        # 중복 확인
+        if not db.query(models.CustomDesign).filter(models.CustomDesign.item_name == formatted_id).first():
+            break
+        attempt += 1
+    
+    if formatted_id is None or attempt >= 100:
         raise HTTPException(status_code=409, detail="코드명 생성 중 충돌이 발생했습니다. 다시 시도해주세요.")
 
     # Base64 이미지 업로드 처리

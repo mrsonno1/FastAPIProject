@@ -19,6 +19,7 @@ def create_portfolio(db: Session, portfolio: portfolio_schema.PortfolioCreate, u
         exposed_countries=portfolio.exposed_countries,
         is_fixed_axis=portfolio.is_fixed_axis,
         main_image_url=portfolio.main_image_url,
+        thumbnail_url=portfolio.thumbnail_url,  # 썸네일 URL 추가
         design_line_image_id=portfolio.design_line_image_id,
         design_line_color_id=portfolio.design_line_color_id,
         design_base1_image_id=portfolio.design_base1_image_id,

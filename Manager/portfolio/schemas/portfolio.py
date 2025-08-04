@@ -31,6 +31,7 @@ class PortfolioCreate(BaseModel):
     exposed_countries: str = ""  # 콤마로 구분된 국가 ID들 (예: "1,2,3,4")
     is_fixed_axis: str = "N"  # Y 또는 N
     main_image_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None  # 썸네일 URL 추가
     design_line_image_id: Optional[str] = None
     design_line_color_id: Optional[str] = None
     design_base1_image_id: Optional[str] = None
@@ -53,6 +54,7 @@ class PortfolioDetailResponse(BaseModel):
     exposed_countries: str
     is_fixed_axis: str
     main_image_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None  # 썸네일 URL 추가
     view_count: int
     created_at: datetime
 
@@ -84,6 +86,7 @@ class PortfolioDetailData(BaseModel):
     exposed_countries: str
     is_fixed_axis: str
     main_image_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None  # 썸네일 URL 추가
     view_count: int
     created_at: datetime
 
@@ -149,6 +152,7 @@ class PortfolioListItem(BaseModel):
     id: int
     user_name: str
     main_image_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None  # 썸네일 URL 추가
     design_name: Optional[str] = None
     color_name: Optional[str] = None
     exposed_countries: str
