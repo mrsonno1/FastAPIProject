@@ -36,6 +36,7 @@ class Country(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     country_name = Column(String, unique=True, index=True, nullable=False)
+    country_name_en = Column(String, index=True, nullable=True)  # 영문 이름 추가
     rank = Column(Integer, nullable=False, index=True)
 
 class Image(Base):

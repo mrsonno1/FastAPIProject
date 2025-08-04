@@ -5,15 +5,18 @@ from typing import List
 # 국가 생성을 위한 스키마
 class CountryCreate(BaseModel):
     country_name: str = Field(..., min_length=1)
+    country_name_en: str = Field(None, min_length=1, description="영문 국가명")
 
 # 국가 정보 수정을 위한 스키마
 class CountryUpdate(BaseModel):
     country_name: str = Field(..., min_length=1)
+    country_name_en: str = Field(None, min_length=1, description="영문 국가명")
 
 # API 응답을 위한 스키마
 class CountryResponse(BaseModel):
     id: int
     country_name: str
+    country_name_en: str = None
     rank: int
 
     class Config:
