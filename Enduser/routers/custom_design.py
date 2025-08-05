@@ -89,50 +89,58 @@ def get_my_designs_list(
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """커스텀디자인 완료 목록 조회"""
+    try:
+        paginated_data = custom_design_crud.get_user_custom_designs_paginated(
+            db=db,
+            user_id=current_user.username,
+            page=page,
+            size=size,
+            orderBy=orderBy
+        )
 
-    paginated_data = custom_design_crud.get_user_custom_designs_paginated(
-        db=db,
-        user_id=current_user.username,
-        page=page,
-        size=size,
-        orderBy=orderBy
-    )
+        total_count = paginated_data["total_count"]
+        total_pages = math.ceil(total_count / size) if total_count > 0 else 1
 
-    total_count = paginated_data["total_count"]
-    total_pages = math.ceil(total_count / size) if total_count > 0 else 1
+        # 현재 사용자의 카트에 있는 커스텀디자인 item_name 목록 가져오기
+        cart_items = db.query(models.Cart.item_name).filter(
+            models.Cart.user_id == current_user.username,
+            models.Cart.category == "커스텀디자인"
+        ).all()
+        cart_item_names = {item[0] for item in cart_items if item[0]}  # None 값 제외
 
-    # 현재 사용자의 카트에 있는 커스텀디자인 item_name 목록 가져오기
-    cart_items = db.query(models.Cart.item_name).filter(
-        models.Cart.user_id == current_user.username,
-        models.Cart.category == "커스텀디자인"
-    ).all()
-    cart_item_names = {item[0] for item in cart_items}  # set으로 변환하여 빠른 검색
+        # 응답 형식에 맞게 변환 (status에 따른 item_name 표시 처리)
+        items = []
+        for design in paginated_data["items"]:
+            # status가 '1' 또는 '2'일 때 item_name을 ""로 표시
+            display_item_name = "" if design.status in ['0','1', '2'] else (design.item_name or "")
+            
+            # 카트에 있는지 확인 (item_name이 None이 아닐 때만)
+            in_cart = design.item_name in cart_item_names if design.item_name else False
 
-    # 응답 형식에 맞게 변환 (status에 따른 item_name 표시 처리)
-    items = []
-    for design in paginated_data["items"]:
-        # status가 '1' 또는 '2'일 때 item_name을 ""로 표시
-        display_item_name = "" if design.status in ['0','1', '2'] else design.item_name
-        
-        # 카트에 있는지 확인
-        in_cart = design.item_name in cart_item_names
+            items.append(custom_design_schema.CustomDesignListItem(
+                id=design.id,
+                item_name=display_item_name,
+                main_image_url=design.main_image_url or "",
+                thumbnail_url=design.thumbnail_url or "",  # thumbnail_url 추가
+                in_cart=in_cart,  # in_cart 필드 추가
+                account_code=current_user.account_code  # account_code 추가
+            ))
 
-        items.append(custom_design_schema.CustomDesignListItem(
-            id=design.id,
-            item_name=display_item_name,
-            main_image_url=design.main_image_url or "",
-            thumbnail_url=design.thumbnail_url or "",  # thumbnail_url 추가
-            in_cart=in_cart,  # in_cart 필드 추가
-            account_code=current_user.account_code  # account_code 추가
-        ))
-
-    return custom_design_schema.PaginatedCustomDesignResponse(
-        total_count=total_count,
-        total_pages=total_pages,
-        page=page,
-        size=size,
-        items=items
-    )
+        return custom_design_schema.PaginatedCustomDesignResponse(
+            total_count=total_count,
+            total_pages=total_pages,
+            page=page,
+            size=size,
+            items=items
+        )
+    except Exception as e:
+        print(f"ERROR in get_my_designs_list: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"디자인 목록 조회 중 오류가 발생했습니다: {str(e)}"
+        )
 
 
 @router.get("/my-designs/{design_id}", response_model=custom_design_schema.CustomDesignDetailResponse)
@@ -142,33 +150,54 @@ def get_my_design_detail(
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """내 커스텀디자인 항목 조회"""
-
-    design_detail = custom_design_crud.get_custom_design_detail(
-        db=db,
-        design_id=design_id,
-        user_id=current_user.username
-    )
-
-    if not design_detail:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="커스텀 디자인을 찾을 수 없습니다."
+    try:
+        design_detail = custom_design_crud.get_custom_design_detail(
+            db=db,
+            design_id=design_id,
+            user_id=current_user.username
         )
 
-    # design 상태 확인을 위해 DB에서 디자인 정보 가져오기
-    design = custom_design_crud.get_design_by_id(db, design_id, current_user.username)
+        if not design_detail:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="커스텀 디자인을 찾을 수 없습니다."
+            )
 
-    # status가 '0', '1' 또는 '2'일 때 item_name을 "-"로 표시
-    # status가 '3'이고 item_name이 있을 때만 실제 값 표시
-    if design and design.status in ['0', '1', '2']:
-        design_detail['item_name'] = "-"
-    elif design and design.status == '3' and not design.item_name:
-        design_detail['item_name'] = "-"  # status 3이지만 아직 item_name이 없는 경우
-    
-    # account_code 추가
-    design_detail['account_code'] = current_user.account_code
+        # design 상태 확인을 위해 DB에서 디자인 정보 가져오기
+        design = custom_design_crud.get_design_by_id(db, design_id, current_user.username)
 
-    return custom_design_schema.CustomDesignDetailResponse(**design_detail)
+        # status가 '0', '1' 또는 '2'일 때 item_name을 "-"로 표시
+        # status가 '3'이고 item_name이 있을 때만 실제 값 표시
+        if design and design.status in ['0', '1', '2']:
+            design_detail['item_name'] = "-"
+        elif design and design.status == '3' and not design.item_name:
+            design_detail['item_name'] = "-"  # status 3이지만 아직 item_name이 없는 경우
+        
+        # account_code 추가
+        design_detail['account_code'] = current_user.account_code
+
+        # CustomDesignDetailResponse 스키마에 맞게 데이터 변환
+        response_data = {
+            "item_name": design_detail.get('item_name'),
+            "account_code": design_detail.get('account_code', current_user.account_code),
+            "design_line": design_detail.get('design_line'),
+            "design_base1": design_detail.get('design_base1'),
+            "design_base2": design_detail.get('design_base2'),
+            "design_pupil": design_detail.get('design_pupil'),
+            "graphic_diameter": design_detail.get('graphic_diameter'),
+            "optic_zone": design_detail.get('optic_zone'),
+            "dia": design_detail.get('dia')
+        }
+
+        return custom_design_schema.CustomDesignDetailResponse(**response_data)
+    except Exception as e:
+        print(f"ERROR in get_my_design_detail: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"디자인 조회 중 오류가 발생했습니다: {str(e)}"
+        )
 
 
 # 기존 Form/File 업로드 방식 (하위 호환성 유지)
