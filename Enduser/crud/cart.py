@@ -58,10 +58,21 @@ def get_cart_items(
     formatted_items = []
     for item in cart_items:
         account_code = None
+        thumbnail_url = None
         
         if item.category == '커스텀디자인':
             # 커스텀디자인인 경우 현재 로그인한 사용자의 account_code
             account_code = current_user.account_code if current_user else None
+            
+            # 커스텀디자인에서 썸네일 URL 가져오기
+            custom_design = db.query(models.CustomDesign).filter(
+                models.CustomDesign.item_name == item.item_name,
+                models.CustomDesign.user_id == user_id
+            ).first()
+            
+            if custom_design:
+                thumbnail_url = custom_design.thumbnail_url
+                
         elif item.category == '포트폴리오':
             # 포트폴리오인 경우 portfolio의 user_id로 account_code 조회
             portfolio = db.query(models.Portfolio).filter(
@@ -70,6 +81,7 @@ def get_cart_items(
             ).first()
             
             if portfolio:
+                thumbnail_url = portfolio.thumbnail_url
                 portfolio_user = db.query(models.AdminUser).filter(
                     models.AdminUser.id == portfolio.user_id,
                     models.AdminUser.is_deleted == False
@@ -79,6 +91,7 @@ def get_cart_items(
         formatted_items.append({
             "item_name": item.item_name,
             "main_image_url": item.main_image_url,
+            "thumbnail_url": thumbnail_url,
             "category": item.category,
             "account_code": account_code
         })

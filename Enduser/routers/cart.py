@@ -52,6 +52,7 @@ def get_cart_list(
         cart_schema.CartItem(
             item_name=item["item_name"],
             main_image_url=item["main_image_url"],
+            thumbnail_url=item["thumbnail_url"],
             account_code=item["account_code"],
             category=item["category"]
         )

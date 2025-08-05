@@ -58,11 +58,13 @@ def get_samples_paginated(
         if portfolio:
             item_name = portfolio.design_name
             main_image_url = portfolio.main_image_url
+            thumbnail_url = portfolio.thumbnail_url
             category = '포트폴리오'
             design_obj = portfolio
         elif custom_design:
             item_name = custom_design.item_name
             main_image_url = custom_design.main_image_url
+            thumbnail_url = custom_design.thumbnail_url
             category = '커스텀디자인'
             design_obj = custom_design
         else:
@@ -96,6 +98,7 @@ def get_samples_paginated(
             "id": progress_status.id,
             "item_name": item_name,
             "main_image_url": main_image_url,
+            "thumbnail_url": thumbnail_url,
             "category": category,
             "design_line": design_components.get("design_line"),
             "design_base1": design_components.get("design_base1"),

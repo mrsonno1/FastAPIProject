@@ -20,6 +20,7 @@ class SampleListItem(BaseModel):
     id: int  # progressstatus id
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
+    thumbnail_url: Optional[str] = None  # 썸네일 URL
     category: str  # 카테고리 (커스텀디자인, 포트폴리오)
     design_line: Optional[DesignComponent] = None
     design_base1: Optional[DesignComponent] = None

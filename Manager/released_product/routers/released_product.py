@@ -172,8 +172,12 @@ async def update_released_product_details(
         update_obj = SimpleNamespace(**update_dict)
         released_product_update_data = update_obj
     else:
-        # 이미지가 없는 경우 기존 thumbnail_url 유지를 위해 SimpleNamespace로 변환
+        # 이미지가 없는 경우 기존 이미지 URL들을 유지
         update_dict = released_product_update_data.model_dump()
+        # 기존 이미지 URL들을 유지
+        update_dict['main_image_url'] = db_released_product.main_image_url
+        update_dict['thumbnail_url'] = db_released_product.thumbnail_url
+        
         from types import SimpleNamespace
         released_product_update_data = SimpleNamespace(**update_dict)
 
