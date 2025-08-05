@@ -123,9 +123,13 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
     if not user:
         return None
 
+    # user_id가 username(문자열) 또는 id(숫자 문자열)일 수 있으므로 둘 다 확인
     design = db.query(models.CustomDesign).filter(
         models.CustomDesign.id == design_id,
-        models.CustomDesign.user_id == user.id  # username이 아닌 id 사용
+        or_(
+            models.CustomDesign.user_id == str(user.id),  # 새로운 형식: id를 문자열로
+            models.CustomDesign.user_id == user.username   # 오래된 형식: username
+        )
     ).first()
 
     if not design:
@@ -204,8 +208,9 @@ def create_custom_design(
         raise ValueError(f"User not found: {user_id}")
 
     # 커스텀 디자인 생성
+    # 프로덕션 DB는 user_id가 varchar(20)이므로 문자열로 변환
     db_design = models.CustomDesign(
-        user_id=user.id,  # username이 아닌 id 사용
+        user_id=str(user.id),  # 문자열로 변환하여 프로덕션 DB와 호환
         item_name=form_data.get("item_name"),  # NULL 허용, get 메서드 사용으로 KeyError 방지
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
         thumbnail_url=thumbnail_url,  # 썸네일 URL
@@ -258,8 +263,12 @@ def get_user_custom_designs_paginated(
     if not user:
         return {"total_count": 0, "items": []}
 
+    # user_id가 username 또는 id일 수 있으므로 둘 다 확인
     query = db.query(models.CustomDesign).filter(
-        models.CustomDesign.user_id == user.id  # username이 아닌 id 사용
+        or_(
+            models.CustomDesign.user_id == str(user.id),  # 새로운 형식
+            models.CustomDesign.user_id == user.username   # 오래된 형식
+        )
     )
 
     # 정렬
@@ -314,9 +323,13 @@ def get_design_by_id(db: Session, design_id: int, user_id: str) -> Optional[mode
     if not user:
         return None
     
+    # user_id가 username 또는 id일 수 있으므로 둘 다 확인
     return db.query(models.CustomDesign).filter(
         models.CustomDesign.id == design_id,
-        models.CustomDesign.user_id == user.id  # username이 아닌 id 사용
+        or_(
+            models.CustomDesign.user_id == str(user.id),  # 새로운 형식
+            models.CustomDesign.user_id == user.username   # 오래된 형식
+        )
     ).first()
 
 
@@ -341,8 +354,12 @@ def update_design_status(db: Session, design_id: int, user_id: str, status: str)
         if user and user.account_code:
             # 해당 계정의 커스텀 디자인 중 마지막 순번 찾기
             # item_name이 숫자로만 이루어진 것들 중에서 찾기
+            # user_id가 username 또는 id일 수 있으므로 둘 다 확인
             last_design = db.query(models.CustomDesign).filter(
-                models.CustomDesign.user_id == user.id,  # username이 아닌 id 사용
+                or_(
+                    models.CustomDesign.user_id == str(user.id),  # 새로운 형식
+                    models.CustomDesign.user_id == user.username   # 오래된 형식
+                ),
                 models.CustomDesign.item_name != None,
                 models.CustomDesign.item_name.op('~')('^[0-9]+$')  # 숫자만으로 이루어진 item_name
             ).order_by(models.CustomDesign.id.desc()).first()

@@ -70,7 +70,7 @@ class CustomDesign(Base):
     __tablename__ = "custom_designs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(String(20), nullable=False)  # 프로덕션 DB에 맞게 varchar(20)로 변경
     item_name = Column(String(50), unique=True, nullable=True)
     status = Column(String(20), default="0") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)

@@ -133,6 +133,9 @@ def get_my_designs_list(
             size=size,
             items=items
         )
+    except HTTPException:
+        # HTTPException은 그대로 전달
+        raise
     except Exception as e:
         print(f"ERROR in get_my_designs_list: {str(e)}")
         import traceback
@@ -190,6 +193,9 @@ def get_my_design_detail(
         }
 
         return custom_design_schema.CustomDesignDetailResponse(**response_data)
+    except HTTPException:
+        # HTTPException은 그대로 전달 (404 등)
+        raise
     except Exception as e:
         print(f"ERROR in get_my_design_detail: {str(e)}")
         import traceback
