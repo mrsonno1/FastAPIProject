@@ -26,37 +26,36 @@ class ThumbnailService:
         # Open image from bytes
         img = Image.open(io.BytesIO(image_data))
         
-        # Convert RGBA to RGB if necessary (for JPEG compatibility)
-        if img.mode in ('RGBA', 'LA', 'P'):
-            # Create a white background
-            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-            # Paste the image on the white background using alpha channel as mask
+        # Convert to RGBA if not already (to ensure alpha channel)
+        if img.mode != 'RGBA':
             if img.mode == 'P':
+                # Handle palette images with transparency
                 img = img.convert('RGBA')
-            rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-            img = rgb_img
+            elif img.mode in ('L', 'LA'):
+                # Handle grayscale with alpha
+                img = img.convert('RGBA')
+            else:
+                # For RGB/other modes, create RGBA with full opacity
+                img = img.convert('RGBA')
         
         # Create thumbnail maintaining aspect ratio
         img.thumbnail(self.THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
         
-        # Create a square canvas
-        thumb = Image.new('RGB', self.THUMBNAIL_SIZE, (255, 255, 255))
+        # Create a square canvas with transparent background
+        thumb = Image.new('RGBA', self.THUMBNAIL_SIZE, (255, 255, 255, 0))
         
         # Calculate position to center the image
         x = (self.THUMBNAIL_SIZE[0] - img.width) // 2
         y = (self.THUMBNAIL_SIZE[1] - img.height) // 2
         
         # Paste the resized image onto the square canvas
-        thumb.paste(img, (x, y))
+        thumb.paste(img, (x, y), img)
         
-        # Save thumbnail to bytes
+        # Save thumbnail to bytes as PNG to preserve transparency
         output = io.BytesIO()
-        # Determine format based on original filename
-        ext = os.path.splitext(original_filename)[1].lower()
-        format = 'JPEG' if ext in ['.jpg', '.jpeg'] else 'PNG'
-        thumb.save(output, format=format, quality=85, optimize=True)
+        thumb.save(output, format='PNG', optimize=True)
         
-        return output.getvalue(), ext[1:] if ext else 'jpg'
+        return output.getvalue(), 'png'
     
     def create_and_upload_thumbnail(self, image_data: bytes, original_filename: str) -> Optional[str]:
         """
@@ -81,8 +80,8 @@ class ThumbnailService:
             thumbnail_filename = f"thumbnail_{uuid.uuid4()}.{extension}"
             print(f"DEBUG: Thumbnail filename: {thumbnail_filename}")
             
-            # Determine content type
-            content_type = 'image/jpeg' if extension in ['jpg', 'jpeg'] else 'image/png'
+            # Content type is always PNG now
+            content_type = 'image/png'
             
             # Upload thumbnail to storage using existing method
             result = storage_service.upload_base64_file(
