@@ -48,19 +48,22 @@ def delete_released_product_by_id(db: Session, product_id: int) -> bool:
 def update_released_product(
         db: Session,
         db_released_product: models.Releasedproduct,
-        released_product_update: released_product_schema.ReleasedProductCreate
+        released_product_update
 ):
-    update_data = released_product_update.model_dump(exclude_unset=True)
+    # SimpleNamespace 또는 Pydantic 모델 모두 처리 가능하도록 수정
+    if hasattr(released_product_update, 'model_dump'):
+        # Pydantic 모델인 경우
+        update_data = released_product_update.model_dump(exclude_unset=True)
+    else:
+        # SimpleNamespace인 경우
+        update_data = vars(released_product_update)
+    
     for key, value in update_data.items():
         # JSON 필드는 model_dump()를 통해 딕셔너리로 변환하여 저장
-        if key in ["color_line", "color_base1", "color_base2", "color_pupil"] and value is not None:
+        if key in ["color_line", "color_base1", "color_base2", "color_pupil"] and value is not None and hasattr(value, 'model_dump'):
             setattr(db_released_product, key, value.model_dump())
         else:
             setattr(db_released_product, key, value)
-    
-    # thumbnail_url이 있는 경우 별도로 처리
-    if hasattr(released_product_update, 'thumbnail_url') and released_product_update.thumbnail_url:
-        db_released_product.thumbnail_url = released_product_update.thumbnail_url
     
     db.commit()
     db.refresh(db_released_product)
