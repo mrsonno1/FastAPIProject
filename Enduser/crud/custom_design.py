@@ -113,10 +113,19 @@ def get_colors_paginated(
 
 def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optional[Dict[str, Any]]:
     """커스텀 디자인 상세 정보 조회"""
+    
+    # username으로 AdminUser의 id 조회
+    user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == user_id,
+        models.AdminUser.is_deleted == False
+    ).first()
+    
+    if not user:
+        return None
 
     design = db.query(models.CustomDesign).filter(
         models.CustomDesign.id == design_id,
-        models.CustomDesign.user_id == user_id
+        models.CustomDesign.user_id == user.id  # username이 아닌 id 사용
     ).first()
 
     if not design:
@@ -184,11 +193,20 @@ def create_custom_design(
         thumbnail_url: Optional[str] = None
 ) -> models.CustomDesign:
     """커스텀 디자인 생성 - Form 데이터와 업로드된 이미지 URL 방식"""
+    
+    # username으로 AdminUser의 id 조회
+    user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == user_id,
+        models.AdminUser.is_deleted == False
+    ).first()
+    
+    if not user:
+        raise ValueError(f"User not found: {user_id}")
 
     # 커스텀 디자인 생성
     db_design = models.CustomDesign(
-        user_id=user_id,
-        item_name=form_data["item_name"],
+        user_id=user.id,  # username이 아닌 id 사용
+        item_name=form_data["item_name"],  # NULL 허용
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
         thumbnail_url=thumbnail_url,  # 썸네일 URL
         request_message=form_data.get("request_message"),
@@ -230,9 +248,18 @@ def get_user_custom_designs_paginated(
         orderBy: Optional[str] = None
 ) -> Dict[str, Any]:
     """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회"""
+    
+    # username으로 AdminUser의 id 조회
+    user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == user_id,
+        models.AdminUser.is_deleted == False
+    ).first()
+    
+    if not user:
+        return {"total_count": 0, "items": []}
 
     query = db.query(models.CustomDesign).filter(
-        models.CustomDesign.user_id == user_id
+        models.CustomDesign.user_id == user.id  # username이 아닌 id 사용
     )
 
     # 정렬
@@ -277,9 +304,19 @@ def get_user_custom_designs_paginated(
 
 def get_design_by_id(db: Session, design_id: int, user_id: str) -> Optional[models.CustomDesign]:
     """ID로 커스텀 디자인 조회 (사용자 본인의 디자인만)"""
+    
+    # username으로 AdminUser의 id 조회
+    user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == user_id,
+        models.AdminUser.is_deleted == False
+    ).first()
+    
+    if not user:
+        return None
+    
     return db.query(models.CustomDesign).filter(
         models.CustomDesign.id == design_id,
-        models.CustomDesign.user_id == user_id
+        models.CustomDesign.user_id == user.id  # username이 아닌 id 사용
     ).first()
 
 
@@ -297,12 +334,15 @@ def update_design_status(db: Session, design_id: int, user_id: str, status: str)
     # 상태가 '3'(완료)로 변경되고 item_name이 없는 경우 코드 생성
     if status == '3' and (db_design.item_name is None or db_design.item_name == ''):
         # 사용자 정보 조회
-        user = db.query(models.AdminUser).filter(models.AdminUser.username == user_id).first()
+        user = db.query(models.AdminUser).filter(
+            models.AdminUser.username == user_id,
+            models.AdminUser.is_deleted == False
+        ).first()
         if user and user.account_code:
             # 해당 계정의 커스텀 디자인 중 마지막 순번 찾기
             # item_name이 숫자로만 이루어진 것들 중에서 찾기
             last_design = db.query(models.CustomDesign).filter(
-                models.CustomDesign.user_id == user_id,
+                models.CustomDesign.user_id == user.id,  # username이 아닌 id 사용
                 models.CustomDesign.item_name != None,
                 models.CustomDesign.item_name.op('~')('^[0-9]+$')  # 숫자만으로 이루어진 item_name
             ).order_by(models.CustomDesign.id.desc()).first()

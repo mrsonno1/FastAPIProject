@@ -175,7 +175,8 @@ GET {{host}}{{api_prefix}}/brands/listall?brand_name=영풍
 Authorization: {{superadmin_token}}
 
 ### 브랜드 삭제
-DELETE {{host}}{{api_prefix}}/brands/4
+DELETE {{host}}{{api_prefix}}/brands/14
+Authorization: {{superadmin_token}}
 
 ### 컬러 삭제
 DELETE {{host}}{{api_prefix}}/colors/11

@@ -13,6 +13,7 @@ def create_released_product(db: Session, released_product: dict, user_id: int):
         color_name=released_product.color_name,
         brand_id=released_product.brand_id,
         main_image_url=released_product.main_image_url,
+        thumbnail_url=released_product.thumbnail_url if hasattr(released_product, 'thumbnail_url') else None,
         color_line_color_id=released_product.color_line_color_id,
         color_base1_color_id=released_product.color_base1_color_id,
         color_base2_color_id=released_product.color_base2_color_id,
@@ -56,6 +57,11 @@ def update_released_product(
             setattr(db_released_product, key, value.model_dump())
         else:
             setattr(db_released_product, key, value)
+    
+    # thumbnail_url이 있는 경우 별도로 처리
+    if hasattr(released_product_update, 'thumbnail_url') and released_product_update.thumbnail_url:
+        db_released_product.thumbnail_url = released_product_update.thumbnail_url
+    
     db.commit()
     db.refresh(db_released_product)
     return db_released_product
@@ -161,6 +167,7 @@ def get_released_products_paginated(
             "design_name": product.design_name,
             "color_name": product.color_name,
             "image": product.main_image_url,  # 이 라인을 추가합니다.
+            "thumbnail_url": product.thumbnail_url,
             "color_line_color": get_color_details(product.color_line_color_id),
             "color_base1_color": get_color_details(product.color_base1_color_id),
             "color_base2_color": get_color_details(product.color_base2_color_id),
@@ -227,6 +234,7 @@ def get_released_product_detail(db: Session, product_id: int):
         "design_name": product.design_name,
         "color_name": product.color_name,
         "image": product.main_image_url,
+        "thumbnail_url": product.thumbnail_url,
         # 각 색상 ID로 전체 Color 객체를 조회하여 할당
         "color_line_color": get_color_details(product.color_line_color_id),
         "color_base1_color": get_color_details(product.color_base1_color_id),

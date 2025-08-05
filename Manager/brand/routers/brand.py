@@ -49,7 +49,7 @@ def create_new_brand(
     )
 
 
-@router.delete("/{brand_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{brand_id}")
 def delete_single_brand(
         brand_id: int,
         db: Session = Depends(get_db),
@@ -72,7 +72,14 @@ def delete_single_brand(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
 
-    return
+    return {
+        "success": True,
+        "message": f"브랜드 ID {brand_id}가 성공적으로 삭제되었습니다.",
+        "deleted_brand": {
+            "id": deleted_brand.id,
+            "brand_name": deleted_brand.brand_name
+        }
+    }
 
 
 @router.get("/listall", response_model=List[brand_schema.BrandResponse])

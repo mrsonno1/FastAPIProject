@@ -71,7 +71,7 @@ class CustomDesign(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)
-    item_name = Column(String(50), unique=True, nullable=False)
+    item_name = Column(String(50), unique=True, nullable=True)
     status = Column(String(20), default="0") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=True)

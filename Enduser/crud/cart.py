@@ -48,9 +48,10 @@ def get_cart_items(
     # 최대 40개 제한
     cart_items = query.limit(40).all()
     
-    # 현재 사용자 정보 조회
+    # 현재 사용자 정보 조회 (삭제되지 않은 사용자만)
     current_user = db.query(models.AdminUser).filter(
-        models.AdminUser.username == user_id
+        models.AdminUser.username == user_id,
+        models.AdminUser.is_deleted == False
     ).first()
     
     # 결과 포맷팅
@@ -70,7 +71,8 @@ def get_cart_items(
             
             if portfolio:
                 portfolio_user = db.query(models.AdminUser).filter(
-                    models.AdminUser.id == portfolio.user_id
+                    models.AdminUser.id == portfolio.user_id,
+                    models.AdminUser.is_deleted == False
                 ).first()
                 account_code = portfolio_user.account_code if portfolio_user else None
         

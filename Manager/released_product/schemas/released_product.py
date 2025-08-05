@@ -16,6 +16,7 @@ class ReleasedProductCreate(BaseModel):
     design_name: str
     color_name: str
     main_image_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
     brand_id: int
     color_line_color_id: Optional[str] = None
     color_base1_color_id: Optional[str] = None
@@ -59,6 +60,7 @@ class ReleasedProductDetailResponse(BaseModel):
     design_name: str
     color_name: str
     image: str
+    thumbnail_url: Optional[str] = None
 
     # dk_color, dk_rgb 필드를 아래의 상세 객체 필드로 교체
     color_line_color: Optional[ColorComponentDetail] = None
@@ -95,6 +97,7 @@ class ReleasedProductListItem(BaseModel):
     design_name: str
     color_name: str
     image: str
+    thumbnail_url: Optional[str] = None
     color_line_color: Optional[ColorComponentDetail] = None
     color_base1_color: Optional[ColorComponentDetail] = None
     color_base2_color: Optional[ColorComponentDetail] = None
