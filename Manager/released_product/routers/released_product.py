@@ -70,13 +70,18 @@ async def create_new_released_product(
     # 썸네일 생성
     thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
 
-    released_product_data.main_image_url = upload_result["public_url"]
-    released_product_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
+    # Pydantic 모델을 딕셔너리로 변환하고 추가 필드 설정
+    product_dict = released_product_data.model_dump()
+    product_dict['main_image_url'] = upload_result["public_url"]
+    product_dict['thumbnail_url'] = thumbnail_url
+    
+    # 딕셔너리를 다시 Pydantic 모델로 변환
+    from types import SimpleNamespace
+    product_obj = SimpleNamespace(**product_dict)
 
     created_released_product = released_product_CRUD.create_released_product(
         db=db,
-        # --- [수정] CRUD 함수에 Pydantic 모델 객체 전달 ---
-        released_product=released_product_data,
+        released_product=product_obj,
         user_id=current_user.id
     )
 
@@ -153,11 +158,24 @@ async def update_released_product_details(
         upload_result = storage_service.upload_file(file)
         if not upload_result:
             raise HTTPException(status_code=500, detail="새 이미지 업로드에 실패했습니다.")
-        released_product_update_data.main_image_url = upload_result["public_url"]
         
         # 썸네일 생성
         thumbnail_url = thumbnail_service.create_and_upload_thumbnail(file_content, file.filename)
-        released_product_update_data.thumbnail_url = thumbnail_url  # 썸네일 URL 추가
+        
+        # Pydantic 모델을 딕셔너리로 변환하고 추가 필드 설정
+        update_dict = released_product_update_data.model_dump()
+        update_dict['main_image_url'] = upload_result["public_url"]
+        update_dict['thumbnail_url'] = thumbnail_url
+        
+        # 딕셔너리를 다시 SimpleNamespace 객체로 변환
+        from types import SimpleNamespace
+        update_obj = SimpleNamespace(**update_dict)
+        released_product_update_data = update_obj
+    else:
+        # 이미지가 없는 경우 기존 thumbnail_url 유지를 위해 SimpleNamespace로 변환
+        update_dict = released_product_update_data.model_dump()
+        from types import SimpleNamespace
+        released_product_update_data = SimpleNamespace(**update_dict)
 
     updated_released_product = released_product_CRUD.update_released_product(
         db=db,
