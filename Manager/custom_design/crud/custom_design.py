@@ -232,12 +232,23 @@ def get_designs_paginated(
 
     # --- [수정 2] 필터링 로직 수정 ---
     if item_name:
-        # item_name 파라미터로 item_name 또는 account_code를 검색
+        # item_name 파라미터로 item_name, account_code, 또는 account_code-item_name 조합을 검색
         # item_name이 NULL인 경우를 고려하여 수정
+        from sqlalchemy import func, case
+        
+        # NULL 체크를 포함한 조합 검색
+        combined_search = case(
+            (models.CustomDesign.item_name.isnot(None), 
+             func.concat(models.AdminUser.account_code, '-', models.CustomDesign.item_name)),
+            else_=models.AdminUser.account_code
+        )
+        
         query = query.filter(
             or_(
                 models.CustomDesign.item_name.ilike(f"%{item_name}%"),
-                models.AdminUser.account_code.ilike(f"%{item_name}%")
+                models.AdminUser.account_code.ilike(f"%{item_name}%"),
+                # account_code + "-" + item_name 조합으로 검색 (NULL 안전)
+                combined_search.ilike(f"%{item_name}%")
             )
         )
 
