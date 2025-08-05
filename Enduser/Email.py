@@ -67,7 +67,7 @@ def send_email_with_base64_image(email_data: EmailBase64Schema = Body(...)):
         msg = MIMEMultipart()
         msg['From'] = SMTP_USER
         msg['To'] = email_data.to_email
-        msg['Subject'] = email_data.subject
+        msg['Subject'] = '[LENSGRAPICK] 요청하신 렌즈 이미지가 도착했습니다!'
         
         # HTML 템플릿에 이미지 URL 포함
         html_content = f"""

@@ -343,6 +343,11 @@ Content-Type: image/png
 GET {{host}}/api/custom-designs/list?item_name=01
 Authorization: {{superadmin_token}}
 
+### 10. Search by custom design name
+GET {{host}}/api/custom-designs/list
+Authorization: {{superadmin_token}}
+
+
 ### 14. 포트폴리오 목록 조회 (기본 - 인기순)
 GET {{host}}{{api_prefix}}/my-designs/list
 Authorization: {{superadmin_token}}
