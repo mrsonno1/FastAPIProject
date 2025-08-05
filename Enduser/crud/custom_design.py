@@ -206,7 +206,7 @@ def create_custom_design(
     # 커스텀 디자인 생성
     db_design = models.CustomDesign(
         user_id=user.id,  # username이 아닌 id 사용
-        item_name=form_data["item_name"],  # NULL 허용
+        item_name=form_data.get("item_name"),  # NULL 허용, get 메서드 사용으로 KeyError 방지
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
         thumbnail_url=thumbnail_url,  # 썸네일 URL
         request_message=form_data.get("request_message"),
