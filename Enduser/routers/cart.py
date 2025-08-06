@@ -79,6 +79,13 @@ def add_to_cart(
 
     # 해당 아이템이 실제로 존재하는지 확인
     if cart_data.category == '커스텀디자인':
+        # item_name이 비어있는 경우 처리
+        if not cart_data.item_name or cart_data.item_name.strip() == "":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="커스텀디자인의 item_name이 비어있습니다."
+            )
+        
         # 커스텀디자인 확인
         design = db.query(models.CustomDesign).filter(
             models.CustomDesign.item_name == cart_data.item_name,
@@ -92,6 +99,13 @@ def add_to_cart(
                 detail="해당 커스텀디자인을 찾을 수 없습니다."
             )
     else:
+        # item_name이 비어있는 경우 처리
+        if not cart_data.item_name or cart_data.item_name.strip() == "":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="포트폴리오의 item_name이 비어있습니다."
+            )
+            
         # 포트폴리오 확인
         portfolio = db.query(models.Portfolio).filter(
             models.Portfolio.design_name == cart_data.item_name,

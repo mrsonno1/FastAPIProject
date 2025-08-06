@@ -184,13 +184,23 @@ def get_custom_design_detail(
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """ID로 커스텀 디자인의 상세 정보를 포맷에 맞게 조회합니다."""
+    try:
+        detail_data = custom_design_CRUD.get_design_detail_formatted(db, design_id=design_id)
 
-    detail_data = custom_design_CRUD.get_design_detail_formatted(db, design_id=design_id)
+        if not detail_data:
+            raise HTTPException(status_code=404, detail="해당 ID의 커스텀 디자인을 찾을 수 없습니다.")
 
-    if not detail_data:
-        raise HTTPException(status_code=404, detail="해당 ID의 커스텀 디자인을 찾을 수 없습니다.")
-
-    return detail_data
+        return detail_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR in get_custom_design_detail: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"커스텀 디자인 상세 정보 조회 중 오류가 발생했습니다: {str(e)}"
+        )
 
 @router.delete("/{design_id}", response_model=portfolio_schema.StatusResponse,
                status_code=status.HTTP_200_OK)

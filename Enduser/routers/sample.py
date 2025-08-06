@@ -99,6 +99,13 @@ def create_sample_from_custom_design(
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """장바구니의 커스텀디자인을 샘플 요청(progress_status)으로 생성"""
+    
+    # name이 비어있는 경우 처리
+    if not name or name.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="커스텀디자인의 이름이 비어있습니다."
+        )
 
     success = sample_crud.create_progress_status_from_cart(
         db=db,
@@ -131,6 +138,13 @@ def create_sample_from_portfolio(
         current_user: models.AdminUser = Depends(get_current_user)
 ):
     """장바구니의 포트폴리오를 샘플 요청(progress_status)으로 생성"""
+    
+    # name이 비어있는 경우 처리
+    if not name or name.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="포트폴리오의 이름이 비어있습니다."
+        )
 
     success = sample_crud.create_progress_status_from_cart(
         db=db,

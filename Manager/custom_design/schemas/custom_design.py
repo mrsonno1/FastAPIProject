@@ -57,7 +57,7 @@ class CustomDesignDetailResponse(BaseModel):
     user_name: str
     account_code: str  # account_code 추가
 
-    item_name: str
+    item_name: Optional[str] = None  # NULL일 수 있으므로 Optional로 변경
     status: str
     request_message: Optional[str] = None
     main_image_url: Optional[str] = None

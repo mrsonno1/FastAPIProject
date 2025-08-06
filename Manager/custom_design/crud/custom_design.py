@@ -127,15 +127,23 @@ def update_design_status(
 
 def get_design_detail_formatted(db: Session, design_id: int):
     """ID로 커스텀 디자인의 상세 정보를 조회하고 지정된 형식으로 가공합니다."""
-
-    db_design = get_design_by_id(db, design_id)
-    if not db_design:
-        return None
+    try:
+        db_design = get_design_by_id(db, design_id)
+        if not db_design:
+            return None
+    except Exception as e:
+        print(f"ERROR in get_design_detail_formatted - get_design_by_id: {str(e)}")
+        raise
 
     def get_image_details(image_id: Optional[str], opacity: Optional[str], size: Optional[str]):
         if not image_id:
             return None
-        image = db.query(models.Image).filter(models.Image.id == image_id).first()
+        try:
+            # image_id를 정수로 변환
+            image_id_int = int(image_id)
+        except (ValueError, TypeError):
+            return None
+        image = db.query(models.Image).filter(models.Image.id == image_id_int).first()
         if not image:
             return None
         try:
@@ -155,7 +163,12 @@ def get_design_detail_formatted(db: Session, design_id: int):
     def get_color_details(color_id: Optional[str]):
         if not color_id:
             return None
-        color = db.query(models.Color).filter(models.Color.id == color_id).first()
+        try:
+            # color_id를 정수로 변환
+            color_id_int = int(color_id)
+        except (ValueError, TypeError):
+            return None
+        color = db.query(models.Color).filter(models.Color.id == color_id_int).first()
         if not color:
             return None
         return {
@@ -164,22 +177,27 @@ def get_design_detail_formatted(db: Session, design_id: int):
             "color_values": color.color_values
         }
 
-    # 각 컴포넌트 정보 조회
-    design_line_details = get_image_details(db_design.design_line_image_id, db_design.line_transparency, db_design.line_size)
-    design_line_color_details = get_color_details(db_design.design_line_color_id)
+    try:
+        # 각 컴포넌트 정보 조회
+        design_line_details = get_image_details(db_design.design_line_image_id, db_design.line_transparency, db_design.line_size)
+        design_line_color_details = get_color_details(db_design.design_line_color_id)
 
-    design_base1_details = get_image_details(db_design.design_base1_image_id, db_design.base1_transparency, db_design.base1_size)
-    design_base1_color_details = get_color_details(db_design.design_base1_color_id)
+        design_base1_details = get_image_details(db_design.design_base1_image_id, db_design.base1_transparency, db_design.base1_size)
+        design_base1_color_details = get_color_details(db_design.design_base1_color_id)
 
-    design_base2_details = get_image_details(db_design.design_base2_image_id, db_design.base2_transparency, db_design.base2_size)
-    design_base2_color_details = get_color_details(db_design.design_base2_color_id)
+        design_base2_details = get_image_details(db_design.design_base2_image_id, db_design.base2_transparency, db_design.base2_size)
+        design_base2_color_details = get_color_details(db_design.design_base2_color_id)
 
-    design_pupil_details = get_image_details(db_design.design_pupil_image_id, db_design.pupil_transparency, db_design.pupil_size)
-    design_pupil_color_details = get_color_details(db_design.design_pupil_color_id)
+        design_pupil_details = get_image_details(db_design.design_pupil_image_id, db_design.pupil_transparency, db_design.pupil_size)
+        design_pupil_color_details = get_color_details(db_design.design_pupil_color_id)
 
-    # 사용자 정보 조회하여 account_code 가져오기
-    user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
-    account_code = user.account_code if user else "Unknown"
+        # 사용자 정보 조회하여 account_code 가져오기
+        user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
+        account_code = user.account_code if user else "Unknown"
+    except Exception as e:
+        print(f"ERROR in get_design_detail_formatted - component details: {str(e)}")
+        print(f"Design ID: {design_id}, User ID: {db_design.user_id}")
+        raise
 
     # 최종 응답 데이터 구성
     response_data = {
