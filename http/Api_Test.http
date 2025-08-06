@@ -21,7 +21,7 @@ GET {{host}}{{api_prefix}}/custom-designs/info/1
 Authorization: {{superadmin_token}}
 
 ###
-PATCH {{host}}{{api_prefix}}/custom-designs/status/201
+PATCH {{host}}{{api_prefix}}/custom-designs/status/195
 Content-Type: multipart/form-data; boundary=boundary
 Authorization: {{superadmin_token}}
 
