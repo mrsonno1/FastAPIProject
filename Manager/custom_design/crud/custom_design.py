@@ -78,8 +78,9 @@ def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict
                 # 새 코드 생성 (숫자만)
                 new_code = str(next_number).zfill(4)
                 
-                # 중복 체크 (현재 수정 중인 디자인 제외)
+                # 중복 체크 (같은 사용자 내에서, 현재 수정 중인 디자인 제외)
                 existing = db.query(models.CustomDesign).filter(
+                    models.CustomDesign.user_id == db_design.user_id,
                     models.CustomDesign.item_name == new_code,
                     models.CustomDesign.id != db_design.id
                 ).first()

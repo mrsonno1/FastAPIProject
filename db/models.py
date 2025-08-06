@@ -71,7 +71,7 @@ class CustomDesign(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String(20), nullable=False)  # 프로덕션 DB에 맞게 varchar(20)로 변경
-    item_name = Column(String(50), unique=True, nullable=True)
+    item_name = Column(String(50), nullable=True)  # unique=True 제거, 복합 unique는 __table_args__에서 처리
     status = Column(String(20), default="0") # 기본값을 셋팅
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=True)
@@ -102,6 +102,10 @@ class CustomDesign(Base):
     dia = Column(String(20), nullable=True, default="14")  # DIA
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'item_name', name='custom_designs_user_item_unique'),
+    )
 
 
 class Portfolio(Base):
