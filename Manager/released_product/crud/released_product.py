@@ -198,22 +198,9 @@ def get_released_product_detail(db: Session, product_id: int):
     if not product:
         return None
 
-    # 조회수 및 일일 조회수 업데이트
-    product.views += 1
-    today = date.today()
-    daily_view = db.query(models.DailyView).filter(
-        models.DailyView.view_date == today,
-        models.DailyView.content_type == 'released_product',
-        models.DailyView.content_id == product_id
-    ).first()
-    if daily_view:
-        daily_view.view_count += 1
-    else:
-        db.add(models.DailyView(
-            view_date=today, content_type='released_product', content_id=product_id, view_count=1
-        ))
-
-
+    # Manager API에서는 조회수를 증가시키지 않음
+    # (Enduser API에서만 조회수 증가)
+    
     # --- [수정] 색상 상세 정보를 가져오는 로직 ---
     def get_color_details(color_id: Optional[str]):
         if not color_id:
@@ -249,6 +236,5 @@ def get_released_product_detail(db: Session, product_id: int):
         "base_curve": product.base_curve
     }
 
-    db.commit()
-    db.refresh(product)
+    # Manager API는 조회만 하므로 commit 불필요
     return response_data

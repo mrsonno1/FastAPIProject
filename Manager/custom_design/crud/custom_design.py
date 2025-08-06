@@ -54,27 +54,44 @@ def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict
         # 사용자 정보 조회
         user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
         if user and user.account_code:
-            # 해당 계정의 커스텀 디자인 중 마지막 순번 찾기
-            # item_name이 숫자로만 이루어진 것들 중에서 찾기
-            last_design = db.query(models.CustomDesign).filter(
-                models.CustomDesign.user_id == db_design.user_id,
+            # 모든 숫자로만 이루어진 item_name 중 가장 큰 값 찾기
+            # 사용자별이 아닌 전체 시스템에서 찾기
+            all_numeric_designs = db.query(models.CustomDesign).filter(
                 models.CustomDesign.item_name != None,
                 models.CustomDesign.item_name.op('~')('^[0-9]+$')  # 숫자만으로 이루어진 item_name
-            ).order_by(models.CustomDesign.id.desc()).first()
+            ).all()
             
-            if last_design and last_design.item_name:
-                # 마지막 번호에서 다음 번호 계산
+            max_number = 0
+            for design in all_numeric_designs:
                 try:
-                    last_number = int(last_design.item_name)
-                    next_number = last_number + 1
+                    num = int(design.item_name)
+                    if num > max_number:
+                        max_number = num
                 except:
-                    next_number = 1
-            else:
-                next_number = 1
+                    continue
             
-            # 새 코드 생성 (숫자만)
-            new_code = str(next_number).zfill(4)
-            update_data['item_name'] = new_code
+            next_number = max_number + 1
+            
+            # 중복 체크를 위한 반복문
+            max_attempts = 1000  # 무한 루프 방지
+            for _ in range(max_attempts):
+                # 새 코드 생성 (숫자만)
+                new_code = str(next_number).zfill(4)
+                
+                # 중복 체크 (현재 수정 중인 디자인 제외)
+                existing = db.query(models.CustomDesign).filter(
+                    models.CustomDesign.item_name == new_code,
+                    models.CustomDesign.id != db_design.id
+                ).first()
+                
+                if not existing:
+                    update_data['item_name'] = new_code
+                    break
+                
+                next_number += 1
+            else:
+                # max_attempts 후에도 유니크한 코드를 찾지 못한 경우
+                raise HTTPException(status_code=500, detail="Unable to generate unique item_name")
 
     for key, value in update_data.items():
         setattr(db_design, key, value)
