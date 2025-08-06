@@ -25,7 +25,17 @@ def create_new_country(country: country_schema.CountryCreate, db: Session = Depe
 @router.get("/listall", response_model=List[country_schema.CountryResponse])
 def get_all_countries(db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
     """모든 국가를 순위 순으로 조회합니다."""
-    return country_crud.get_all_countries_ordered(db)
+    try:
+        countries = country_crud.get_all_countries_ordered(db)
+        return countries
+    except Exception as e:
+        print(f"ERROR in get_all_countries endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"국가 목록 조회 중 오류가 발생했습니다: {str(e)}"
+        )
 
 
 @router.delete("/{country_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)

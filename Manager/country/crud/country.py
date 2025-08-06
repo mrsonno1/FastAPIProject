@@ -16,7 +16,18 @@ def get_country_by_id(db: Session, country_id: int):
 
 
 def get_all_countries_ordered(db: Session):
-    return db.query(models.Country).order_by(models.Country.rank).all()
+    try:
+        # rank가 NULL인 경우를 처리하기 위해 COALESCE 사용
+        countries = db.query(models.Country).order_by(
+            func.coalesce(models.Country.rank, 999999),  # NULL인 경우 큰 숫자로 정렬
+            models.Country.id
+        ).all()
+        return countries
+    except Exception as e:
+        print(f"ERROR in get_all_countries_ordered: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 def create_country(db: Session, country: country_schema.CountryCreate):
     """새로운 국가를 가장 낮은 순위로 생성합니다."""

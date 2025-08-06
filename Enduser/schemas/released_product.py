@@ -47,8 +47,8 @@ class ReleasedProductDetailResponse(BaseModel):
     design_pupil: Optional[DesignComponent] = None  # 동공 디자인 정보
     graphic_diameter: Optional[str] = None  # 그래픽 직경
     optic_zone: Optional[str] = None  # 옵틱존
-    base_curve: Optional[str] = None  # 베이스커브 추가
-    g_dia: Optional[str] = None  # 베이스커브 추가
+    base_curve: Optional[str] = None  # 베이스커브
+    dia: Optional[str] = None  # DIA
     brand_name: str  # 브랜드 이름
     realtime_users: int = 0  # 실시간 유저수
 

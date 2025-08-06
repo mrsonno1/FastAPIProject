@@ -1,6 +1,6 @@
 # schemas/country.py
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 # 국가 생성을 위한 스키마
 class CountryCreate(BaseModel):
@@ -16,8 +16,8 @@ class CountryUpdate(BaseModel):
 class CountryResponse(BaseModel):
     id: int
     country_name: str
-    country_name_en: str = None
-    rank: int
+    country_name_en: Optional[str] = None
+    rank: Optional[int] = None  # rank가 NULL일 수 있도록 수정
 
     class Config:
         from_attributes = True

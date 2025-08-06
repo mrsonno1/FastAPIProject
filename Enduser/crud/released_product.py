@@ -151,7 +151,7 @@ def get_released_product_detail(db: Session, item_name: str) -> Optional[Dict[st
         "graphic_diameter": product.graphic_diameter,
         "optic_zone": product.optic_zone,
         "base_curve": product.base_curve,  # 추가
-        "g_dia": product.graphic_diameter,
+        "dia": product.dia,
         "brand_name": brand.brand_name,
         "realtime_users": realtime_users
     }
