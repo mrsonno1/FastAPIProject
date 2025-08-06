@@ -21,34 +21,36 @@ def apply_migration():
     """Apply the unique constraint migration for custom_designs table"""
     
     try:
-        with engine.begin() as conn:
-            # Step 1: Check if the old constraint exists and drop it
-            logger.info("Step 1: Dropping existing unique constraint on item_name...")
-            try:
+        # Step 1: Check if the old constraint exists and drop it
+        logger.info("Step 1: Dropping existing unique constraint on item_name...")
+        try:
+            with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE custom_designs DROP CONSTRAINT custom_designs_item_name_key"))
                 logger.info("  - Dropped custom_designs_item_name_key")
-            except Exception as e:
-                logger.info(f"  - Constraint custom_designs_item_name_key doesn't exist or already dropped: {e}")
-            
-            # Step 2: Check if the new constraint already exists
-            logger.info("Step 2: Checking if new constraint already exists...")
+        except Exception as e:
+            logger.info(f"  - Constraint custom_designs_item_name_key doesn't exist or already dropped")
+        
+        # Step 2: Check if the new constraint already exists
+        logger.info("Step 2: Checking if new constraint already exists...")
+        with engine.begin() as conn:
             result = conn.execute(text("""
                 SELECT COUNT(*) 
                 FROM pg_constraint 
                 WHERE conname = 'custom_designs_user_item_unique'
             """))
             constraint_exists = result.scalar() > 0
-            
-            if constraint_exists:
-                logger.info("  - Constraint custom_designs_user_item_unique already exists, skipping creation")
-            else:
-                # Step 3: Create the new composite unique constraint
-                logger.info("Step 3: Creating new composite unique constraint on (user_id, item_name)...")
+        
+        if constraint_exists:
+            logger.info("  - Constraint custom_designs_user_item_unique already exists, skipping creation")
+        else:
+            # Step 3: Create the new composite unique constraint
+            logger.info("Step 3: Creating new composite unique constraint on (user_id, item_name)...")
+            with engine.begin() as conn:
                 conn.execute(text(
                     "ALTER TABLE custom_designs ADD CONSTRAINT custom_designs_user_item_unique UNIQUE (user_id, item_name)"
                 ))
                 logger.info("  - Created custom_designs_user_item_unique")
-            
+        
         logger.info("✅ Migration completed successfully!")
         logger.info("Now different users can have the same item_name (e.g., User A: 0001, User B: 0001)")
         
