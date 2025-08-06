@@ -49,8 +49,8 @@ def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict
     # 기존 상태 저장
     old_status = db_design.status
 
-    # 상태가 '1'(완료)로 변경되고 item_name이 없는 경우 코드 생성
-    if update_data.get('status') == '1' and db_design.item_name is None:
+    # 상태가 '3'(완료)로 변경되고 item_name이 없는 경우 코드 생성
+    if update_data.get('status') == '3' and db_design.item_name is None:
         # 사용자 정보 조회
         user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
         if user and user.account_code:

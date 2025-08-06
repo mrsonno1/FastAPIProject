@@ -348,7 +348,7 @@ GET {{host}}/api/custom-designs/list
 Authorization: {{superadmin_token}}
 
 ### 10. Search by custom design name
-GET {{host}}/api/custom-designs/info/60
+GET {{host}}/api/custom-designs/info/190
 Authorization: {{superadmin_token}}
 
 ### 10. Search by custom design name
