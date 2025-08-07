@@ -21,6 +21,58 @@ class CountryResponse(BaseModel):
 
 
 @router.get("/countries/sorted", response_model=List[CountryResponse])
+def get_all_countries_sorted(
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user),
+        language: str = Depends(get_current_language_dependency)
+):
+    """
+    모든 국가를 rank 순으로 정렬하여 반환합니다.
+    
+    - countries 테이블의 모든 국가를 반환
+    - language_setting에 따라 테이블에 저장된 국가명을 반환
+    - rank 필드 순으로 정렬
+    """
+    
+    # 모든 국가를 rank 순으로 조회
+    countries = db.query(models.Country).order_by(
+        models.Country.rank
+    ).all()
+    
+    # 국가 정보를 반환
+    country_data = []
+    
+    for country in countries:
+        # 언어 설정에 따라 테이블에서 직접 읽기
+        if language == 'en':
+            # 영문 이름이 있으면 사용, 없으면 번역 서비스 사용
+            if country.country_name_en:
+                country_name = country.country_name_en
+            else:
+                # 영문 이름이 없으면 번역하고 DB에 저장
+                translated_name = translate_service.translate_text(
+                    country.country_name, 
+                    target_lang='en', 
+                    source_lang='ko'
+                )
+                # DB에 영문 이름 저장
+                country.country_name_en = translated_name
+                db.commit()
+                country_name = translated_name
+        else:
+            # 한국어는 그대로 사용
+            country_name = country.country_name
+            
+        country_data.append({
+            'id': country.id,
+            'country_name': country_name
+        })
+    
+    return [CountryResponse(id=country['id'], country_name=country['country_name']) 
+            for country in country_data]
+
+
+@router.get("/countries/exposed_sorted", response_model=List[CountryResponse])
 def get_sorted_countries(
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user),

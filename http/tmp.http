@@ -73,6 +73,10 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/countries/sorted
 Authorization: {{superadmin_token}}
 
+### 국가 리스트(포트폴리오 포함)
+GET {{host}}{{api_prefix}}/countries/exposed_sorted
+Authorization: {{superadmin_token}}
+
 ### 4. 브랜드 목록 조회 (현재 설정된 언어로 표시됨)
 GET {{host}}{{api_prefix}}/brands/list?page=1&size=10
 Authorization: {{superadmin_token}}
