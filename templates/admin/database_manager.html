@@ -311,6 +311,54 @@
         let selectedColumns = new Set();
         let authToken = '';
 
+        // 페이지 로드 시 자동 로그인 시도
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 자동 로그인 설정
+            const autoLoginCredentials = {
+                username: 'sontest',
+                password: '1234567'
+            };
+
+            // 폼 데이터 생성
+            const formData = new FormData();
+            formData.append('username', autoLoginCredentials.username);
+            formData.append('password', autoLoginCredentials.password);
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+
+                    // 로그인 성공 시 메인 화면 표시
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('mainContainer').style.display = 'block';
+
+                    // 테이블 목록 로드
+                    await loadTables();
+                    
+                    // account 테이블 자동 선택
+                    document.getElementById('tableSelect').value = 'account';
+                    await loadTableData();
+                } else {
+                    // 자동 로그인 실패 시 수동 로그인 폼 표시
+                    console.log('Auto-login failed, showing manual login form');
+                    // 폼에 기본값 설정
+                    document.getElementById('username').value = autoLoginCredentials.username;
+                    document.getElementById('password').value = autoLoginCredentials.password;
+                }
+            } catch (error) {
+                console.error('Auto-login error:', error);
+                // 오류 발생 시 수동 로그인 폼 표시
+                document.getElementById('username').value = autoLoginCredentials.username;
+                document.getElementById('password').value = autoLoginCredentials.password;
+            }
+        });
+
         // 로그인 처리
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();

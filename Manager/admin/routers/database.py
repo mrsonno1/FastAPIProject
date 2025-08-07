@@ -16,7 +16,7 @@ router = APIRouter(
 
 # 수정 가능한 테이블 목록 (보안상 중요한 테이블은 제외)
 ALLOWED_TABLES = [
-    'brands', 'countries', 'images', 'colors',
+    'account', 'brands', 'countries', 'images', 'colors',
     'custom_designs', 'portfolios', 'releasedproducts',
     'progressstatus', 'carts', 'shares', 'realtime_users',
     'daily_views'
