@@ -115,14 +115,8 @@ def update_my_info(
 ):
     """내 정보 수정"""
 
-    # 이메일 중복 검사 (이메일이 제공되고 자신의 이메일이 아닌 경우)
-    if user_update.email and user_update.email != current_user.email:
-        existing_user = login_crud.get_user_by_email(db, email=user_update.email)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="이미 사용 중인 이메일입니다."
-            )
+    # 이메일 중복 검사 제거 - 중복 이메일 허용
+    # 이메일은 더 이상 unique하지 않으므로 중복 체크를 하지 않습니다.
 
     # 업데이트할 데이터 준비 (None이 아닌 값만 포함)
     update_data = {}

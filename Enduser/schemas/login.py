@@ -34,11 +34,10 @@ class UserUpdateRequest(BaseModel):
         if v == "":
             return None
         if v is not None:
-            # 이메일 형식 검증
-            from email_validator import validate_email, EmailNotValidError
-            try:
-                validate_email(v)
-            except EmailNotValidError:
+            # 간단한 이메일 형식 검증 (@ 포함 여부만 확인)
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, v):
                 raise ValueError("유효한 이메일 주소를 입력해주세요.")
         return v
 
