@@ -75,6 +75,7 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     account_code: Optional[str] = None
+    language_preference: Optional[str] = None  # 언어 설정 추가
 
 class TokenData(BaseModel):
     username: Optional[str] = None

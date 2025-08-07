@@ -38,11 +38,15 @@ def login_for_access_token(
 
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(data={"sub": user.username})
+    
+    # 언어 설정 가져오기 (없으면 기본값 'ko')
+    language_preference = user.language_preference if hasattr(user, 'language_preference') else 'ko'
 
     return user_schema.Token(
         access_token=access_token,
         refresh_token=refresh_token,
-        account_code=user.account_code
+        account_code=user.account_code,
+        language_preference=language_preference
     )
 
 
