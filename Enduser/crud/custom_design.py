@@ -285,9 +285,13 @@ def get_user_custom_designs_paginated(
             if hasattr(models.CustomDesign, column):
                 query = query.order_by(getattr(models.CustomDesign, column).asc())
     else:
-        # 기본 정렬: created_at 내림차순으로 정렬 (최신 등록된 항목이 맨 앞으로)
-        # status='3'인 항목 우선순위는 Python에서 처리
-        query = query.order_by(models.CustomDesign.created_at.desc())
+        # 기본 정렬: status='3'인 항목을 우선으로, 그 다음 created_at 내림차순
+        # SQL 레벨에서 정렬하여 페이지 간 일관성 유지
+        from sqlalchemy import case
+        query = query.order_by(
+            case((models.CustomDesign.status == '3', 0), else_=1),  # status='3'이면 0, 아니면 1 (0이 먼저 옴)
+            models.CustomDesign.created_at.desc()  # 그 다음 created_at 내림차순
+        )
 
     # 전체 카운트
     total_count = query.count()
@@ -295,14 +299,6 @@ def get_user_custom_designs_paginated(
     # 페이지네이션
     offset = (page - 1) * size
     items = query.offset(offset).limit(size).all()
-    
-    # Python에서 status='3'인 항목을 우선 정렬 (페이지 내에서만)
-    # status='3'인 항목과 아닌 항목을 분리하여 정렬
-    if not orderBy:  # 기본 정렬일 때만 적용
-        status_3_items = [item for item in items if item.status == '3']
-        other_items = [item for item in items if item.status != '3']
-        # 각 그룹은 이미 created_at 순으로 정렬되어 있음
-        items = status_3_items + other_items
 
     return {
         "total_count": total_count,
