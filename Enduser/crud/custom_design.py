@@ -249,10 +249,13 @@ def get_user_custom_designs_paginated(
         db: Session,
         user_id: str,
         page: int = 1,
-        size: int = 1000,
+        size: int = 100,
         orderBy: Optional[str] = None
 ) -> Dict[str, Any]:
     """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회"""
+    
+    # Size 제한: 최대 1000개까지 허용
+    size = min(size, 1000)
     
     # username으로 AdminUser의 id 조회
     user = db.query(models.AdminUser).filter(
