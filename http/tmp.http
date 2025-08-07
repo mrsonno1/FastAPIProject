@@ -256,7 +256,7 @@ GET {{host}}{{api_prefix}}/my-designs/list
 Authorization: {{superadmin_token}}
 
 ### 12. 내 커스텀 디자인 상세 조회
-GET {{host}}{{api_prefix}}/my-designs/34
+GET {{host}}{{api_prefix}}/my-designs/61
 Authorization: {{superadmin_token}}
 
 ### 13. 커스텀 디자인 생성 (File 업로드 방식)
