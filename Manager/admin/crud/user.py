@@ -84,7 +84,10 @@ def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema
         # 'new_password' 키를 DB 모델의 속성명인 'password'로 바꾸고, 값을 해싱합니다.
         update_data["hashed_password"] = get_password_hash(update_data.pop("new_password"))
 
-    # 3. 딕셔너리의 각 키-값 쌍에 대해 DB 모델 객체의 속성을 업데이트합니다.
+    # 3. 이메일이 변경되려는 경우, 중복 확인을 건너뜁니다 (중복 허용)
+    # 이메일 중복 체크를 제거하여 같은 이메일을 여러 계정이 가질 수 있도록 합니다.
+    
+    # 4. 딕셔너리의 각 키-값 쌍에 대해 DB 모델 객체의 속성을 업데이트합니다.
     #    이제 모든 키 이름이 모델 속성 이름과 일치하므로 분기문이 필요 없습니다.
     for key, value in update_data.items():
         setattr(db_user, key, value)

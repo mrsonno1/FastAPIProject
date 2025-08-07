@@ -64,11 +64,8 @@ def register_user(
     if db_user_by_name:
         raise HTTPException(status_code=400, detail="이미 등록된 아이디입니다.")
 
-    # 이메일 중복 검사
-    if user.email:
-        db_user_by_email = user_crud.get_user_by_email(db, email=user.email)
-        if db_user_by_email:
-            raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
+    # 이메일 중복 검사 제거 - 중복 이메일 허용
+    # 이메일은 더 이상 unique하지 않으므로 중복 체크를 하지 않습니다.
 
     # create_user 함수를 try-except로 감싸서 데이터베이스 오류를 처리합니다.
     try:

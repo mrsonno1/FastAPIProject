@@ -17,7 +17,7 @@ class AdminUser(Base):
     company_name = Column(String(20), nullable=False)
     contact_name = Column(String(100))
     contact_phone = Column(String(50))
-    email = Column(String(100), unique=True, nullable=True, index=True)
+    email = Column(String(100), nullable=True, index=True)  # unique=True 제거 - 중복 이메일 허용
     language_preference = Column(String(10), nullable=False, default='ko')  # 언어 설정 (ko, en)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     last_login_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
