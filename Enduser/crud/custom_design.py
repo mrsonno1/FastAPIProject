@@ -249,7 +249,7 @@ def get_user_custom_designs_paginated(
         db: Session,
         user_id: str,
         page: int = 1,
-        size: int = 10,
+        size: int = 1000,
         orderBy: Optional[str] = None
 ) -> Dict[str, Any]:
     """사용자의 커스텀 디자인 목록을 페이지네이션하여 조회"""

@@ -12,6 +12,22 @@ username=sontest&password=1234567
     client.global.set("code", response.body.account_code + "-");
 %}
 
+
+
+### 유니티 사용자 로그인
+POST {{host}}{{api_prefix}}/login/
+Content-Type: application/x-www-form-urlencoded
+
+username=test123&password=123456
+
+> {%
+    client.global.set("superadmin_token", "Bearer " + response.body.access_token);
+    client.global.set("my_refresh_token", response.body.refresh_token);
+    client.global.set("code", response.body.account_code + "-");
+%}
+
+
+
 ### 계정 등록
 POST {{host}}/api/auth/register
 Authorization: {{superadmin_token}}
