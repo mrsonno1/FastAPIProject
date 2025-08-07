@@ -1,7 +1,7 @@
 # Enduser/routers/country.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from db.database import get_db
 from db import models
 from core.security import get_current_user
@@ -24,7 +24,8 @@ class CountryResponse(BaseModel):
 def get_all_countries_sorted(
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user),
-        language: str = Depends(get_current_language_dependency)
+        lang: Optional[str] = Query(None, description="Language code (en or ko)"),
+        accept_language: Optional[str] = Header(None, alias="Accept-Language")
 ):
     """
     모든 국가를 rank 순으로 정렬하여 반환합니다.
@@ -32,7 +33,33 @@ def get_all_countries_sorted(
     - countries 테이블의 모든 국가를 반환
     - language_setting에 따라 테이블에 저장된 국가명을 반환
     - rank 필드 순으로 정렬
+    
+    언어 설정 우선순위:
+    1. Query parameter: ?lang=en 또는 ?lang=ko
+    2. Accept-Language header
+    3. 사용자 저장 설정
+    4. 기본값: ko
     """
+    
+    # 언어 결정 (우선순위: query param > header > DB user setting > memory cache > default)
+    language = 'ko'  # 기본값
+    
+    if lang:
+        # Query parameter가 있으면 우선 사용
+        language = lang.lower()
+    elif accept_language:
+        # Accept-Language 헤더 파싱 (예: "en-US,en;q=0.9,ko;q=0.8")
+        # 간단하게 첫 번째 언어만 추출
+        first_lang = accept_language.split(',')[0].split('-')[0].lower()
+        if first_lang in ['en', 'ko']:
+            language = first_lang
+    else:
+        # 데이터베이스의 사용자 언어 설정 사용
+        if hasattr(current_user, 'language_preference') and current_user.language_preference:
+            language = current_user.language_preference
+        else:
+            # DB에 없으면 메모리 캐시 확인
+            language = get_current_language_dependency(current_user)
     
     # 모든 국가를 rank 순으로 조회
     countries = db.query(models.Country).order_by(
@@ -76,7 +103,8 @@ def get_all_countries_sorted(
 def get_sorted_countries(
         db: Session = Depends(get_db),
         current_user: models.AdminUser = Depends(get_current_user),
-        language: str = Depends(get_current_language_dependency)
+        lang: Optional[str] = Query(None, description="Language code (en or ko)"),
+        accept_language: Optional[str] = Header(None, alias="Accept-Language")
 ):
     """
     포트폴리오에 노출된 국가들을 rank 순으로 정렬하여 반환합니다.
@@ -84,7 +112,33 @@ def get_sorted_countries(
     - portfolios 테이블의 exposed_countries 필드에 있는 국가 ID들만 추출
     - language_setting에 따라 테이블에 저장된 국가명을 반환
     - rank 필드 순으로 정렬
+    
+    언어 설정 우선순위:
+    1. Query parameter: ?lang=en 또는 ?lang=ko
+    2. Accept-Language header
+    3. 사용자 저장 설정
+    4. 기본값: ko
     """
+    
+    # 언어 결정 (우선순위: query param > header > DB user setting > memory cache > default)
+    language = 'ko'  # 기본값
+    
+    if lang:
+        # Query parameter가 있으면 우선 사용
+        language = lang.lower()
+    elif accept_language:
+        # Accept-Language 헤더 파싱 (예: "en-US,en;q=0.9,ko;q=0.8")
+        # 간단하게 첫 번째 언어만 추출
+        first_lang = accept_language.split(',')[0].split('-')[0].lower()
+        if first_lang in ['en', 'ko']:
+            language = first_lang
+    else:
+        # 데이터베이스의 사용자 언어 설정 사용
+        if hasattr(current_user, 'language_preference') and current_user.language_preference:
+            language = current_user.language_preference
+        else:
+            # DB에 없으면 메모리 캐시 확인
+            language = get_current_language_dependency(current_user)
     
     # 모든 포트폴리오에서 exposed_countries 수집
     portfolios = db.query(models.Portfolio).filter(

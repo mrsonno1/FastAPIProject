@@ -18,6 +18,7 @@ class AdminUser(Base):
     contact_name = Column(String(100))
     contact_phone = Column(String(50))
     email = Column(String(100), unique=True, nullable=True, index=True)
+    language_preference = Column(String(10), nullable=False, default='ko')  # 언어 설정 (ko, en)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     last_login_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     is_deleted = Column(Boolean, default=False, nullable=False)  # 소프트 삭제를 위한 필드
