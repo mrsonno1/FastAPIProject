@@ -118,18 +118,13 @@ def update_my_info(
     # 이메일 중복 검사 제거 - 중복 이메일 허용
     # 이메일은 더 이상 unique하지 않으므로 중복 체크를 하지 않습니다.
 
-    # 업데이트할 데이터 준비 (None이 아닌 값만 포함)
-    update_data = {}
-    if user_update.company_name is not None:
-        update_data["company_name"] = user_update.company_name
-    if user_update.contact_name is not None:
-        update_data["contact_name"] = user_update.contact_name
-    if user_update.contact_phone is not None:
-        update_data["contact_phone"] = user_update.contact_phone
-    if user_update.email is not None:
-        update_data["email"] = user_update.email
-    if user_update.new_password is not None:
-        update_data["new_password"] = user_update.new_password
+    # 업데이트할 데이터 준비 - 빈 문자열("")은 None으로 변환되어 전달됨
+    # model_dump를 사용하여 설정된 필드만 가져옴 (exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True, exclude_none=False)
+    
+    # new_password가 None인 경우 제거 (비밀번호는 None으로 설정할 수 없음)
+    if "new_password" in update_data and update_data["new_password"] is None:
+        update_data.pop("new_password")
 
     # 사용자 정보 업데이트
     updated_user = login_crud.update_user_info(db, current_user, update_data)

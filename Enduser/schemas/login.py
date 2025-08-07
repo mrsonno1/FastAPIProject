@@ -27,12 +27,18 @@ class UserUpdateRequest(BaseModel):
     email: Optional[str] = None  # EmailStr 대신 str 사용
     new_password: Optional[str] = None
     
+    @field_validator('email', 'company_name', 'contact_name', 'contact_phone', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """빈 문자열은 None으로 처리"""
+        if v == "":
+            return None
+        return v
+    
     @field_validator('email')
     @classmethod
     def validate_email(cls, v):
-        """이메일 유효성 검사 - 빈 문자열은 None으로 처리"""
-        if v == "":
-            return None
+        """이메일 유효성 검사"""
         if v is not None:
             # 간단한 이메일 형식 검증 (@ 포함 여부만 확인)
             import re

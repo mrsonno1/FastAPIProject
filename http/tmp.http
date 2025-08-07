@@ -68,7 +68,7 @@ Content-Type: application/json
   "company_name": "1",
   "contact_name": "",
   "contact_phone": "",
-  "email": "abc123@acd.com"
+  "email": ""
 
 }
 

@@ -76,13 +76,17 @@ def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema
     관리자 계정의 정보를 선택적으로 업데이트합니다. (단순화된 버전)
     """
     # 1. Pydantic 모델에서 사용자가 보낸 값들만 딕셔너리로 추출합니다.
-    update_data = user_fix.model_dump(exclude_unset=True)
+    # exclude_none=False를 사용하여 None 값도 포함시킵니다 (빈 문자열이 None으로 변환된 경우 처리)
+    update_data = user_fix.model_dump(exclude_unset=True, exclude_none=False)
 
     from core.security import get_password_hash
     # 2. 비밀번호가 있다면, 해싱하여 딕셔너리 값을 교체합니다.
     if "new_password" in update_data and update_data["new_password"]:
         # 'new_password' 키를 DB 모델의 속성명인 'password'로 바꾸고, 값을 해싱합니다.
         update_data["hashed_password"] = get_password_hash(update_data.pop("new_password"))
+    elif "new_password" in update_data:
+        # new_password가 None이면 제거 (비밀번호는 None으로 설정할 수 없음)
+        update_data.pop("new_password")
 
     # 3. 이메일이 변경되려는 경우, 중복 확인을 건너뜁니다 (중복 허용)
     # 이메일 중복 체크를 제거하여 같은 이메일을 여러 계정이 가질 수 있도록 합니다.

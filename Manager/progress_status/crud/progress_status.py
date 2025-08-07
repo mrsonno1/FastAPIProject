@@ -485,8 +485,7 @@ def get_progress_status_paginated(
     # 필터링 적용
     if user_name:
         query = query.filter(
-            (models.AdminUser.username.ilike(f"%{user_name}%")) |
-            (models.AdminUser.contact_name.ilike(f"%{user_name}%"))
+            models.AdminUser.username.ilike(f"%{user_name}%")  # username으로만 검색
         )
 
     if custom_design_name:
@@ -638,7 +637,7 @@ def get_progress_status_paginated(
         # 공통 필드 추가
         item.update({
             "id": progress_status.id,
-            "user_name": user.contact_name or user.username,
+            "user_name": user.username,  # 담당자명 대신 항상 아이디(username) 사용
             "account_code": user.account_code,  # account_code 추가
             "expected_shipping_date": progress_status.expected_shipping_date,
             "status": progress_status.status,
