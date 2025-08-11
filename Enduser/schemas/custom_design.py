@@ -77,6 +77,7 @@ class CustomDesignListItem(BaseModel):
     thumbnail_url: Optional[str] = None
     in_cart: bool  # 카트에 포함되어 있는지 여부
     account_code: str  # account_code 추가
+    created_at: datetime  # created_at 추가
 
     class Config:
         from_attributes = True

@@ -123,7 +123,8 @@ def get_my_designs_list(
                 main_image_url=design.main_image_url or "",
                 thumbnail_url=design.thumbnail_url or "",  # thumbnail_url 추가
                 in_cart=in_cart,  # in_cart 필드 추가
-                account_code=current_user.account_code  # account_code 추가
+                account_code=current_user.account_code,  # account_code 추가
+                created_at=design.created_at  # created_at 추가
             ))
 
         return custom_design_schema.PaginatedCustomDesignResponse(
