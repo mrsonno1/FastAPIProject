@@ -5,7 +5,6 @@ from typing import List, Optional
 from db.database import get_db
 from db import models
 from core.security import get_current_user
-from core.dependencies import get_current_language_dependency
 from services.translate_service import translate_service
 from pydantic import BaseModel
 
@@ -40,26 +39,38 @@ def get_all_countries_sorted(
     3. 사용자 저장 설정
     4. 기본값: ko
     """
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
     
-    # 언어 결정 (우선순위: query param > header > DB user setting > memory cache > default)
+    # 언어 결정 - account 테이블의 language_preference를 최우선으로 사용
+    # Query parameter나 header가 있으면 그것을 사용
     language = 'ko'  # 기본값
     
     if lang:
         # Query parameter가 있으면 우선 사용
         language = lang.lower()
+        logger.info(f"Language from query param: {language}")
     elif accept_language:
         # Accept-Language 헤더 파싱 (예: "en-US,en;q=0.9,ko;q=0.8")
         # 간단하게 첫 번째 언어만 추출
         first_lang = accept_language.split(',')[0].split('-')[0].lower()
         if first_lang in ['en', 'ko']:
             language = first_lang
+        logger.info(f"Language from Accept-Language header: {language}")
     else:
-        # 데이터베이스의 사용자 언어 설정 사용
-        if hasattr(current_user, 'language_preference') and current_user.language_preference:
-            language = current_user.language_preference
+        # Query param과 header가 없으면 DB의 language_preference 사용
+        # 사용자를 다시 조회하여 최신 language_preference 가져오기
+        db_user = db.query(models.AdminUser).filter(
+            models.AdminUser.username == current_user.username
+        ).first()
+        
+        if db_user and db_user.language_preference:
+            language = db_user.language_preference
+            logger.info(f"Language from DB (user: {current_user.username}): {language}")
         else:
-            # DB에 없으면 메모리 캐시 확인
-            language = get_current_language_dependency(current_user)
+            language = 'ko'  # 기본값
+            logger.info(f"Using default language: {language}")
     
     # 모든 국가를 rank 순으로 조회
     countries = db.query(models.Country).order_by(
@@ -69,23 +80,33 @@ def get_all_countries_sorted(
     # 국가 정보를 반환
     country_data = []
     
+    logger.info(f"Processing {len(countries)} countries with language: {language}")
+    
     for country in countries:
         # 언어 설정에 따라 테이블에서 직접 읽기
         if language == 'en':
             # 영문 이름이 있으면 사용, 없으면 번역 서비스 사용
             if country.country_name_en:
                 country_name = country.country_name_en
+                logger.debug(f"Country {country.id}: Using existing English name: {country_name}")
             else:
-                # 영문 이름이 없으면 번역하고 DB에 저장
-                translated_name = translate_service.translate_text(
-                    country.country_name, 
-                    target_lang='en', 
-                    source_lang='ko'
-                )
-                # DB에 영문 이름 저장
-                country.country_name_en = translated_name
-                db.commit()
-                country_name = translated_name
+                logger.info(f"Country {country.id} ({country.country_name}): No English name, attempting translation")
+                try:
+                    # 영문 이름이 없으면 번역하고 DB에 저장
+                    translated_name = translate_service.translate_text(
+                        country.country_name, 
+                        target_lang='en', 
+                        source_lang='ko'
+                    )
+                    # DB에 영문 이름 저장
+                    country.country_name_en = translated_name
+                    db.commit()
+                    country_name = translated_name
+                    logger.info(f"Country {country.id}: Translation successful: {country.country_name} -> {translated_name}")
+                except Exception as e:
+                    logger.error(f"Country {country.id}: Translation failed for '{country.country_name}': {str(e)}")
+                    # 번역 실패 시 한국어 이름 사용
+                    country_name = country.country_name
         else:
             # 한국어는 그대로 사용
             country_name = country.country_name
@@ -120,7 +141,7 @@ def get_sorted_countries(
     4. 기본값: ko
     """
     
-    # 언어 결정 (우선순위: query param > header > DB user setting > memory cache > default)
+    # 언어 결정 - account 테이블의 language_preference를 사용
     language = 'ko'  # 기본값
     
     if lang:
@@ -133,12 +154,16 @@ def get_sorted_countries(
         if first_lang in ['en', 'ko']:
             language = first_lang
     else:
-        # 데이터베이스의 사용자 언어 설정 사용
-        if hasattr(current_user, 'language_preference') and current_user.language_preference:
-            language = current_user.language_preference
+        # Query param과 header가 없으면 DB의 language_preference 사용
+        # 사용자를 다시 조회하여 최신 language_preference 가져오기
+        db_user = db.query(models.AdminUser).filter(
+            models.AdminUser.username == current_user.username
+        ).first()
+        
+        if db_user and db_user.language_preference:
+            language = db_user.language_preference
         else:
-            # DB에 없으면 메모리 캐시 확인
-            language = get_current_language_dependency(current_user)
+            language = 'ko'  # 기본값
     
     # 모든 포트폴리오에서 exposed_countries 수집
     portfolios = db.query(models.Portfolio).filter(
@@ -167,23 +192,33 @@ def get_sorted_countries(
     # 국가 정보를 반환
     country_data = []
     
+    logger.info(f"Processing {len(countries)} countries with language: {language}")
+    
     for country in countries:
         # 언어 설정에 따라 테이블에서 직접 읽기
         if language == 'en':
             # 영문 이름이 있으면 사용, 없으면 번역 서비스 사용
             if country.country_name_en:
                 country_name = country.country_name_en
+                logger.debug(f"Country {country.id}: Using existing English name: {country_name}")
             else:
-                # 영문 이름이 없으면 번역하고 DB에 저장
-                translated_name = translate_service.translate_text(
-                    country.country_name, 
-                    target_lang='en', 
-                    source_lang='ko'
-                )
-                # DB에 영문 이름 저장
-                country.country_name_en = translated_name
-                db.commit()
-                country_name = translated_name
+                logger.info(f"Country {country.id} ({country.country_name}): No English name, attempting translation")
+                try:
+                    # 영문 이름이 없으면 번역하고 DB에 저장
+                    translated_name = translate_service.translate_text(
+                        country.country_name, 
+                        target_lang='en', 
+                        source_lang='ko'
+                    )
+                    # DB에 영문 이름 저장
+                    country.country_name_en = translated_name
+                    db.commit()
+                    country_name = translated_name
+                    logger.info(f"Country {country.id}: Translation successful: {country.country_name} -> {translated_name}")
+                except Exception as e:
+                    logger.error(f"Country {country.id}: Translation failed for '{country.country_name}': {str(e)}")
+                    # 번역 실패 시 한국어 이름 사용
+                    country_name = country.country_name
         else:
             # 한국어는 그대로 사용
             country_name = country.country_name

@@ -10,11 +10,13 @@ logger = logging.getLogger(__name__)
 def _cached_translate(text: str, target_lang: str, source_lang: str) -> str:
     """실제 번역을 수행하고 캐싱합니다."""
     try:
+        logger.debug(f"Translating: '{text}' from {source_lang} to {target_lang}")
         translator = GoogleTranslator(source=source_lang, target=target_lang)
         result = translator.translate(text)
+        logger.debug(f"Translation successful: '{text}' -> '{result}'")
         return result
     except Exception as e:
-        logger.error(f"Translation error: {e}")
+        logger.error(f"Translation error for '{text}' ({source_lang} -> {target_lang}): {str(e)}")
         return text  # 번역 실패 시 원본 반환
 
 

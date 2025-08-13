@@ -35,12 +35,16 @@ def login_for_access_token(
 
     # 로그인 성공 시, 마지막 접속 시간 업데이트
     user_crud.update_last_login(db, username=user.username)
+    
+    # 로그인 시 언어 설정을 항상 한국어('ko')로 초기화
+    user.language_preference = 'ko'
+    db.commit()
 
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(data={"sub": user.username})
     
-    # 언어 설정 가져오기 (없으면 기본값 'ko')
-    language_preference = user.language_preference if hasattr(user, 'language_preference') else 'ko'
+    # 언어 설정은 항상 'ko'로 반환
+    language_preference = 'ko'
 
     return user_schema.Token(
         access_token=access_token,
