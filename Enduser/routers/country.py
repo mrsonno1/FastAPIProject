@@ -1,7 +1,7 @@
 # Enduser/routers/country.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from db.database import get_db
 from db import models
 from core.security import get_current_user
@@ -22,55 +22,31 @@ class CountryResponse(BaseModel):
 @router.get("/countries/sorted", response_model=List[CountryResponse])
 def get_all_countries_sorted(
         db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user),
-        lang: Optional[str] = Query(None, description="Language code (en or ko)"),
-        accept_language: Optional[str] = Header(None, alias="Accept-Language")
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     모든 국가를 rank 순으로 정렬하여 반환합니다.
     
     - countries 테이블의 모든 국가를 반환
-    - language_setting에 따라 테이블에 저장된 국가명을 반환
+    - account 테이블의 language_preference에 따라 국가명을 반환
     - rank 필드 순으로 정렬
-    
-    언어 설정 우선순위:
-    1. Query parameter: ?lang=en 또는 ?lang=ko
-    2. Accept-Language header
-    3. 사용자 저장 설정
-    4. 기본값: ko
     """
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     
-    # 언어 결정 - account 테이블의 language_preference를 최우선으로 사용
-    # Query parameter나 header가 있으면 그것을 사용
-    language = 'ko'  # 기본값
+    # account 테이블의 language_preference만 사용
+    # 사용자를 다시 조회하여 최신 language_preference 가져오기
+    db_user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == current_user.username
+    ).first()
     
-    if lang:
-        # Query parameter가 있으면 우선 사용
-        language = lang.lower()
-        logger.info(f"Language from query param: {language}")
-    elif accept_language:
-        # Accept-Language 헤더 파싱 (예: "en-US,en;q=0.9,ko;q=0.8")
-        # 간단하게 첫 번째 언어만 추출
-        first_lang = accept_language.split(',')[0].split('-')[0].lower()
-        if first_lang in ['en', 'ko']:
-            language = first_lang
-        logger.info(f"Language from Accept-Language header: {language}")
+    if db_user and db_user.language_preference:
+        language = db_user.language_preference
+        logger.info(f"Language from DB (user: {current_user.username}): {language}")
     else:
-        # Query param과 header가 없으면 DB의 language_preference 사용
-        # 사용자를 다시 조회하여 최신 language_preference 가져오기
-        db_user = db.query(models.AdminUser).filter(
-            models.AdminUser.username == current_user.username
-        ).first()
-        
-        if db_user and db_user.language_preference:
-            language = db_user.language_preference
-            logger.info(f"Language from DB (user: {current_user.username}): {language}")
-        else:
-            language = 'ko'  # 기본값
-            logger.info(f"Using default language: {language}")
+        language = 'ko'  # 기본값
+        logger.info(f"Using default language: {language}")
     
     # 모든 국가를 rank 순으로 조회
     countries = db.query(models.Country).order_by(
@@ -123,47 +99,26 @@ def get_all_countries_sorted(
 @router.get("/countries/exposed_sorted", response_model=List[CountryResponse])
 def get_sorted_countries(
         db: Session = Depends(get_db),
-        current_user: models.AdminUser = Depends(get_current_user),
-        lang: Optional[str] = Query(None, description="Language code (en or ko)"),
-        accept_language: Optional[str] = Header(None, alias="Accept-Language")
+        current_user: models.AdminUser = Depends(get_current_user)
 ):
     """
     포트폴리오에 노출된 국가들을 rank 순으로 정렬하여 반환합니다.
     
     - portfolios 테이블의 exposed_countries 필드에 있는 국가 ID들만 추출
-    - language_setting에 따라 테이블에 저장된 국가명을 반환
+    - account 테이블의 language_preference에 따라 국가명을 반환
     - rank 필드 순으로 정렬
-    
-    언어 설정 우선순위:
-    1. Query parameter: ?lang=en 또는 ?lang=ko
-    2. Accept-Language header
-    3. 사용자 저장 설정
-    4. 기본값: ko
     """
     
-    # 언어 결정 - account 테이블의 language_preference를 사용
-    language = 'ko'  # 기본값
+    # account 테이블의 language_preference만 사용
+    # 사용자를 다시 조회하여 최신 language_preference 가져오기
+    db_user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == current_user.username
+    ).first()
     
-    if lang:
-        # Query parameter가 있으면 우선 사용
-        language = lang.lower()
-    elif accept_language:
-        # Accept-Language 헤더 파싱 (예: "en-US,en;q=0.9,ko;q=0.8")
-        # 간단하게 첫 번째 언어만 추출
-        first_lang = accept_language.split(',')[0].split('-')[0].lower()
-        if first_lang in ['en', 'ko']:
-            language = first_lang
+    if db_user and db_user.language_preference:
+        language = db_user.language_preference
     else:
-        # Query param과 header가 없으면 DB의 language_preference 사용
-        # 사용자를 다시 조회하여 최신 language_preference 가져오기
-        db_user = db.query(models.AdminUser).filter(
-            models.AdminUser.username == current_user.username
-        ).first()
-        
-        if db_user and db_user.language_preference:
-            language = db_user.language_preference
-        else:
-            language = 'ko'  # 기본값
+        language = 'ko'  # 기본값
     
     # 모든 포트폴리오에서 exposed_countries 수집
     portfolios = db.query(models.Portfolio).filter(
