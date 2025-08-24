@@ -60,7 +60,7 @@ class Color(Base):
     __tablename__ = "colors"
 
     id = Column(Integer, primary_key=True, index=True)
-    color_name = Column(String, unique=True, index=True, nullable=False)
+    color_name = Column(String, index=True, nullable=True)  # nullable=True로 변경, unique 제거 (빈 문자열 중복 허용)
     color_values = Column(String(100), nullable=False)
     monochrome_type = Column(String(10), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
@@ -151,7 +151,7 @@ class Releasedproduct(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True, nullable=False)
     design_name = Column(String(50), nullable=False, index=True)
-    color_name = Column(String(50), nullable=False)
+    color_name = Column(String(50), nullable=True)
     brand_id = Column(Integer, nullable=False)
     request_message = Column(Text, nullable=True)
     main_image_url = Column(String, nullable=False)

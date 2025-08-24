@@ -14,7 +14,7 @@ class ColorComponentDetail(BaseModel):
 
 class ReleasedProductCreate(BaseModel):
     design_name: str
-    color_name: str
+    color_name: Optional[str] = None
     main_image_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
     brand_id: int
@@ -58,7 +58,7 @@ class ReleasedProductDetailResponse(BaseModel):
     brand_name: str
     brand_image_url: Optional[str] = None
     design_name: str
-    color_name: str
+    color_name: Optional[str] = None
     image: str
     thumbnail_url: Optional[str] = None
 
@@ -95,7 +95,7 @@ class ReleasedProductListItem(BaseModel):
     brand_name: str
     brand_image_url: Optional[str] = None
     design_name: str
-    color_name: str
+    color_name: Optional[str] = None
     image: str
     thumbnail_url: Optional[str] = None
     color_line_color: Optional[ColorComponentDetail] = None

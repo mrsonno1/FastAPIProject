@@ -3,8 +3,24 @@ from sqlalchemy.orm import Session
 from db import models
 from Manager.color.schemas import color as color_schema
 from typing import Optional
-from sqlalchemy import or_, cast, Integer, func
+from sqlalchemy import or_, cast, Integer, func, case
 from fastapi import HTTPException
+import re
+
+
+def natural_sort_key(text):
+    """
+    자연 정렬을 위한 키 함수
+    알파뉴메릭 문자열을 숫자와 문자 부분으로 분리하여 정렬
+    예: A1, A2, A10, B1, B2 순서로 정렬
+    """
+    def convert(text):
+        return int(text) if text.isdigit() else text.lower()
+    
+    def alphanum_key(key):
+        return [convert(c) for c in re.split('([0-9]+)', key)]
+    
+    return alphanum_key(text)
 
 def get_color_by_name(db: Session, color_name: str):
     """color_name으로 컬러 정보 조회"""
@@ -17,12 +33,26 @@ def get_color_by_id(db: Session, color_id: int):
 def create_color(db: Session, color: color_schema.ColorCreate):
     """새로운 컬러 생성"""
     
-    # color_name이 숫자로만 이루어져 있는지 확인
-    if color.color_name.isdigit():
-        # 5자리로 맞추고 앞에 0을 채움
-        processed_color_name = color.color_name.zfill(5)
+    # color_name 처리 로직 - None과 빈 문자열을 안전하게 처리
+    color_name = color.color_name
+    if color_name is None:
+        processed_color_name = ""
+    elif color_name == "":
+        processed_color_name = ""
+    elif color_name.strip() == "":
+        # 공백만 있는 경우도 빈 문자열로 처리
+        processed_color_name = ""
+    elif color_name.isalnum() and len(color_name) <= 6:
+        # 6자리 알파뉴메릭인지 확인하고 처리
+        if color_name.isdigit():
+            # 숫자인 경우 6자리로 패딩
+            processed_color_name = color_name.zfill(6)
+        else:
+            # 알파뉴메릭인 경우 대문자로 변환하고 6자리까지 허용
+            processed_color_name = color_name.upper()
     else:
-        processed_color_name = color.color_name
+        # 기타 경우 그대로 유지
+        processed_color_name = color_name
 
     db_color = models.Color(
         color_name=processed_color_name,
@@ -124,12 +154,17 @@ def get_colors_paginated(
             )
         )
 
-    # 2. 동적 정렬
+    total_count = query.count()
+
+    # 2. 동적 정렬 처리
+    color_name_sort = False
+    sort_desc = False
+    
     if orderBy:
         try:
             order_column_name, order_direction = orderBy.strip().split()
-
-            # 허용된 정렬 기준 컬럼 정의 (SQL Injection 방지 및 안정성)
+            
+            # 허용된 정렬 기준 컬럼 정의
             allowed_columns = {
                 "id": models.Color.id,
                 "color_name": models.Color.color_name,
@@ -138,27 +173,38 @@ def get_colors_paginated(
             }
 
             if order_column_name in allowed_columns:
-                order_column = allowed_columns[order_column_name]
-                direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
-
                 if order_column_name == 'color_name':
-                    # color_name을 자연스럽게 정렬 (alphanumeric sorting)
-                    # 숫자가 포함된 문자열도 올바르게 정렬되도록 처리
-                    query = query.order_by(direction_func(order_column))
+                    # color_name 정렬은 Python에서 자연 정렬로 처리
+                    color_name_sort = True
+                    sort_desc = order_direction.lower() == 'desc'
+                    # DB에서는 정렬하지 않고 모든 데이터를 가져옴
+                    pass
                 else:
+                    # 다른 컬럼들은 DB에서 정렬
+                    order_column = allowed_columns[order_column_name]
+                    direction_func = lambda col: col.desc() if order_direction.lower() == 'desc' else col.asc()
                     query = query.order_by(direction_func(order_column))
             else:
                 # 허용되지 않은 컬럼명이면 기본 정렬(최신순) 적용
                 query = query.order_by(models.Color.created_at.desc())
         except (ValueError, AttributeError):
-            # orderBy 형식이 잘못되었거나 존재하지 않는 컬럼일 경우 기본 정렬로 대체
+            # orderBy 형식이 잘못된 경우 기본 정렬로 대체
             query = query.order_by(models.Color.created_at.desc())
     else:
         # orderBy 파라미터가 없으면 기본 정렬 (최신순)
         query = query.order_by(models.Color.created_at.desc())
 
-    total_count = query.count()
-    offset = (page - 1) * size
-    items = query.offset(offset).limit(size).all()
+    if color_name_sort:
+        # color_name으로 정렬하는 경우: 모든 데이터를 가져와서 Python에서 자연 정렬
+        all_items = query.all()
+        sorted_items = sorted(all_items, key=lambda x: natural_sort_key(x.color_name), reverse=sort_desc)
+        
+        # 페이지네이션 적용
+        offset = (page - 1) * size
+        items = sorted_items[offset:offset + size]
+    else:
+        # 다른 컬럼으로 정렬하는 경우: DB에서 페이지네이션 적용
+        offset = (page - 1) * size
+        items = query.offset(offset).limit(size).all()
 
     return {"items": items, "total_count": total_count}

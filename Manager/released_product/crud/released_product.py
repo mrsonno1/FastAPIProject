@@ -88,7 +88,11 @@ def get_released_products_paginated(
     if design_name:
         query = query.filter(models.Releasedproduct.design_name.ilike(f"%{design_name}%"))
     if color_name:
-        query = query.filter(models.Releasedproduct.color_name.ilike(f"%{color_name}%"))
+        # 빈 문자열인 경우 NULL 값 검색, 아닌 경우 LIKE 검색
+        if color_name.strip() == "":
+            query = query.filter(models.Releasedproduct.color_name.is_(None))
+        else:
+            query = query.filter(models.Releasedproduct.color_name.ilike(f"%{color_name}%"))
 
     print("=" * 20)
     print("Query after filtering:")

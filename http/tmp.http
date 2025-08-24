@@ -81,12 +81,32 @@ refresh-token: {{my_refresh_token}}
 GET {{host}}{{api_prefix}}/locale_kr
 Authorization: {{superadmin_token}}
 
+### 2-1. 한국어 설정 후 국가 리스트 확인 (한국어로 나와야 함)
+GET {{host}}{{api_prefix}}/countries/sorted
+Authorization: {{superadmin_token}}
+
 ### 3. 영어로 설정
 GET {{host}}{{api_prefix}}/locale_en
 Authorization: {{superadmin_token}}
 
-### 국가 리스트(포트폴리오 포함)
+### 3-1. 영어 설정 후 국가 리스트 확인 (영어로 나와야 함)
 GET {{host}}{{api_prefix}}/countries/sorted
+Authorization: {{superadmin_token}}
+
+### 3-2. 현재 언어 설정 확인
+GET {{host}}{{api_prefix}}/current_locale
+Authorization: {{superadmin_token}}
+
+### 국가 리스트(포트폴리오 포함) - 기본
+GET {{host}}{{api_prefix}}/countries/sorted
+Authorization: {{superadmin_token}}
+
+### 국가 리스트 - 명시적으로 영어 요청
+GET {{host}}{{api_prefix}}/countries/sorted?lang=en
+Authorization: {{superadmin_token}}
+
+### 국가 리스트 - 명시적으로 한국어 요청
+GET {{host}}{{api_prefix}}/countries/sorted?lang=ko
 Authorization: {{superadmin_token}}
 
 ### 국가 리스트(포트폴리오 포함)
@@ -121,7 +141,7 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-  "color_name": "Unity1 레드1",
+  "color_name": "",
   "design_line_image_id": "1",
   "design_line_color_id": "10",
   "line_transparency": "85",
@@ -268,7 +288,7 @@ GET {{host}}{{api_prefix}}/colors/list?page=1&size=10&color_name=빨강
 Authorization: {{superadmin_token}}
 
 ### 11. 내 커스텀 디자인 목록 조회
-GET {{host}}{{api_prefix}}/my-designs/list?page=3&size=10
+GET {{host}}{{api_prefix}}/my-designs/list?page=1&size=10
 Authorization: {{superadmin_token}}
 
 ### 12. 내 커스텀 디자인 상세 조회
@@ -373,6 +393,10 @@ Authorization: {{superadmin_token}}
 
 ### 10. Search by custom design name
 GET {{host}}/api/countries/listall
+Authorization: {{superadmin_token}}
+
+### 10. Search by custom design name
+GET {{host}}/unity/countries/list
 Authorization: {{superadmin_token}}
 
 ### 14. 포트폴리오 목록 조회 (기본 - 인기순)

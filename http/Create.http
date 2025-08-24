@@ -59,7 +59,7 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-  "color_name": "0032",
+  "color_name": "",
   "monochrome_type": "흑",
   "color_values": "255,0,0,0,100,100,0"
 }

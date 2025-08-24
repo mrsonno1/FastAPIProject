@@ -1,5 +1,5 @@
 # routers/color.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 import math
 from db.database import get_db
@@ -42,15 +42,69 @@ def list_all_colors(
     }
 
 @router.post("/", response_model=color_schema.ColorResponse, status_code=status.HTTP_201_CREATED)
-def create_new_color(color: color_schema.ColorCreate, db: Session = Depends(get_db), current_user: models.AdminUser = Depends(get_current_user)):
+def create_new_color(
+    color: color_schema.ColorCreate,
+    db: Session = Depends(get_db), 
+    current_user: models.AdminUser = Depends(get_current_user)
+):
     """
     새로운 컬러를 등록합니다. 이름이 중복되면 에러가 발생합니다.
+    빈 문자열 color_name은 중복 검사를 하지 않고 계속 생성 가능합니다.
     """
-    db_color = color_crud.get_color_by_name(db, color_name=color.color_name)
-    if db_color:
-        raise HTTPException(status_code=409, detail="이미 사용 중인 컬러 이름입니다.")
+    # 빈 문자열이 아닌 경우에만 중복 검사
+    color_name = color.color_name or ""
+    # 빈 문자열("")이거나 None이거나 공백만 있는 경우는 중복 검사 건너뛰기
+    if color_name and color_name.strip():
+        db_color = color_crud.get_color_by_name(db, color_name=color_name)
+        if db_color:
+            raise HTTPException(status_code=409, detail="이미 사용 중인 컬러 이름입니다.")
+    
     return color_crud.create_color(db=db, color=color)
 
+@router.post("/create-with-empty", response_model=color_schema.ColorResponse, status_code=status.HTTP_201_CREATED)
+async def create_color_with_empty_name(
+    request: Request,
+    db: Session = Depends(get_db), 
+    current_user: models.AdminUser = Depends(get_current_user)
+):
+    """
+    빈 문자열 color_name을 허용하는 새로운 컬러 생성 엔드포인트
+    """
+    try:
+        body = await request.body()
+        if not body:
+            raise HTTPException(status_code=422, detail="Request body is empty")
+            
+        import json
+        data = json.loads(body.decode('utf-8'))
+        
+        color_name = data.get("color_name", "")
+        color_values = data.get("color_values")
+        monochrome_type = data.get("monochrome_type")
+        
+        if not color_values or not monochrome_type:
+            raise HTTPException(status_code=422, detail="color_values and monochrome_type are required")
+        
+        # 빈 문자열이 아닌 경우에만 중복 검사
+        if color_name and color_name.strip():
+            db_color = color_crud.get_color_by_name(db, color_name=color_name)
+            if db_color:
+                raise HTTPException(status_code=409, detail="이미 사용 중인 컬러 이름입니다.")
+        
+        # CRUD 함수 직접 호출 (스키마 우회)
+        from types import SimpleNamespace
+        color_obj = SimpleNamespace()
+        color_obj.color_name = color_name
+        color_obj.color_values = color_values
+        color_obj.monochrome_type = monochrome_type
+        
+        result = color_crud.create_color(db=db, color=color_obj)
+        return result
+        
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="Invalid JSON")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.delete("/{color_id}", response_model=portfolio_schema.StatusResponse, status_code=status.HTTP_200_OK)
 def delete_single_color(

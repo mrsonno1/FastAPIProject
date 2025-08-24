@@ -19,7 +19,7 @@ router = APIRouter(prefix="/released-product", tags=["released-product"])
 )
 async def create_new_released_product(
     design_name: str = Form(...),
-    color_name: str = Form(...),
+    color_name: Optional[str] = Form(None),
     brand_id: int = Form(...),
     color_line_color_id: Optional[str] = Form(None),
     color_base1_color_id: Optional[str] = Form(None),
@@ -51,8 +51,6 @@ async def create_new_released_product(
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    if released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_data.design_name):
-        raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     # 파일 내용을 먼저 읽어서 저장
     file_content = await file.read()
@@ -97,7 +95,7 @@ async def create_new_released_product(
 async def update_released_product_details(
     product_id: int,
     design_name: str = Form(...),
-    color_name: str = Form(...),
+    color_name: Optional[str] = Form(None),
     brand_id: int = Form(...),
     color_line_color_id: Optional[str] = Form(None),
     color_base1_color_id: Optional[str] = Form(None),
@@ -134,10 +132,6 @@ async def update_released_product_details(
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    # 디자인명 중복 검사 (자신을 제외하고)
-    existing_product = released_product_CRUD.get_released_product_by_design_name(db, design_name=released_product_update_data.design_name)
-    if existing_product and existing_product.id != product_id:
-        raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     # 이미지 파일 처리
     if file:
