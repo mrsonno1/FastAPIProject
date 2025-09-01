@@ -4,7 +4,7 @@
 POST {{host}}{{api_prefix}}/login/
 Content-Type: application/x-www-form-urlencoded
 
-username=sontest&password=1234567
+username=tester1&password=1234567
 
 > {%
     client.global.set("superadmin_token", "Bearer " + response.body.access_token);
@@ -132,7 +132,7 @@ GET {{host}}{{api_prefix}}/released_product/list?page=1&size=10
 Authorization: {{superadmin_token}}
 
 ### 8. 출시제품 상세 조회 (brand_name이 번역됨)
-GET {{host}}{{api_prefix}}/released_product/334
+GET {{host}}{{api_prefix}}/released_product/Roun Gra
 Authorization: {{superadmin_token}}
 
 ### 3. 커스텀 디자인 생성 - Base64 방식 (이미지 포함)

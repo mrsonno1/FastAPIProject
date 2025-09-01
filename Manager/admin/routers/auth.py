@@ -41,7 +41,9 @@ def check_account_code_duplicate(account_code: str, db: Session = Depends(get_db
     if not account_code.strip():
         return {"exists": False}
 
-    user = user_crud.get_user_by_account_code(db, account_code=account_code)
+    # 대소문자 구분 없이 검사 (upper로 통일)
+    account_code_upper = account_code.strip().upper()
+    user = user_crud.get_user_by_account_code_case_insensitive(db, account_code=account_code_upper)
     return {"exists": user is not None}
 
 @router.post("/register", response_model=user_schema.AdminUserResponse, status_code=status.HTTP_201_CREATED)
@@ -63,6 +65,14 @@ def register_user(
     db_user_by_name = user_crud.get_user_by_username(db, username=user.username)
     if db_user_by_name:
         raise HTTPException(status_code=400, detail="이미 등록된 아이디입니다.")
+    
+    # 계정코드 중복 검사 (대소문자 구분 없이)
+    if user.account_code:
+        existing_user = user_crud.get_user_by_account_code_case_insensitive(db, account_code=user.account_code)
+        if existing_user:
+            raise HTTPException(status_code=400, detail="이미 등록된 계정 코드입니다.")
+        # 계정코드를 대문자로 저장
+        user.account_code = user.account_code.upper()
 
     # 이메일 중복 검사 제거 - 중복 이메일 허용
     # 이메일은 더 이상 unique하지 않으므로 중복 체크를 하지 않습니다.

@@ -26,6 +26,16 @@ def get_user_by_account_code(db: Session, account_code: str):
         models.AdminUser.is_deleted == False
     ).first()
 
+def get_user_by_account_code_case_insensitive(db: Session, account_code: str):
+    """계정코드로 사용자 정보 조회 - 대소문자 구분 없음 (삭제되지 않은 사용자만)"""
+    # 계정코드는 NULL일 수 있으므로, 비어있지 않은 경우에만 조회합니다.
+    if not account_code:
+        return None
+    return db.query(models.AdminUser).filter(
+        func.upper(models.AdminUser.account_code) == account_code.upper(),
+        models.AdminUser.is_deleted == False
+    ).first()
+
 
 def get_user_by_email(db: Session, email: str):
     """이메일로 사용자 정보 조회 (삭제되지 않은 사용자만)"""

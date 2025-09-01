@@ -1,5 +1,5 @@
 # schemas/user.py
-from pydantic import BaseModel, EmailStr, field_validator # field_validator 임포트
+from pydantic import BaseModel, EmailStr, field_validator, Field # field_validator와 Field 임포트
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from zoneinfo import ZoneInfo # zoneinfo 임포트
@@ -31,7 +31,7 @@ class AdminUserCreate(BaseModel):
     username: str
     password: str
     permission: str
-    account_code: str
+    account_code: str = Field(..., min_length=2, max_length=3, pattern=r'^[0-9]{2,3}$', description="계정코드는 숫자 2-3자리여야 합니다")
     company_name: str
     email: Optional[EmailStr] = None
     contact_name: Optional[str] = None
@@ -43,6 +43,16 @@ class AdminUserCreate(BaseModel):
         # 입력값이 빈 문자열이면 None으로 변환
         if v == "":
             return None
+        return v
+    
+    @field_validator('account_code', mode='after')
+    @classmethod
+    def validate_account_code(cls, v):
+        # 계정코드가 숫자 2-3자리인지 확인
+        if v and not v.isdigit():
+            raise ValueError("계정코드는 숫자로만 구성되어야 합니다")
+        if v and (len(v) < 2 or len(v) > 3):
+            raise ValueError("계정코드는 2-3자리 숫자여야 합니다")
         return v
 
 # 응답으로 보낼 유저 정보 (비밀번호 제외)
