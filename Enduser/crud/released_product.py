@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import models
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from datetime import date
 from Enduser.crud import realtime_users as realtime_users_crud
 
@@ -61,6 +61,7 @@ def get_released_products_paginated(
         )
 
         formatted_items.append({
+            "id": product.id,  # ID 추가
             "item_name": product.design_name,
             "main_image_url": product.main_image_url,
             "thumbnail_url": product.thumbnail_url,
@@ -74,15 +75,21 @@ def get_released_products_paginated(
     }
 
 
-def get_released_product_detail(db: Session, item_name: str) -> Optional[Dict[str, Any]]:
-    """디자인 이름으로 출시 제품 상세 정보 조회"""
+def get_released_product_detail(db: Session, item_name: str = None, product_id: int = None) -> Optional[Dict[str, Any]]:
+    """디자인 이름 또는 ID로 출시 제품 상세 정보 조회"""
 
-    result = db.query(models.Releasedproduct, models.Brand).join(
+    query = db.query(models.Releasedproduct, models.Brand).join(
         models.Brand,
         models.Releasedproduct.brand_id == models.Brand.id
-    ).filter(
-        models.Releasedproduct.design_name == item_name
-    ).first()
+    )
+    
+    # ID로 조회하거나 이름으로 조회
+    if product_id is not None:
+        result = query.filter(models.Releasedproduct.id == product_id).first()
+    elif item_name is not None:
+        result = query.filter(models.Releasedproduct.design_name == item_name).first()
+    else:
+        return None
 
     if not result:
         return None
@@ -141,6 +148,7 @@ def get_released_product_detail(db: Session, item_name: str) -> Optional[Dict[st
     )
 
     return {
+        "id": product.id,  # ID 추가
         "item_name": product.design_name,
         "color_name": product.color_name,
         "main_image_url": product.main_image_url,

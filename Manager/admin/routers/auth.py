@@ -71,23 +71,43 @@ def register_user(
         existing_user = user_crud.get_user_by_account_code_case_insensitive(db, account_code=user.account_code)
         if existing_user:
             raise HTTPException(status_code=400, detail="이미 등록된 계정 코드입니다.")
-        # 계정코드를 대문자로 저장
-        user.account_code = user.account_code.upper()
 
     # 이메일 중복 검사 제거 - 중복 이메일 허용
     # 이메일은 더 이상 unique하지 않으므로 중복 체크를 하지 않습니다.
 
     # create_user 함수를 try-except로 감싸서 데이터베이스 오류를 처리합니다.
     try:
-        new_user = user_crud.create_user(db=db, user=user)
+        # Pydantic 모델을 딕셔너리로 변환 후 계정코드를 대문자로 변경
+        user_data = user.model_dump()
+        if user_data.get('account_code'):
+            user_data['account_code'] = user_data['account_code'].upper()
+        
+        # 수정된 데이터로 새로운 Pydantic 모델 생성
+        modified_user = user_schema.AdminUserCreate(**user_data)
+        new_user = user_crud.create_user(db=db, user=modified_user)
         return new_user
-    except IntegrityError:
+    except IntegrityError as e:
         # 데이터베이스의 UNIQUE 제약 조건 위반 시 실행됩니다.
         db.rollback()  # 트랜잭션을 롤백하여 세션을 깨끗한 상태로 만듭니다.
-        raise HTTPException(
-            status_code=409,  # 409 Conflict는 리소스 충돌을 의미합니다.
-            detail="이미 등록된 계정 코드입니다."
-        )
+        error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
+        
+        # 에러 메시지를 분석하여 적절한 오류 메시지 반환
+        if 'account_code' in error_msg.lower():
+            raise HTTPException(
+                status_code=409,
+                detail="이미 등록된 계정 코드입니다."
+            )
+        elif 'username' in error_msg.lower():
+            raise HTTPException(
+                status_code=409,
+                detail="이미 등록된 아이디입니다."
+            )
+        else:
+            # 예상치 못한 IntegrityError
+            raise HTTPException(
+                status_code=409,
+                detail=f"데이터 중복 오류: {error_msg}"
+            )
     except Exception as e:
         # 그 외 예기치 못한 오류 처리
         db.rollback()

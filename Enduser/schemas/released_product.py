@@ -17,6 +17,7 @@ class DesignComponent(BaseModel):
 
 # 출시 제품 목록 아이템
 class ReleasedProductListItem(BaseModel):
+    id: int  # 출시제품 ID
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
     thumbnail_url: Optional[str] = None  # 썸네일 URL
@@ -38,6 +39,7 @@ class PaginatedReleasedProductResponse(BaseModel):
 
 # 출시 제품 상세 정보 응답
 class ReleasedProductDetailResponse(BaseModel):
+    id: int  # 출시제품 ID
     item_name: str  # 디자인 이름
     color_name: Optional[str] = None  # 디자인 컬러 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL

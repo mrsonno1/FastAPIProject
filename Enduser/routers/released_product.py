@@ -67,6 +67,42 @@ def get_released_product_list(
 
 
 # get_released_product_detail 함수 수정 - Depends에 언어 추가
+@router.get("/released_product/by-id/{product_id}", response_model=released_product_schema.ReleasedProductDetailResponse)
+def get_released_product_detail_by_id(
+        product_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user),
+        language: str = Depends(get_current_language_dependency)
+):
+    """
+    ID로 출시 제품 상세 정보 조회
+    
+    출시 제품 ID로 상세 정보를 조회합니다.
+    조회시 조회수가 증가합니다.
+    """
+    
+    product_detail = released_product_crud.get_released_product_detail(
+        db=db,
+        product_id=product_id
+    )
+    
+    if not product_detail:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="출시 제품을 찾을 수 없습니다."
+        )
+    
+    # 브랜드명 번역 처리
+    if language == 'en' and 'brand_name' in product_detail:
+        product_detail['brand_name'] = translate_service.translate_text(
+            product_detail['brand_name'],
+            target_lang='en',
+            source_lang='ko'
+        )
+    
+    return released_product_schema.ReleasedProductDetailResponse(**product_detail)
+
+
 @router.get("/released_product/{item_name}", response_model=released_product_schema.ReleasedProductDetailResponse)
 def get_released_product_detail(
         item_name: str,
