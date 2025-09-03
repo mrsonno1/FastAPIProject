@@ -34,14 +34,14 @@ Authorization: {{superadmin_token}}
 Content-Type: application/json
 
 {
-    "permission": "superadmin",
-    "username": "sontes1t",
-    "password": "1234567",
-    "email": "bba11@gmail.com",
-    "company_name": "넷스트림",
-    "contact_name": "홍길동",
-    "contact_phone": "01022334455",
-    "account_code": "D1A"
+  "permission": "admin",
+  "username": "test111",
+  "company_name": "test",
+  "contact_name": "",
+  "contact_phone": "",
+  "email": "",
+  "account_code": "889",
+  "password": "123456"
 }
 
 ### 메일 보내기

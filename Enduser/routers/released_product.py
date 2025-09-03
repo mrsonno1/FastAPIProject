@@ -139,6 +139,39 @@ def get_released_product_detail(
     return released_product_schema.ReleasedProductDetailResponse(**product_detail)
 
 
+@router.post("/released_product/enter/by-id/{product_id}", response_model=released_product_schema.RealtimeUsersResponse)
+def enter_released_product_by_id(
+        product_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 조회된 디자인 실시간 유저수 +1"""
+    
+    # 출시제품 존재 확인
+    product = db.query(models.Releasedproduct).filter(
+        models.Releasedproduct.id == product_id
+    ).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="출시 제품을 찾을 수 없습니다."
+        )
+    
+    # 유저 입장 처리 (ID 기반)
+    realtime_users = realtime_users_crud.enter_content(
+        db=db,
+        user_id=current_user.username,
+        content_type='released_product',
+        content_id=product_id
+    )
+    
+    return released_product_schema.RealtimeUsersResponse(
+        item_name=product.design_name,
+        realtime_users=realtime_users
+    )
+
+
 @router.post("/released_product/enter/{item_name}", response_model=released_product_schema.RealtimeUsersResponse)
 def enter_released_product(
         item_name: str,
@@ -172,6 +205,39 @@ def enter_released_product(
     )
 
 
+@router.post("/released_product/leave/by-id/{product_id}", response_model=released_product_schema.RealtimeUsersResponse)
+def leave_released_product_by_id(
+        product_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 조회된 디자인 실시간 유저수 -1"""
+    
+    # 출시제품 존재 확인
+    product = db.query(models.Releasedproduct).filter(
+        models.Releasedproduct.id == product_id
+    ).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="출시 제품을 찾을 수 없습니다."
+        )
+    
+    # 유저 퇴장 처리 (ID 기반)
+    realtime_users = realtime_users_crud.leave_content(
+        db=db,
+        user_id=current_user.username,
+        content_type='released_product',
+        content_id=product_id
+    )
+    
+    return released_product_schema.RealtimeUsersResponse(
+        item_name=product.design_name,
+        realtime_users=realtime_users
+    )
+
+
 @router.post("/released_product/leave/{item_name}", response_model=released_product_schema.RealtimeUsersResponse)
 def leave_released_product(
         item_name: str,
@@ -190,6 +256,38 @@ def leave_released_product(
 
     return released_product_schema.RealtimeUsersResponse(
         item_name=item_name,
+        realtime_users=realtime_users
+    )
+
+
+@router.get("/released_product/realtime-users/by-id/{product_id}",
+            response_model=released_product_schema.RealtimeUsersResponse)
+def get_released_product_realtime_users_by_id(
+        product_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 조회한 디자인 실시간 유저수 조회"""
+    
+    # 출시제품 존재 확인
+    product = db.query(models.Releasedproduct).filter(
+        models.Releasedproduct.id == product_id
+    ).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="출시 제품을 찾을 수 없습니다."
+        )
+    
+    realtime_users = realtime_users_crud.get_realtime_users_count(
+        db=db,
+        content_type='released_product',
+        content_id=product_id
+    )
+    
+    return released_product_schema.RealtimeUsersResponse(
+        item_name=product.design_name,
         realtime_users=realtime_users
     )
 

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from db import models
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Union
 
 
 def clean_expired_users(db: Session):
@@ -21,12 +21,26 @@ def enter_content(
         db: Session,
         user_id: str,
         content_type: str,
-        content_name: str
+        content_name: str = None,
+        content_id: int = None
 ) -> int:
-    """컨텐츠에 유저 입장"""
+    """컨텐츠에 유저 입장 (name 또는 id 기반)"""
 
     # 만료된 유저 정리
     clean_expired_users(db)
+    
+    # ID로 name 조회 (released_product의 경우)
+    if content_id is not None and content_type == 'released_product':
+        product = db.query(models.Releasedproduct).filter(
+            models.Releasedproduct.id == content_id
+        ).first()
+        if product:
+            content_name = product.design_name
+        else:
+            return 0  # 제품을 찾을 수 없음
+    
+    if not content_name:
+        return 0  # content_name이 없으면 처리 불가
 
     # 이미 입장한 기록이 있는지 확인
     existing = db.query(models.RealtimeUser).filter(
@@ -52,19 +66,33 @@ def enter_content(
     db.commit()
 
     # 현재 유저수 반환
-    return get_realtime_users_count(db, content_type, content_name)
+    return get_realtime_users_count(db, content_type, content_name, content_id)
 
 
 def leave_content(
         db: Session,
         user_id: str,
         content_type: str,
-        content_name: str
+        content_name: str = None,
+        content_id: int = None
 ) -> int:
-    """컨텐츠에서 유저 퇴장"""
+    """컨텐츠에서 유저 퇴장 (name 또는 id 기반)"""
 
     # 만료된 유저 정리
     clean_expired_users(db)
+    
+    # ID로 name 조회 (released_product의 경우)
+    if content_id is not None and content_type == 'released_product':
+        product = db.query(models.Releasedproduct).filter(
+            models.Releasedproduct.id == content_id
+        ).first()
+        if product:
+            content_name = product.design_name
+        else:
+            return 0  # 제품을 찾을 수 없음
+    
+    if not content_name:
+        return 0  # content_name이 없으면 처리 불가
 
     # 유저 기록 삭제
     db.query(models.RealtimeUser).filter(
@@ -78,18 +106,32 @@ def leave_content(
     db.commit()
 
     # 현재 유저수 반환
-    return get_realtime_users_count(db, content_type, content_name)
+    return get_realtime_users_count(db, content_type, content_name, content_id)
 
 
 def get_realtime_users_count(
         db: Session,
         content_type: str,
-        content_name: str
+        content_name: str = None,
+        content_id: int = None
 ) -> int:
-    """현재 실시간 유저수 조회"""
+    """현재 실시간 유저수 조회 (name 또는 id 기반)"""
 
     # 만료된 유저 정리
     clean_expired_users(db)
+    
+    # ID로 name 조회 (released_product의 경우)
+    if content_id is not None and content_type == 'released_product':
+        product = db.query(models.Releasedproduct).filter(
+            models.Releasedproduct.id == content_id
+        ).first()
+        if product:
+            content_name = product.design_name
+        else:
+            return 0  # 제품을 찾을 수 없음
+    
+    if not content_name:
+        return 0  # content_name이 없으면 처리 불가
 
     # 현재 유저수 카운트
     count = db.query(func.count(models.RealtimeUser.id)).filter(

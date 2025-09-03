@@ -12,30 +12,51 @@ from core.config import settings
 class StorageService:
     def __init__(self):
         self.bucket_name = None
+        self.s3_client = None
+        self.is_available = False
 
-        if settings.APP_ENV == 'production':
-            # 프로덕션 환경: IAM Role을 사용하는 S3 클라이언트 초기화
-            self.s3_client = boto3.client('s3', region_name=settings.AWS_S3_REGION)
-            self.bucket_name = settings.AWS_S3_BUCKET_NAME
-        else:
-            # 로컬 환경: 기존 MinIO 클라이언트 초기화
-            self.s3_client = boto3.client(
-                's3',
-                endpoint_url=f"http://{settings.MINIO_ENDPOINT}",
-                aws_access_key_id=settings.MINIO_ACCESS_KEY,
-                aws_secret_access_key=settings.MINIO_SECRET_KEY,
-            )
-            self.bucket_name = settings.MINIO_BUCKET_NAME
-            self.create_bucket_if_not_exists()  # MinIO에서만 버킷 생성 시도
+        try:
+            if settings.APP_ENV == 'production':
+                # 프로덕션 환경: IAM Role을 사용하는 S3 클라이언트 초기화
+                self.s3_client = boto3.client('s3', region_name=settings.AWS_S3_REGION)
+                self.bucket_name = settings.AWS_S3_BUCKET_NAME
+                self.is_available = True
+            else:
+                # 로컬 환경: 기존 MinIO 클라이언트 초기화
+                if settings.MINIO_ENDPOINT:
+                    self.s3_client = boto3.client(
+                        's3',
+                        endpoint_url=f"http://{settings.MINIO_ENDPOINT}",
+                        aws_access_key_id=settings.MINIO_ACCESS_KEY,
+                        aws_secret_access_key=settings.MINIO_SECRET_KEY,
+                    )
+                    self.bucket_name = settings.MINIO_BUCKET_NAME
+                    self.create_bucket_if_not_exists()  # MinIO에서만 버킷 생성 시도
+                    self.is_available = True
+                else:
+                    print("Warning: MinIO configuration not found. Storage service disabled.")
+        except Exception as e:
+            print(f"Warning: Could not initialize storage service: {e}")
+            self.is_available = False
 
     def create_bucket_if_not_exists(self):
         # 이 함수는 MinIO에서만 사용됩니다.
         try:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
-        except ClientError:
-            self.s3_client.create_bucket(Bucket=self.bucket_name)
+        except (ClientError, Exception) as e:
+            # MinIO/S3 연결 실패시 경고만 출력하고 계속 진행
+            print(f"Warning: Could not connect to MinIO/S3: {e}")
+            print("Storage service will be unavailable, but the app will continue to run.")
+            try:
+                self.s3_client.create_bucket(Bucket=self.bucket_name)
+            except:
+                pass  # 버킷 생성 실패시에도 계속 진행
 
     def upload_file(self, file: UploadFile) -> dict:
+        if not self.is_available:
+            print("Warning: Storage service is not available")
+            return None
+            
         file_extension = file.filename.split('.')[-1]
         object_name = f"uploads/{uuid.uuid4()}.{file_extension}"  # uploads/ 하위 경로에 저장
 
@@ -65,6 +86,10 @@ class StorageService:
 
     def upload_base64_file(self, file_data: bytes, filename: str, content_type: str) -> Optional[Dict[str, str]]:
         """Base64 디코딩된 파일 데이터를 업로드합니다."""
+        if not self.is_available:
+            print("Warning: Storage service is not available")
+            return None
+            
         print(f"DEBUG storage_service: upload_base64_file called - filename: {filename}, content_type: {content_type}, data_size: {len(file_data)}")
         
         file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
@@ -102,6 +127,10 @@ class StorageService:
             return None
 
     def delete_file(self, object_name: str) -> bool:
+        if not self.is_available:
+            print("Warning: Storage service is not available")
+            return False
+            
         try:
             self.s3_client.delete_object(Bucket=self.bucket_name, Key=object_name)
             return True

@@ -4,27 +4,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.requests import ClientDisconnect
-from Enduser.routers import login as enduser_login_router
-from Enduser.routers import custom_design as enduser_custom_design_router
-from Enduser.routers import portfolio as enduser_portfolio_router
-from Enduser.routers import cart as enduser_cart_router  # 추가
-from Enduser.routers import sample as enduser_sample_router  # 추가
-from Enduser.routers import brand as enduser_brand_router  # 추가
-from Enduser.routers import released_product as enduser_released_product_router  # 추가
-from Enduser.routers import share as enduser_share_router  # 추가
-from Enduser.routers import language_setting as enduser_language_setting_router
-from Enduser.routers import country as enduser_country_router
+from Enduser.routers.login import router as enduser_login_router
+from Enduser.routers.custom_design import router as enduser_custom_design_router
+from Enduser.routers.portfolio import router as enduser_portfolio_router
+from Enduser.routers.cart import router as enduser_cart_router  # 추가
+from Enduser.routers.sample import router as enduser_sample_router  # 추가
+from Enduser.routers.brand import router as enduser_brand_router  # 추가
+from Enduser.routers.released_product import router as enduser_released_product_router  # 추가
+from Enduser.routers.share import router as enduser_share_router  # 추가
+from Enduser.routers.language_setting import router as enduser_language_setting_router
+from Enduser.routers.country import router as enduser_country_router
 from Enduser.Email import router as email_mail_router, email_router
-from Manager.released_product.routers import released_product
-from Manager.portfolio.routers import portfolio
-from Manager.image.routers import upload
-from Manager.custom_design.routers import custom_design
-from Manager.country.routers import country
-from Manager.color.routers import color
-from Manager.brand.routers import brand
-from Manager.admin.routers import auth, admin, database
-from Manager.rank.routers import rank as rank
-from Manager.progress_status.routers import progress_status
+from Manager.released_product.routers.released_product import router as released_product
+from Manager.portfolio.routers.portfolio import router as portfolio
+from Manager.image.routers.upload import router as upload
+from Manager.custom_design.routers.custom_design import router as custom_design
+from Manager.country.routers.country import router as country
+from Manager.color.routers.color import router as color
+from Manager.brand.routers.brand import router as brand
+from Manager.admin.routers.auth import router as auth
+from Manager.admin.routers.admin import router as admin
+from Manager.admin.routers.database import router as database
+from Manager.rank.routers.rank import router as rank
+from Manager.progress_status.routers.progress_status import router as progress_status
 from db.database import engine, Base
 
 
@@ -107,37 +109,37 @@ app.add_middleware(
 )
 
 unity_router = APIRouter(prefix="/unity")
-unity_router.include_router(enduser_login_router.router)
-unity_router.include_router(enduser_custom_design_router.router)
-unity_router.include_router(enduser_portfolio_router.router)
-unity_router.include_router(enduser_cart_router.router)  # 추가
-unity_router.include_router(enduser_sample_router.router)  # 추가
-unity_router.include_router(enduser_brand_router.router)  # 추가
-unity_router.include_router(enduser_released_product_router.router)  # 추가
-unity_router.include_router(enduser_share_router.router)  # 추가
-unity_router.include_router(enduser_language_setting_router.router)
-unity_router.include_router(enduser_country_router.router)
+unity_router.include_router(enduser_login_router)
+unity_router.include_router(enduser_custom_design_router)
+unity_router.include_router(enduser_portfolio_router)
+unity_router.include_router(enduser_cart_router)  # 추가
+unity_router.include_router(enduser_sample_router)  # 추가
+unity_router.include_router(enduser_brand_router)  # 추가
+unity_router.include_router(enduser_released_product_router)  # 추가
+unity_router.include_router(enduser_share_router)  # 추가
+unity_router.include_router(enduser_language_setting_router)
+unity_router.include_router(enduser_country_router)
 
 unity_router.include_router(email_mail_router)
 unity_router.include_router(email_router)
 
 api_router = APIRouter(prefix="/api")
-api_router.include_router(auth.router)
-api_router.include_router(admin.router)
-api_router.include_router(upload.router)
-api_router.include_router(color.router)
-api_router.include_router(brand.router)
-api_router.include_router(country.router)
-api_router.include_router(custom_design.router)
-api_router.include_router(portfolio.router)
-api_router.include_router(released_product.router)
-api_router.include_router(rank.router)
-api_router.include_router(progress_status.router)
+api_router.include_router(auth)
+api_router.include_router(admin)
+api_router.include_router(upload)
+api_router.include_router(color)
+api_router.include_router(brand)
+api_router.include_router(country)
+api_router.include_router(custom_design)
+api_router.include_router(portfolio)
+api_router.include_router(released_product)
+api_router.include_router(rank)
+api_router.include_router(progress_status)
 
 
 #database_router = APIRouter(prefix="/database")
 
-api_router.include_router(database.router)
+api_router.include_router(database)
 
 app.include_router(api_router)
 app.include_router(unity_router)
