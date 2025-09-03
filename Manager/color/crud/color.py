@@ -11,16 +11,30 @@ import re
 def natural_sort_key(text):
     """
     자연 정렬을 위한 키 함수
-    알파뉴메릭 문자열을 숫자와 문자 부분으로 분리하여 정렬
-    예: A1, A2, A10, B1, B2 순서로 정렬
+    7자리 알파뉴메릭 문자열 정렬
+    - 숫자만: 0000001 ~ 9999999
+    - 알파벳+숫자: AA00001 ~ ZZ99999
+    예: 0000001, 0000002, AA00001, AA00002, AB00001, ZZ99999 순서로 정렬
     """
-    def convert(text):
-        return int(text) if text.isdigit() else text.lower()
+    if not text or text == "":
+        return (0, "", 0)  # 빈 문자열은 맨 앞으로
     
-    def alphanum_key(key):
-        return [convert(c) for c in re.split('([0-9]+)', key)]
+    text = text.upper()
     
-    return alphanum_key(text)
+    # 숫자만 있는 경우
+    if text.isdigit():
+        return (1, "", int(text))
+    
+    # 알파벳+숫자 혼합인 경우
+    # 앞 2자리 알파벳, 뒤 5자리 숫자 형식 가정
+    match = re.match(r'^([A-Z]{1,2})(\d{1,5})$', text)
+    if match:
+        alpha_part = match.group(1).ljust(2, '0')  # 알파벳 부분을 2자리로 맞춤
+        num_part = int(match.group(2))
+        return (2, alpha_part, num_part)
+    
+    # 그 외의 경우 (기타 형식)
+    return (3, text, 0)
 
 def get_color_by_name(db: Session, color_name: str):
     """color_name으로 컬러 정보 조회"""
@@ -42,13 +56,13 @@ def create_color(db: Session, color: color_schema.ColorCreate):
     elif color_name.strip() == "":
         # 공백만 있는 경우도 빈 문자열로 처리
         processed_color_name = ""
-    elif color_name.isalnum() and len(color_name) <= 6:
-        # 6자리 알파뉴메릭인지 확인하고 처리
+    elif color_name.isalnum() and len(color_name) <= 7:
+        # 7자리 알파뉴메릭인지 확인하고 처리
         if color_name.isdigit():
-            # 숫자인 경우 6자리로 패딩
-            processed_color_name = color_name.zfill(6)
+            # 숫자만 있는 경우 7자리로 패딩
+            processed_color_name = color_name.zfill(7)
         else:
-            # 알파뉴메릭인 경우 대문자로 변환하고 6자리까지 허용
+            # 알파뉴메릭인 경우 대문자로 변환하고 7자리까지 허용
             processed_color_name = color_name.upper()
     else:
         # 기타 경우 그대로 유지
@@ -128,9 +142,30 @@ def delete_color_by_id(db: Session, color_id: int) -> bool:
 
 def update_color(db: Session, db_color: models.Color, color_update: color_schema.ColorUpdate):
     """컬러 값 업데이트"""
+    # color_name 처리 로직 - create_color와 동일하게 적용
+    color_name = color_update.color_name
+    if color_name is None:
+        processed_color_name = ""
+    elif color_name == "":
+        processed_color_name = ""
+    elif color_name.strip() == "":
+        # 공백만 있는 경우도 빈 문자열로 처리
+        processed_color_name = ""
+    elif color_name.isalnum() and len(color_name) <= 7:
+        # 7자리 알파뉴메릭인지 확인하고 처리
+        if color_name.isdigit():
+            # 숫자만 있는 경우 7자리로 패딩
+            processed_color_name = color_name.zfill(7)
+        else:
+            # 알파뉴메릭인 경우 대문자로 변환하고 7자리까지 허용
+            processed_color_name = color_name.upper()
+    else:
+        # 기타 경우 그대로 유지
+        processed_color_name = color_name
+    
     db_color.color_values = color_update.color_values
     db_color.monochrome_type = color_update.monochrome_type
-    db_color.color_name = color_update.color_name
+    db_color.color_name = processed_color_name
     db.commit()
     db.refresh(db_color)
     return db_color

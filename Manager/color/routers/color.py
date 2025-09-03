@@ -50,14 +50,27 @@ def create_new_color(
     """
     새로운 컬러를 등록합니다. 이름이 중복되면 에러가 발생합니다.
     빈 문자열 color_name은 중복 검사를 하지 않고 계속 생성 가능합니다.
+    7자리 알파뉴메릭 형식 지원 (숫자는 자동으로 7자리로 패딩)
     """
     # 빈 문자열이 아닌 경우에만 중복 검사
     color_name = color.color_name or ""
-    # 빈 문자열("")이거나 None이거나 공백만 있는 경우는 중복 검사 건너뛰기
+    
+    # 처리될 이름을 미리 계산 (create_color와 동일한 로직 적용)
     if color_name and color_name.strip():
-        db_color = color_crud.get_color_by_name(db, color_name=color_name)
+        if color_name.isalnum() and len(color_name) <= 7:
+            if color_name.isdigit():
+                # 숫자만 있는 경우 7자리로 패딩
+                processed_name = color_name.zfill(7)
+            else:
+                # 알파뉴메릭인 경우 대문자로 변환
+                processed_name = color_name.upper()
+        else:
+            processed_name = color_name
+            
+        # 처리된 이름으로 중복 검사
+        db_color = color_crud.get_color_by_name(db, color_name=processed_name)
         if db_color:
-            raise HTTPException(status_code=409, detail="이미 사용 중인 컬러 이름입니다.")
+            raise HTTPException(status_code=409, detail=f"이미 사용 중인 컬러 이름입니다: {processed_name}")
     
     return color_crud.create_color(db=db, color=color)
 
