@@ -24,13 +24,35 @@ def enter_content(
         content_name: str = None,
         content_id: int = None
 ) -> int:
-    """컨텐츠에 유저 입장 (name 또는 id 기반)"""
+    """컨텐츠에 유저 입장 (ID 기반)"""
 
     # 만료된 유저 정리
     clean_expired_users(db)
     
-    # ID로 name 조회
-    if content_id is not None:
+    # content_name으로 호출된 경우 ID 찾기
+    if content_id is None and content_name is not None:
+        if content_type == 'released_product':
+            product = db.query(models.Releasedproduct).filter(
+                models.Releasedproduct.design_name == content_name
+            ).first()
+            if product:
+                content_id = product.id
+                content_name = product.design_name
+            else:
+                return 0
+        elif content_type == 'portfolio':
+            portfolio = db.query(models.Portfolio).filter(
+                models.Portfolio.design_name == content_name,
+                models.Portfolio.is_deleted == False
+            ).first()
+            if portfolio:
+                content_id = portfolio.id
+                content_name = portfolio.design_name
+            else:
+                return 0
+    
+    # content_id로 호출된 경우 name 조회 (참고용)
+    elif content_id is not None and content_name is None:
         if content_type == 'released_product':
             product = db.query(models.Releasedproduct).filter(
                 models.Releasedproduct.id == content_id
@@ -38,7 +60,7 @@ def enter_content(
             if product:
                 content_name = product.design_name
             else:
-                return 0  # 제품을 찾을 수 없음
+                return 0
         elif content_type == 'portfolio':
             portfolio = db.query(models.Portfolio).filter(
                 models.Portfolio.id == content_id,
@@ -47,17 +69,17 @@ def enter_content(
             if portfolio:
                 content_name = portfolio.design_name
             else:
-                return 0  # 포트폴리오를 찾을 수 없음
+                return 0
     
-    if not content_name:
-        return 0  # content_name이 없으면 처리 불가
+    if content_id is None:
+        return 0  # content_id가 없으면 처리 불가
 
-    # 이미 입장한 기록이 있는지 확인
+    # 이미 입장한 기록이 있는지 확인 (ID 기반)
     existing = db.query(models.RealtimeUser).filter(
         and_(
             models.RealtimeUser.user_id == user_id,
             models.RealtimeUser.content_type == content_type,
-            models.RealtimeUser.content_name == content_name
+            models.RealtimeUser.content_id == content_id
         )
     ).first()
 
@@ -69,7 +91,8 @@ def enter_content(
         new_entry = models.RealtimeUser(
             user_id=user_id,
             content_type=content_type,
-            content_name=content_name
+            content_id=content_id,
+            content_name=content_name  # 참고용
         )
         db.add(new_entry)
 
@@ -86,40 +109,40 @@ def leave_content(
         content_name: str = None,
         content_id: int = None
 ) -> int:
-    """컨텐츠에서 유저 퇴장 (name 또는 id 기반)"""
+    """컨텐츠에서 유저 퇴장 (ID 기반)"""
 
     # 만료된 유저 정리
     clean_expired_users(db)
     
-    # ID로 name 조회
-    if content_id is not None:
+    # content_name으로 호출된 경우 ID 찾기
+    if content_id is None and content_name is not None:
         if content_type == 'released_product':
             product = db.query(models.Releasedproduct).filter(
-                models.Releasedproduct.id == content_id
+                models.Releasedproduct.design_name == content_name
             ).first()
             if product:
-                content_name = product.design_name
+                content_id = product.id
             else:
-                return 0  # 제품을 찾을 수 없음
+                return 0
         elif content_type == 'portfolio':
             portfolio = db.query(models.Portfolio).filter(
-                models.Portfolio.id == content_id,
+                models.Portfolio.design_name == content_name,
                 models.Portfolio.is_deleted == False
             ).first()
             if portfolio:
-                content_name = portfolio.design_name
+                content_id = portfolio.id
             else:
-                return 0  # 포트폴리오를 찾을 수 없음
+                return 0
     
-    if not content_name:
-        return 0  # content_name이 없으면 처리 불가
+    if content_id is None:
+        return 0  # content_id가 없으면 처리 불가
 
-    # 유저 기록 삭제
+    # 유저 기록 삭제 (ID 기반)
     db.query(models.RealtimeUser).filter(
         and_(
             models.RealtimeUser.user_id == user_id,
             models.RealtimeUser.content_type == content_type,
-            models.RealtimeUser.content_name == content_name
+            models.RealtimeUser.content_id == content_id
         )
     ).delete()
 
@@ -135,39 +158,39 @@ def get_realtime_users_count(
         content_name: str = None,
         content_id: int = None
 ) -> int:
-    """현재 실시간 유저수 조회 (name 또는 id 기반)"""
+    """현재 실시간 유저수 조회 (ID 기반)"""
 
     # 만료된 유저 정리
     clean_expired_users(db)
     
-    # ID로 name 조회
-    if content_id is not None:
+    # content_name으로 호출된 경우 ID 찾기
+    if content_id is None and content_name is not None:
         if content_type == 'released_product':
             product = db.query(models.Releasedproduct).filter(
-                models.Releasedproduct.id == content_id
+                models.Releasedproduct.design_name == content_name
             ).first()
             if product:
-                content_name = product.design_name
+                content_id = product.id
             else:
-                return 0  # 제품을 찾을 수 없음
+                return 0
         elif content_type == 'portfolio':
             portfolio = db.query(models.Portfolio).filter(
-                models.Portfolio.id == content_id,
+                models.Portfolio.design_name == content_name,
                 models.Portfolio.is_deleted == False
             ).first()
             if portfolio:
-                content_name = portfolio.design_name
+                content_id = portfolio.id
             else:
-                return 0  # 포트폴리오를 찾을 수 없음
+                return 0
     
-    if not content_name:
-        return 0  # content_name이 없으면 처리 불가
+    if content_id is None:
+        return 0  # content_id가 없으면 처리 불가
 
-    # 현재 유저수 카운트
+    # 현재 유저수 카운트 (ID 기반)
     count = db.query(func.count(models.RealtimeUser.id)).filter(
         and_(
             models.RealtimeUser.content_type == content_type,
-            models.RealtimeUser.content_name == content_name
+            models.RealtimeUser.content_id == content_id
         )
     ).scalar()
 

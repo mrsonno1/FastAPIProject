@@ -253,10 +253,12 @@ class RealtimeUser(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String(50), nullable=False, index=True)  # AdminUser의 username
     content_type = Column(String(20), nullable=False)  # 'portfolio' 또는 'released_product'
-    content_name = Column(String(100), nullable=False, index=True)  # design_name
+    content_id = Column(Integer, nullable=False, index=True)  # portfolio.id 또는 releasedproduct.id
+    content_name = Column(String(100), nullable=True)  # design_name (참고용, nullable)
     entered_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'content_type', 'content_name', name='_user_content_uc'),
+        UniqueConstraint('user_id', 'content_type', 'content_id', name='_user_content_id_uc'),
         Index('idx_entered_at', 'entered_at'),  # 만료된 레코드 삭제를 위한 인덱스
+        Index('idx_content', 'content_type', 'content_id'),  # 빠른 조회를 위한 복합 인덱스
     )
