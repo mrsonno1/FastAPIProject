@@ -77,6 +77,44 @@ def get_portfolio_list(
     )
 
 
+@router.get("/portfolio/by-id/{portfolio_id}", response_model=portfolio_schema.PortfolioDetailResponse)
+def get_portfolio_detail_by_id(
+        portfolio_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user),
+        language: str = Depends(get_current_language_dependency)
+):
+    """
+    ID로 포트폴리오 디자인 항목 조회
+
+    포트폴리오 ID로 상세 정보를 조회합니다.
+    조회시 조회수가 증가합니다.
+    """
+
+    portfolio_detail = portfolio_crud.get_portfolio_detail(
+        db=db,
+        portfolio_id=portfolio_id
+    )
+
+    if not portfolio_detail:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="포트폴리오를 찾을 수 없습니다."
+        )
+
+    # 노출 국가 번역 처리
+    if language == 'en' and portfolio_detail.get('exposed_countries'):
+        countries = portfolio_detail['exposed_countries'].split(', ')
+        translated_countries = translate_service.translate_list(
+            countries,
+            target_lang='en',
+            source_lang='ko'
+        )
+        portfolio_detail['exposed_countries'] = ', '.join(translated_countries)
+
+    return portfolio_schema.PortfolioDetailResponse(**portfolio_detail)
+
+
 @router.get("/portfolio/{item_name}", response_model=portfolio_schema.PortfolioDetailResponse)
 def get_portfolio_detail(
         item_name: str,
@@ -115,6 +153,40 @@ def get_portfolio_detail(
     return portfolio_schema.PortfolioDetailResponse(**portfolio_detail)
 
 
+@router.post("/portfolio/enter/by-id/{portfolio_id}", response_model=portfolio_schema.RealtimeUsersResponse)
+def enter_portfolio_by_id(
+        portfolio_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 조회된 디자인 실시간 유저수 +1"""
+
+    # 포트폴리오 존재 확인
+    portfolio = db.query(models.Portfolio).filter(
+        models.Portfolio.id == portfolio_id,
+        models.Portfolio.is_deleted == False
+    ).first()
+
+    if not portfolio:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="포트폴리오를 찾을 수 없습니다."
+        )
+
+    # 유저 입장 처리 (ID 기반)
+    realtime_users = realtime_users_crud.enter_content(
+        db=db,
+        user_id=current_user.username,
+        content_type='portfolio',
+        content_id=portfolio_id
+    )
+
+    return portfolio_schema.RealtimeUsersResponse(
+        item_name=portfolio.design_name,
+        realtime_users=realtime_users
+    )
+
+
 @router.post("/portfolio/enter/{item_name}", response_model=portfolio_schema.RealtimeUsersResponse)
 def enter_portfolio(
         item_name: str,
@@ -149,6 +221,40 @@ def enter_portfolio(
     )
 
 
+@router.post("/portfolio/leave/by-id/{portfolio_id}", response_model=portfolio_schema.RealtimeUsersResponse)
+def leave_portfolio_by_id(
+        portfolio_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 조회된 디자인 실시간 유저수 -1"""
+
+    # 포트폴리오 존재 확인
+    portfolio = db.query(models.Portfolio).filter(
+        models.Portfolio.id == portfolio_id,
+        models.Portfolio.is_deleted == False
+    ).first()
+
+    if not portfolio:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="포트폴리오를 찾을 수 없습니다."
+        )
+
+    # 유저 퇴장 처리 (ID 기반)
+    realtime_users = realtime_users_crud.leave_content(
+        db=db,
+        user_id=current_user.username,
+        content_type='portfolio',
+        content_id=portfolio_id
+    )
+
+    return portfolio_schema.RealtimeUsersResponse(
+        item_name=portfolio.design_name,
+        realtime_users=realtime_users
+    )
+
+
 @router.post("/portfolio/leave/{item_name}", response_model=portfolio_schema.RealtimeUsersResponse)
 def leave_portfolio(
         item_name: str,
@@ -167,6 +273,38 @@ def leave_portfolio(
 
     return portfolio_schema.RealtimeUsersResponse(
         item_name=item_name,
+        realtime_users=realtime_users
+    )
+
+
+@router.get("/portfolio/realtime-users/by-id/{portfolio_id}", response_model=portfolio_schema.RealtimeUsersResponse)
+def get_portfolio_realtime_users_by_id(
+        portfolio_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID로 조회한 디자인 실시간 유저수 조회"""
+
+    # 포트폴리오 존재 확인
+    portfolio = db.query(models.Portfolio).filter(
+        models.Portfolio.id == portfolio_id,
+        models.Portfolio.is_deleted == False
+    ).first()
+
+    if not portfolio:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="포트폴리오를 찾을 수 없습니다."
+        )
+
+    realtime_users = realtime_users_crud.get_realtime_users_count(
+        db=db,
+        content_type='portfolio',
+        content_id=portfolio_id
+    )
+
+    return portfolio_schema.RealtimeUsersResponse(
+        item_name=portfolio.design_name,
         realtime_users=realtime_users
     )
 

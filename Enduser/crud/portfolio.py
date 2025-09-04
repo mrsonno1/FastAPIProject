@@ -126,13 +126,21 @@ def get_portfolios_paginated(
     }
 
 
-def get_portfolio_detail(db: Session, item_name: str) -> Optional[Dict[str, Any]]:
-    """디자인 이름으로 포트폴리오 상세 정보 조회"""
+def get_portfolio_detail(db: Session, item_name: str = None, portfolio_id: int = None) -> Optional[Dict[str, Any]]:
+    """디자인 이름 또는 ID로 포트폴리오 상세 정보 조회"""
 
-    portfolio = db.query(models.Portfolio).filter(
-        models.Portfolio.design_name == item_name,
-        models.Portfolio.is_deleted == False
-    ).first()
+    if portfolio_id is not None:
+        portfolio = db.query(models.Portfolio).filter(
+            models.Portfolio.id == portfolio_id,
+            models.Portfolio.is_deleted == False
+        ).first()
+    elif item_name is not None:
+        portfolio = db.query(models.Portfolio).filter(
+            models.Portfolio.design_name == item_name,
+            models.Portfolio.is_deleted == False
+        ).first()
+    else:
+        return None
 
     if not portfolio:
         return None

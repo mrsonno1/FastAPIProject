@@ -29,15 +29,25 @@ def enter_content(
     # 만료된 유저 정리
     clean_expired_users(db)
     
-    # ID로 name 조회 (released_product의 경우)
-    if content_id is not None and content_type == 'released_product':
-        product = db.query(models.Releasedproduct).filter(
-            models.Releasedproduct.id == content_id
-        ).first()
-        if product:
-            content_name = product.design_name
-        else:
-            return 0  # 제품을 찾을 수 없음
+    # ID로 name 조회
+    if content_id is not None:
+        if content_type == 'released_product':
+            product = db.query(models.Releasedproduct).filter(
+                models.Releasedproduct.id == content_id
+            ).first()
+            if product:
+                content_name = product.design_name
+            else:
+                return 0  # 제품을 찾을 수 없음
+        elif content_type == 'portfolio':
+            portfolio = db.query(models.Portfolio).filter(
+                models.Portfolio.id == content_id,
+                models.Portfolio.is_deleted == False
+            ).first()
+            if portfolio:
+                content_name = portfolio.design_name
+            else:
+                return 0  # 포트폴리오를 찾을 수 없음
     
     if not content_name:
         return 0  # content_name이 없으면 처리 불가
@@ -81,15 +91,25 @@ def leave_content(
     # 만료된 유저 정리
     clean_expired_users(db)
     
-    # ID로 name 조회 (released_product의 경우)
-    if content_id is not None and content_type == 'released_product':
-        product = db.query(models.Releasedproduct).filter(
-            models.Releasedproduct.id == content_id
-        ).first()
-        if product:
-            content_name = product.design_name
-        else:
-            return 0  # 제품을 찾을 수 없음
+    # ID로 name 조회
+    if content_id is not None:
+        if content_type == 'released_product':
+            product = db.query(models.Releasedproduct).filter(
+                models.Releasedproduct.id == content_id
+            ).first()
+            if product:
+                content_name = product.design_name
+            else:
+                return 0  # 제품을 찾을 수 없음
+        elif content_type == 'portfolio':
+            portfolio = db.query(models.Portfolio).filter(
+                models.Portfolio.id == content_id,
+                models.Portfolio.is_deleted == False
+            ).first()
+            if portfolio:
+                content_name = portfolio.design_name
+            else:
+                return 0  # 포트폴리오를 찾을 수 없음
     
     if not content_name:
         return 0  # content_name이 없으면 처리 불가
@@ -120,15 +140,25 @@ def get_realtime_users_count(
     # 만료된 유저 정리
     clean_expired_users(db)
     
-    # ID로 name 조회 (released_product의 경우)
-    if content_id is not None and content_type == 'released_product':
-        product = db.query(models.Releasedproduct).filter(
-            models.Releasedproduct.id == content_id
-        ).first()
-        if product:
-            content_name = product.design_name
-        else:
-            return 0  # 제품을 찾을 수 없음
+    # ID로 name 조회
+    if content_id is not None:
+        if content_type == 'released_product':
+            product = db.query(models.Releasedproduct).filter(
+                models.Releasedproduct.id == content_id
+            ).first()
+            if product:
+                content_name = product.design_name
+            else:
+                return 0  # 제품을 찾을 수 없음
+        elif content_type == 'portfolio':
+            portfolio = db.query(models.Portfolio).filter(
+                models.Portfolio.id == content_id,
+                models.Portfolio.is_deleted == False
+            ).first()
+            if portfolio:
+                content_name = portfolio.design_name
+            else:
+                return 0  # 포트폴리오를 찾을 수 없음
     
     if not content_name:
         return 0  # content_name이 없으면 처리 불가
