@@ -111,6 +111,7 @@ def get_portfolios_paginated(
         in_cart = portfolio.design_name in cart_item_names
 
         formatted_items.append({
+            "id": portfolio.id,  # Portfolio ID 추가
             "item_name": portfolio.design_name,
             "main_image_url": portfolio.main_image_url,
             "thumbnail_url": portfolio.thumbnail_url,

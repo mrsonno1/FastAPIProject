@@ -17,6 +17,7 @@ class DesignComponent(BaseModel):
 
 # 포트폴리오 목록 아이템
 class PortfolioListItem(BaseModel):
+    id: int  # 포트폴리오 ID
     item_name: str  # 디자인 이름
     main_image_url: Optional[str] = None  # 메인 이미지 URL
     thumbnail_url: Optional[str] = None  # 썸네일 URL
