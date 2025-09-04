@@ -47,29 +47,11 @@ def get_color_by_id(db: Session, color_id: int):
 def create_color(db: Session, color: color_schema.ColorCreate):
     """새로운 컬러 생성"""
     
-    # color_name 처리 로직 - None과 빈 문자열을 안전하게 처리
-    color_name = color.color_name
-    if color_name is None:
-        processed_color_name = ""
-    elif color_name == "":
-        processed_color_name = ""
-    elif color_name.strip() == "":
-        # 공백만 있는 경우도 빈 문자열로 처리
-        processed_color_name = ""
-    elif color_name.isalnum() and len(color_name) <= 7:
-        # 7자리 알파뉴메릭인지 확인하고 처리
-        if color_name.isdigit():
-            # 숫자만 있는 경우 7자리로 패딩
-            processed_color_name = color_name.zfill(7)
-        else:
-            # 알파뉴메릭인 경우 대문자로 변환하고 7자리까지 허용
-            processed_color_name = color_name.upper()
-    else:
-        # 기타 경우 그대로 유지
-        processed_color_name = color_name
+    # color_name을 입력값 그대로 저장
+    color_name = color.color_name if color.color_name is not None else ""
 
     db_color = models.Color(
-        color_name=processed_color_name,
+        color_name=color_name,
         color_values=color.color_values,
         monochrome_type=color.monochrome_type
     )
@@ -142,30 +124,12 @@ def delete_color_by_id(db: Session, color_id: int) -> bool:
 
 def update_color(db: Session, db_color: models.Color, color_update: color_schema.ColorUpdate):
     """컬러 값 업데이트"""
-    # color_name 처리 로직 - create_color와 동일하게 적용
-    color_name = color_update.color_name
-    if color_name is None:
-        processed_color_name = ""
-    elif color_name == "":
-        processed_color_name = ""
-    elif color_name.strip() == "":
-        # 공백만 있는 경우도 빈 문자열로 처리
-        processed_color_name = ""
-    elif color_name.isalnum() and len(color_name) <= 7:
-        # 7자리 알파뉴메릭인지 확인하고 처리
-        if color_name.isdigit():
-            # 숫자만 있는 경우 7자리로 패딩
-            processed_color_name = color_name.zfill(7)
-        else:
-            # 알파뉴메릭인 경우 대문자로 변환하고 7자리까지 허용
-            processed_color_name = color_name.upper()
-    else:
-        # 기타 경우 그대로 유지
-        processed_color_name = color_name
+    # color_name을 입력값 그대로 저장
+    color_name = color_update.color_name if color_update.color_name is not None else ""
     
     db_color.color_values = color_update.color_values
     db_color.monochrome_type = color_update.monochrome_type
-    db_color.color_name = processed_color_name
+    db_color.color_name = color_name
     db.commit()
     db.refresh(db_color)
     return db_color

@@ -90,7 +90,10 @@ def fix_user_info_by_username(  # 함수 이름도 변경
 
 
     # 4. CRUD 함수 호출하여 업데이트
-    return user_crud.fix_admin_user(db, db_user=user_to_update, user_fix=user_fix)
+    updated_user = user_crud.fix_admin_user(db, db_user=user_to_update, user_fix=user_fix)
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="삭제된 사용자는 수정할 수 없습니다.")
+    return updated_user
 
 
 @router.get("/list", response_model=user_schema.PaginatedAdminUserResponse)

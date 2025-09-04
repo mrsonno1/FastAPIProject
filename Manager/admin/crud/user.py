@@ -85,6 +85,10 @@ def fix_admin_user(db: Session, db_user: models.AdminUser, user_fix: user_schema
     """
     관리자 계정의 정보를 선택적으로 업데이트합니다. (단순화된 버전)
     """
+    # 삭제된 계정은 수정할 수 없도록 체크
+    if db_user.is_deleted:
+        return None
+    
     # 1. Pydantic 모델에서 사용자가 보낸 값들만 딕셔너리로 추출합니다.
     # exclude_none=False를 사용하여 None 값도 포함시킵니다 (빈 문자열이 None으로 변환된 경우 처리)
     update_data = user_fix.model_dump(exclude_unset=True, exclude_none=False)
