@@ -6,33 +6,33 @@
 -- ============================================================================
 
 -- Step 1: Add new columns
-ALTER TABLE cart ADD COLUMN portfolio_id INTEGER NULL;
-ALTER TABLE cart ADD COLUMN custom_design_id INTEGER NULL;
+ALTER TABLE carts ADD COLUMN portfolio_id INTEGER NULL;
+ALTER TABLE carts ADD COLUMN custom_design_id INTEGER NULL;
 
 -- Step 2: Add foreign key constraints
-ALTER TABLE cart
-    ADD CONSTRAINT fk_cart_portfolio
+ALTER TABLE carts
+    ADD CONSTRAINT fk_carts_portfolio
     FOREIGN KEY (portfolio_id)
     REFERENCES portfolios(id)
     ON DELETE SET NULL;
 
-ALTER TABLE cart
-    ADD CONSTRAINT fk_cart_custom_design
+ALTER TABLE carts
+    ADD CONSTRAINT fk_carts_custom_design
     FOREIGN KEY (custom_design_id)
-    REFERENCES custom_design(id)
+    REFERENCES custom_designs(id)
     ON DELETE SET NULL;
 
 -- Step 3: Add check constraint (둘 중 하나만 NULL이 아니어야 함)
-ALTER TABLE cart
-    ADD CONSTRAINT chk_cart_exclusive_id
+ALTER TABLE carts
+    ADD CONSTRAINT chk_carts_exclusive_id
     CHECK (
         (portfolio_id IS NOT NULL AND custom_design_id IS NULL) OR
         (portfolio_id IS NULL AND custom_design_id IS NOT NULL)
     );
 
 -- Step 4: Create indexes for performance
-CREATE INDEX idx_cart_portfolio_id ON cart(portfolio_id) WHERE portfolio_id IS NOT NULL;
-CREATE INDEX idx_cart_custom_design_id ON cart(custom_design_id) WHERE custom_design_id IS NOT NULL;
+CREATE INDEX idx_carts_portfolio_id ON carts(portfolio_id) WHERE portfolio_id IS NOT NULL;
+CREATE INDEX idx_carts_custom_design_id ON carts(custom_design_id) WHERE custom_design_id IS NOT NULL;
 
 -- Step 5: Verify the migration
 -- Run this to check:
