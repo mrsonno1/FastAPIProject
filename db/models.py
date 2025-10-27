@@ -61,7 +61,7 @@ class Color(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     color_name = Column(String, index=True, nullable=True)  # nullable=True로 변경, unique 제거 (빈 문자열 중복 허용)
-    color_values = Column(String(100), nullable=False)
+    color_values = Column(String(100), nullable=True)  # CMYK는 이제 선택사항
     monochrome_type = Column(String(10), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now()

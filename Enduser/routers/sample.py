@@ -270,3 +270,65 @@ def create_all_samples_from_portfolio(
         failed_count=len(failed_items),
         failed_items=failed_items
     )
+
+
+@router.post("/sample/portfolio/by-id/{portfolio_id}", response_model=sample_schema.SampleResultResponse)
+def create_sample_from_portfolio_by_id(
+        portfolio_id: int,
+        client_name: str = Form(...),
+        number: str = Form(...),
+        address: str = Form(...),
+        request_note: Optional[str] = Form(None),
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID 기반 장바구니의 포트폴리오를 샘플 요청으로 생성 (신규 엔드포인트)"""
+
+    success = sample_crud.create_progress_status_from_cart_by_id(
+        db=db,
+        user_id=current_user.username,
+        portfolio_id=portfolio_id,
+        client_name=client_name,
+        number=number,
+        address=address,
+        request_note=request_note
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="장바구니에서 해당 포트폴리오를 찾을 수 없습니다."
+        )
+
+    return sample_schema.SampleResultResponse(result="포트폴리오 샘플제작 요청 성공")
+
+
+@router.post("/sample/customdesign/by-id/{custom_design_id}", response_model=sample_schema.SampleResultResponse)
+def create_sample_from_custom_design_by_id(
+        custom_design_id: int,
+        client_name: str = Form(...),
+        number: str = Form(...),
+        address: str = Form(...),
+        request_note: Optional[str] = Form(None),
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID 기반 장바구니의 커스텀디자인을 샘플 요청으로 생성 (신규 엔드포인트)"""
+
+    success = sample_crud.create_progress_status_from_cart_by_id(
+        db=db,
+        user_id=current_user.username,
+        custom_design_id=custom_design_id,
+        client_name=client_name,
+        number=number,
+        address=address,
+        request_note=request_note
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="장바구니에서 해당 커스텀디자인을 찾을 수 없습니다."
+        )
+
+    return sample_schema.SampleResultResponse(result="커스텀 디자인 샘플제작 요청 성공")

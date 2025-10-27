@@ -59,41 +59,47 @@ def get_cart_items(
     for item in cart_items:
         account_code = None
         thumbnail_url = None
-        
+        portfolio_id = None
+        custom_design_id = None
+
         if item.category == '커스텀디자인':
             # 커스텀디자인인 경우 현재 로그인한 사용자의 account_code
             account_code = current_user.account_code if current_user else None
-            
+
             # 커스텀디자인에서 썸네일 URL 가져오기
             custom_design = db.query(models.CustomDesign).filter(
                 models.CustomDesign.item_name == item.item_name,
                 models.CustomDesign.user_id == user_id
             ).first()
-            
+
             if custom_design:
                 thumbnail_url = custom_design.thumbnail_url
-                
+                custom_design_id = custom_design.id
+
         elif item.category == '포트폴리오':
             # 포트폴리오인 경우 portfolio의 user_id로 account_code 조회
             portfolio = db.query(models.Portfolio).filter(
                 models.Portfolio.design_name == item.item_name,
                 models.Portfolio.is_deleted == False
             ).first()
-            
+
             if portfolio:
                 thumbnail_url = portfolio.thumbnail_url
+                portfolio_id = portfolio.id
                 portfolio_user = db.query(models.AdminUser).filter(
                     models.AdminUser.id == portfolio.user_id,
                     models.AdminUser.is_deleted == False
                 ).first()
                 account_code = portfolio_user.account_code if portfolio_user else None
-        
+
         formatted_items.append({
             "item_name": item.item_name,
             "main_image_url": item.main_image_url,
             "thumbnail_url": thumbnail_url,
             "category": item.category,
-            "account_code": account_code
+            "account_code": account_code,
+            "portfolio_id": portfolio_id,
+            "custom_design_id": custom_design_id
         })
     
     return formatted_items
@@ -196,3 +202,122 @@ def delete_cart_by_category(
     db.commit()
 
     return deleted_count
+
+
+def add_to_cart_by_id(
+        db: Session,
+        user_id: str,
+        portfolio_id: Optional[int] = None,
+        custom_design_id: Optional[int] = None,
+        main_image_url: Optional[str] = None
+) -> models.Cart:
+    """ID 기반 장바구니 추가 (카테고리별 최대 20개 제한)"""
+
+    if not portfolio_id and not custom_design_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="portfolio_id 또는 custom_design_id 중 하나는 필수입니다."
+        )
+
+    if portfolio_id and custom_design_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="portfolio_id와 custom_design_id는 동시에 지정할 수 없습니다."
+        )
+
+    # 포트폴리오 또는 커스텀디자인 조회
+    if portfolio_id:
+        portfolio = db.query(models.Portfolio).filter(
+            models.Portfolio.id == portfolio_id,
+            models.Portfolio.is_deleted == False
+        ).first()
+
+        if not portfolio:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="포트폴리오를 찾을 수 없습니다.")
+
+        item_name = portfolio.design_name
+        category = '포트폴리오'
+        if not main_image_url:
+            main_image_url = portfolio.main_image_url
+    else:
+        custom_design = db.query(models.CustomDesign).filter(
+            models.CustomDesign.id == custom_design_id,
+            models.CustomDesign.user_id == user_id,
+            models.CustomDesign.status == "3"
+        ).first()
+
+        if not custom_design:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="커스텀디자인을 찾을 수 없습니다.")
+
+        item_name = custom_design.item_name
+        category = '커스텀디자인'
+        if not main_image_url:
+            main_image_url = custom_design.main_image_url
+
+    # 기존 add_to_cart 함수 재사용
+    return add_to_cart(
+        db=db,
+        user_id=user_id,
+        item_name=item_name,
+        main_image_url=main_image_url,
+        category=category
+    )
+
+
+def delete_cart_item_by_id(
+        db: Session,
+        user_id: str,
+        portfolio_id: Optional[int] = None,
+        custom_design_id: Optional[int] = None
+) -> bool:
+    """ID 기반 장바구니 단일 삭제"""
+
+    if not portfolio_id and not custom_design_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="portfolio_id 또는 custom_design_id 중 하나는 필수입니다."
+        )
+
+    if portfolio_id and custom_design_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="portfolio_id와 custom_design_id는 동시에 지정할 수 없습니다."
+        )
+
+    # 포트폴리오 또는 커스텀디자인 조회
+    if portfolio_id:
+        portfolio = db.query(models.Portfolio).filter(
+            models.Portfolio.id == portfolio_id,
+            models.Portfolio.is_deleted == False
+        ).first()
+
+        if not portfolio:
+            return False
+
+        item_name = portfolio.design_name
+        category = '포트폴리오'
+    else:
+        custom_design = db.query(models.CustomDesign).filter(
+            models.CustomDesign.id == custom_design_id,
+            models.CustomDesign.user_id == user_id
+        ).first()
+
+        if not custom_design:
+            return False
+
+        item_name = custom_design.item_name
+        category = '커스텀디자인'
+
+    # 기존 delete_cart_item 함수 재사용
+    return delete_cart_item(
+        db=db,
+        user_id=user_id,
+        item_name=item_name,
+        category=category
+    )

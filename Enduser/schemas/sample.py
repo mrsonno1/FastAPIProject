@@ -22,6 +22,8 @@ class SampleListItem(BaseModel):
     main_image_url: Optional[str] = None  # 메인 이미지 URL
     thumbnail_url: Optional[str] = None  # 썸네일 URL
     category: str  # 카테고리 (커스텀디자인, 포트폴리오)
+    portfolio_id: Optional[int] = None  # 포트폴리오 ID (category가 포트폴리오일 때)
+    custom_design_id: Optional[int] = None  # 커스텀디자인 ID (category가 커스텀디자인일 때)
     design_line: Optional[DesignComponent] = None
     design_base1: Optional[DesignComponent] = None
     design_base2: Optional[DesignComponent] = None

@@ -54,7 +54,9 @@ def get_cart_list(
             main_image_url=item["main_image_url"],
             thumbnail_url=item["thumbnail_url"],
             account_code=item["account_code"],
-            category=item["category"]
+            category=item["category"],
+            portfolio_id=item["portfolio_id"],
+            custom_design_id=item["custom_design_id"]
         )
         for item in items
     ]
@@ -201,6 +203,64 @@ def delete_cart_by_category(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"장바구니에 {delete_data.category} 카테고리의 상품이 없습니다."
+        )
+
+    # 삭제 후 전체 개수 반환
+    count = cart_crud.get_cart_count(
+        db=db,
+        user_id=current_user.username
+    )
+
+    return cart_schema.CartCountResponse(count=count)
+
+
+@router.post("/cart/by-id", response_model=cart_schema.CartCountResponse)
+def add_to_cart_by_id(
+        cart_data: cart_schema.CartAddByIdRequest,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID 기반 장바구니 추가 (신규 엔드포인트)"""
+
+    # 장바구니에 추가
+    cart_crud.add_to_cart_by_id(
+        db=db,
+        user_id=current_user.username,
+        portfolio_id=cart_data.portfolio_id,
+        custom_design_id=cart_data.custom_design_id,
+        main_image_url=cart_data.main_image_url
+    )
+
+    # 추가 후 전체 개수 반환
+    count = cart_crud.get_cart_count(
+        db=db,
+        user_id=current_user.username
+    )
+
+    return cart_schema.CartCountResponse(count=count)
+
+
+@router.delete("/cart/by-id", response_model=cart_schema.CartCountResponse)
+def delete_cart_item_by_id(
+        portfolio_id: Optional[int] = Query(None),
+        custom_design_id: Optional[int] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID 기반 장바구니 단일 삭제 (신규 엔드포인트)"""
+
+    # 삭제 수행
+    success = cart_crud.delete_cart_item_by_id(
+        db=db,
+        user_id=current_user.username,
+        portfolio_id=portfolio_id,
+        custom_design_id=custom_design_id
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="장바구니에서 해당 상품을 찾을 수 없습니다."
         )
 
     # 삭제 후 전체 개수 반환

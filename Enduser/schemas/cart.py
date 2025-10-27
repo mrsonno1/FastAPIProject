@@ -15,6 +15,8 @@ class CartItem(BaseModel):
     thumbnail_url: Optional[str] = None  # 썸네일 URL
     account_code: Optional[str] = None  # account_code 추가 - NULL일 수 있음
     category: str  # 카테고리 (커스텀디자인, 포트폴리오)
+    portfolio_id: Optional[int] = None  # 포트폴리오 ID (category가 포트폴리오일 때)
+    custom_design_id: Optional[int] = None  # 커스텀디자인 ID (category가 커스텀디자인일 때)
 
     class Config:
         from_attributes = True
@@ -35,6 +37,13 @@ class CartAddRequest(BaseModel):
 # 장바구니 삭제 요청
 class CartDeleteRequest(BaseModel):
     category: str  # 카테고리 (커스텀디자인, 포트폴리오)
+
+
+# ID 기반 장바구니 추가 요청
+class CartAddByIdRequest(BaseModel):
+    portfolio_id: Optional[int] = None  # 포트폴리오 ID
+    custom_design_id: Optional[int] = None  # 커스텀디자인 ID
+    main_image_url: Optional[str] = None  # 메인 이미지 URL
 
 
 # Progress Status 생성 요청

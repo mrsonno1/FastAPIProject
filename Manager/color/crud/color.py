@@ -46,13 +46,16 @@ def get_color_by_id(db: Session, color_id: int):
 
 def create_color(db: Session, color: color_schema.ColorCreate):
     """새로운 컬러 생성"""
-    
+
     # color_name을 입력값 그대로 저장
     color_name = color.color_name if color.color_name is not None else ""
 
+    # color_values가 없으면 빈 문자열로 저장
+    color_values = color.color_values if color.color_values is not None else ""
+
     db_color = models.Color(
         color_name=color_name,
-        color_values=color.color_values,
+        color_values=color_values,
         monochrome_type=color.monochrome_type
     )
     db.add(db_color)
@@ -126,9 +129,15 @@ def update_color(db: Session, db_color: models.Color, color_update: color_schema
     """컬러 값 업데이트"""
     # color_name을 입력값 그대로 저장
     color_name = color_update.color_name if color_update.color_name is not None else ""
-    
-    db_color.color_values = color_update.color_values
-    db_color.monochrome_type = color_update.monochrome_type
+
+    # color_values가 제공되면 업데이트, 아니면 기존 값 유지
+    if color_update.color_values is not None:
+        db_color.color_values = color_update.color_values
+
+    # monochrome_type이 제공되면 업데이트, 아니면 기존 값 유지
+    if color_update.monochrome_type is not None:
+        db_color.monochrome_type = color_update.monochrome_type
+
     db_color.color_name = color_name
     db.commit()
     db.refresh(db_color)

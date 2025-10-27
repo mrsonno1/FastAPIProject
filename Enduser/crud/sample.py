@@ -100,6 +100,8 @@ def get_samples_paginated(
             "main_image_url": main_image_url,
             "thumbnail_url": thumbnail_url,
             "category": category,
+            "portfolio_id": portfolio.id if portfolio else None,
+            "custom_design_id": custom_design.id if custom_design else None,
             "design_line": design_components.get("design_line"),
             "design_base1": design_components.get("design_base1"),
             "design_base2": design_components.get("design_base2"),
@@ -338,3 +340,69 @@ def get_design_components(db: Session, design_obj: Any, category: str) -> Dict[s
             design_obj.pupil_size if hasattr(design_obj, 'pupil_size') else None
         )
     }
+
+
+def create_progress_status_from_cart_by_id(
+        db: Session,
+        user_id: str,
+        portfolio_id: Optional[int] = None,
+        custom_design_id: Optional[int] = None,
+        client_name: str = "",
+        number: str = "",
+        address: str = "",
+        request_note: Optional[str] = None
+) -> bool:
+    """ID 기반 장바구니 아이템으로부터 progress_status 생성"""
+
+    if not portfolio_id and not custom_design_id:
+        return False
+
+    if portfolio_id and custom_design_id:
+        return False
+
+    # 사용자 정보 조회
+    user = db.query(models.AdminUser).filter(
+        models.AdminUser.username == user_id
+    ).first()
+
+    if not user:
+        return False
+
+    # 포트폴리오 또는 커스텀디자인 조회
+    item_name = None
+    category = None
+
+    if portfolio_id:
+        portfolio = db.query(models.Portfolio).filter(
+            models.Portfolio.id == portfolio_id,
+            models.Portfolio.is_deleted == False
+        ).first()
+
+        if not portfolio:
+            return False
+
+        item_name = portfolio.design_name
+        category = '포트폴리오'
+    else:
+        custom_design = db.query(models.CustomDesign).filter(
+            models.CustomDesign.id == custom_design_id,
+            models.CustomDesign.user_id == user_id
+        ).first()
+
+        if not custom_design:
+            return False
+
+        item_name = custom_design.item_name
+        category = '커스텀디자인'
+
+    # 기존 함수 재사용
+    return create_progress_status_from_cart(
+        db=db,
+        user_id=user_id,
+        item_name=item_name,
+        category=category,
+        client_name=client_name,
+        number=number,
+        address=address,
+        request_note=request_note
+    )

@@ -65,9 +65,6 @@ def create_new_portfolio(
     except Exception as e:  # Pydantic 유효성 검사 실패 시
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
 
-    if portfolio_CRUD.get_portfolio_by_design_name(db, design_name=portfolio_data.design_name):
-        raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
-
     # 파일 내용을 먼저 읽어서 저장
     file_content = file.file.read()
     file.file.seek(0)  # 파일 포인터를 처음으로 되돌림
@@ -282,11 +279,6 @@ def update_portfolio_details(
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")
-
-    # 디자인명 중복 검사 (자신을 제외하고)
-    existing_portfolio = portfolio_CRUD.get_portfolio_by_design_name(db, design_name=portfolio_update_data.design_name)
-    if existing_portfolio and existing_portfolio.id != portfolio_id:
-        raise HTTPException(status_code=409, detail="이미 사용 중인 디자인명입니다.")
 
     # 이미지 파일 처리
     if file:
