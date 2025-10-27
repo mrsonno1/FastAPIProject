@@ -24,10 +24,9 @@ ALTER TABLE carts
 
 -- Step 3: Add check constraint (둘 중 하나만 NULL이 아니어야 함)
 ALTER TABLE carts
-    ADD CONSTRAINT chk_carts_exclusive_id
+    ADD CONSTRAINT chk_carts_id_at_most_one
     CHECK (
-        (portfolio_id IS NOT NULL AND custom_design_id IS NULL) OR
-        (portfolio_id IS NULL AND custom_design_id IS NOT NULL)
+        portfolio_id IS NULL OR custom_design_id IS NULL
     );
 
 -- Step 4: Create indexes for performance
@@ -38,7 +37,7 @@ CREATE INDEX idx_carts_custom_design_id ON carts(custom_design_id) WHERE custom_
 -- Run this to check:
 -- SELECT column_name, is_nullable, data_type
 -- FROM information_schema.columns
--- WHERE table_name = 'cart' AND column_name IN ('portfolio_id', 'custom_design_id');
+-- WHERE table_name = 'carts' AND column_name IN ('portfolio_id', 'custom_design_id');
 
 -- ============================================================================
 -- Migration Notes:
@@ -53,11 +52,11 @@ CREATE INDEX idx_carts_custom_design_id ON carts(custom_design_id) WHERE custom_
 --    - get_cart_items() 함수에서 ID 우선 조회 로직 추가
 --
 -- 3. 롤백 방법 (필요시):
---    DROP INDEX idx_cart_custom_design_id;
---    DROP INDEX idx_cart_portfolio_id;
---    ALTER TABLE cart DROP CONSTRAINT chk_cart_exclusive_id;
---    ALTER TABLE cart DROP CONSTRAINT fk_cart_custom_design;
---    ALTER TABLE cart DROP CONSTRAINT fk_cart_portfolio;
---    ALTER TABLE cart DROP COLUMN custom_design_id;
---    ALTER TABLE cart DROP COLUMN portfolio_id;
+--    DROP INDEX idx_carts_custom_design_id;
+--    DROP INDEX idx_carts_portfolio_id;
+--    ALTER TABLE carts DROP CONSTRAINT IF EXISTS chk_carts_id_at_most_one;
+--    ALTER TABLE carts DROP CONSTRAINT IF EXISTS fk_carts_custom_design;
+--    ALTER TABLE carts DROP CONSTRAINT IF EXISTS fk_carts_portfolio;
+--    ALTER TABLE carts DROP COLUMN custom_design_id;
+--    ALTER TABLE carts DROP COLUMN portfolio_id;
 -- ============================================================================
