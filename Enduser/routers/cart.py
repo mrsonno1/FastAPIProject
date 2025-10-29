@@ -138,6 +138,67 @@ def add_to_cart(
     return cart_schema.CartCountResponse(count=count)
 
 
+# 우선순위: 정적 경로(/cart/by-id) 라우트를 파라미터 경로(/cart/{item_name})보다 먼저 선언해야
+#           /cart/by-id 요청이 /cart/{item_name}로 매칭되어 바디를 요구하는 문제(422)를 방지할 수 있습니다.
+
+@router.post("/cart/by-id", response_model=cart_schema.CartCountResponse)
+def add_to_cart_by_id(
+        cart_data: cart_schema.CartAddByIdRequest,
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID 기반 장바구니 추가 (신규 엔드포인트)"""
+
+    # 장바구니에 추가
+    cart_crud.add_to_cart_by_id(
+        db=db,
+        user_id=current_user.username,
+        portfolio_id=cart_data.portfolio_id,
+        custom_design_id=cart_data.custom_design_id,
+        main_image_url=cart_data.main_image_url
+    )
+
+    # 추가 후 전체 개수 반환
+    count = cart_crud.get_cart_count(
+        db=db,
+        user_id=current_user.username
+    )
+
+    return cart_schema.CartCountResponse(count=count)
+
+
+@router.delete("/cart/by-id", response_model=cart_schema.CartCountResponse)
+def delete_cart_item_by_id(
+        portfolio_id: Optional[int] = Query(None),
+        custom_design_id: Optional[int] = Query(None),
+        db: Session = Depends(get_db),
+        current_user: models.AdminUser = Depends(get_current_user)
+):
+    """ID 기반 장바구니 단일 삭제 (신규 엔드포인트)"""
+
+    # 삭제 수행
+    success = cart_crud.delete_cart_item_by_id(
+        db=db,
+        user_id=current_user.username,
+        portfolio_id=portfolio_id,
+        custom_design_id=custom_design_id
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="장바구니에서 해당 상품을 찾을 수 없습니다."
+        )
+
+    # 삭제 후 전체 개수 반환
+    count = cart_crud.get_cart_count(
+        db=db,
+        user_id=current_user.username
+    )
+
+    return cart_schema.CartCountResponse(count=count)
+
+
 @router.delete("/cart/{item_name}", response_model=cart_schema.CartCountResponse)
 def delete_cart_item(
         item_name: str,
