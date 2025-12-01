@@ -266,6 +266,9 @@ def get_designs_paginated(
         models.AdminUser, models.CustomDesign.user_id == models.AdminUser.username
     )
 
+    # 기본 목록 조회 시 숨김/삭제 상태(99)는 제외
+    query = query.filter(models.CustomDesign.status != '99')
+
     # --- [수정 2] 필터링 로직 수정 ---
     if item_name:
         # item_name 파라미터로 item_name, account_code, 또는 account_code-item_name 조합을 검색
