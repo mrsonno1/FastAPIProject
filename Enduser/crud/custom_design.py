@@ -129,7 +129,8 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
         or_(
             models.CustomDesign.user_id == str(user.id),  # 새로운 형식: id를 문자열로
             models.CustomDesign.user_id == user.username   # 오래된 형식: username
-        )
+        ),
+        models.CustomDesign.status != '99'  # 숨김/삭제 상태는 제외
     ).first()
 
     if not design:
@@ -271,7 +272,8 @@ def get_user_custom_designs_paginated(
         or_(
             models.CustomDesign.user_id == str(user.id),  # 새로운 형식
             models.CustomDesign.user_id == user.username   # 오래된 형식
-        )
+        ),
+        models.CustomDesign.status != '99'  # 숨김/삭제 상태는 제외
     )
 
     # 정렬
