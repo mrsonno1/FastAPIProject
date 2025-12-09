@@ -468,6 +468,16 @@ def get_progress_status_paginated(
 ):
     """진행 상태 목록을 페이지네이션하여 조회합니다."""
 
+    # 배송 예정일이 지난 진행중(1) 상태를 조회 전에 일괄 지연(2) 상태로 반영
+    today = date.today()
+    updated_rows = db.query(models.Progressstatus).filter(
+        models.Progressstatus.status == '1',
+        models.Progressstatus.expected_shipping_date.isnot(None),
+        models.Progressstatus.expected_shipping_date < today
+    ).update({models.Progressstatus.status: '2'}, synchronize_session=False)
+    if updated_rows:
+        db.commit()
+
     # 기본 쿼리 - 필요한 테이블들을 조인
     query = db.query(
         models.Progressstatus,
@@ -480,6 +490,8 @@ def get_progress_status_paginated(
         models.CustomDesign, models.Progressstatus.custom_design_id == models.CustomDesign.id
     ).outerjoin(
         models.Portfolio, models.Progressstatus.portfolio_id == models.Portfolio.id
+    ).filter(
+        or_(models.Portfolio.id.isnot(None), models.CustomDesign.id.isnot(None))
     )
 
     # 필터링 적용
@@ -529,20 +541,6 @@ def get_progress_status_paginated(
     results = query.order_by(
         models.Progressstatus.created_at.desc()
     ).offset(offset).limit(size).all()
-
-    # --- [수정 1] 배송 지연 상태 자동 업데이트 ---
-    # 먼저 메모리상에서 지연 상태를 확인하고 DB에 일괄 반영합니다.
-    today = date.today()
-    needs_commit = False
-    for progress_status, user, custom_design, portfolio in results:
-        # '진행중(1)' 상태에서만 발송 예정일이 지난 경우 '지연(2)' 상태로 변경
-        if progress_status.status == '1':
-            if progress_status.expected_shipping_date and today > progress_status.expected_shipping_date:
-                progress_status.status = '2'  # '지연' 상태로 변경
-                needs_commit = True
-
-    if needs_commit:
-        db.commit()
 
     # N+1 문제 해결을 위한 ID 사전 수집 로직 (기존과 동일)
     all_image_ids = set()
