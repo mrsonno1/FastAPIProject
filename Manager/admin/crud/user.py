@@ -76,6 +76,13 @@ def delete_admin_user_by_id(db: Session, user_id: int) -> bool:
     ).first()
     if db_user:
         db_user.is_deleted = True  # 소프트 삭제
+        # Hide existing custom designs tied to this username/id to avoid reuse exposure.
+        db.query(models.CustomDesign).filter(
+            models.CustomDesign.user_id.in_([db_user.username, str(db_user.id)])
+        ).update(
+            {models.CustomDesign.status: '99'},
+            synchronize_session=False
+        )
         db.commit()
         return True
     return False

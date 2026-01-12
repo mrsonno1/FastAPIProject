@@ -8,6 +8,10 @@ Authorization: {{superadmin_token}}
 GET {{host}}{{api_prefix}}/custom-designs/list?page=1&size=10&item_name=345
 Authorization: {{superadmin_token}}
 
+### 커스텀 디자인 목록
+GET {{host}}{{api_prefix}}/custom-designs/list?page=2
+Authorization: {{superadmin_token}}
+
 ###
 GET {{host}}{{api_prefix}}/custom-designs/list
 Authorization: {{superadmin_token}}
@@ -136,6 +140,10 @@ Authorization: {{superadmin_token}}
 
 ### 진행 상태
 GET {{host}}{{api_prefix}}/progress-status/list?page=1&per=10&status=2
+Authorization: {{superadmin_token}}
+
+### 진행 상태
+GET {{host}}{{api_prefix}}/progress-status/list?page=2
 Authorization: {{superadmin_token}}
 
 ### 진행 상태 기본 정보 조회

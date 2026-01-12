@@ -52,7 +52,10 @@ def update_design(db: Session, db_design: models.CustomDesign, update_data: Dict
     # 상태가 '3'(완료)로 변경되고 item_name이 없는 경우 코드 생성
     if update_data.get('status') == '3' and db_design.item_name is None:
         # 사용자 정보 조회
-        user = db.query(models.AdminUser).filter(models.AdminUser.username == db_design.user_id).first()
+        user = db.query(models.AdminUser).filter(
+            models.AdminUser.username == db_design.user_id,
+            models.AdminUser.is_deleted == False
+        ).first()
         if user and user.account_code:
             # 해당 사용자의 숫자로만 이루어진 item_name 중 가장 큰 값 찾기
             user_numeric_designs = db.query(models.CustomDesign).filter(
@@ -264,7 +267,7 @@ def get_designs_paginated(
     # CustomDesign 객체와 Account 객체를 함께 조회합니다.
     query = db.query(models.CustomDesign, models.AdminUser).join(
         models.AdminUser, models.CustomDesign.user_id == models.AdminUser.username
-    )
+    ).filter(models.AdminUser.is_deleted == False)
 
     # 기본 목록 조회 시 숨김/삭제 상태(99)는 제외
     query = query.filter(models.CustomDesign.status != '99')
