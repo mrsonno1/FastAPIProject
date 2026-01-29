@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from db import models
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import math
 from services.storage_service import storage_service
 from fastapi import UploadFile
@@ -137,23 +137,52 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
         return None
 
     # 각 컴포넌트 정보 조회
-    def get_component_info(image_id: str, color_id: str, transparency: str, size: str):
-        if not image_id or not color_id:
+    category_map = {
+        "line": ["라인", "line"],
+        "base1": ["바탕1", "base1"],
+        "base2": ["바탕2", "base2"],
+        "pupil": ["동공", "pupil"],
+    }
+
+    def get_component_info(image_id: str, color_id: str, transparency: str, size: str, categories: List[str]):
+        if not image_id:
             return None
 
-        image = db.query(models.Image).filter(models.Image.id == image_id).first()
-        color = db.query(models.Color).filter(models.Color.id == color_id).first()
+        image = None
+        try:
+            image_id_int = int(image_id)
+        except (TypeError, ValueError):
+            image_id_int = None
 
-        if not image or not color:
+        if image_id_int is not None:
+            image = db.query(models.Image).filter(models.Image.id == image_id_int).first()
+
+        if not image and categories:
+            image = db.query(models.Image).filter(
+                models.Image.category.in_(categories),
+                models.Image.display_name == str(image_id)
+            ).first()
+
+        if not image:
             return None
+
+        color = None
+        if color_id:
+            try:
+                color_id_int = int(color_id)
+            except (TypeError, ValueError):
+                color_id_int = None
+
+            if color_id_int is not None:
+                color = db.query(models.Color).filter(models.Color.id == color_id_int).first()
 
         return {
             "image_id": image_id,
             "image_url": image.public_url,
             "image_name": image.display_name,
-            "RGB_id": color_id,
-            "RGB_color": color.color_values,
-            "RGB_name": color.color_name,
+            "RGB_id": color_id if color else None,
+            "RGB_color": color.color_values if color else None,
+            "RGB_name": color.color_name if color else None,
             "size": int(size) if size else 100,
             "opacity": int(transparency) if transparency else 100
         }
@@ -164,25 +193,29 @@ def get_custom_design_detail(db: Session, design_id: int, user_id: str) -> Optio
             design.design_line_image_id,
             design.design_line_color_id,
             design.line_transparency,
-            design.line_size
+            design.line_size,
+            category_map["line"]
         ),
         "design_base1": get_component_info(
             design.design_base1_image_id,
             design.design_base1_color_id,
             design.base1_transparency,
-            design.base1_size
+            design.base1_size,
+            category_map["base1"]
         ),
         "design_base2": get_component_info(
             design.design_base2_image_id,
             design.design_base2_color_id,
             design.base2_transparency,
-            design.base2_size
+            design.base2_size,
+            category_map["base2"]
         ),
         "design_pupil": get_component_info(
             design.design_pupil_image_id,
             design.design_pupil_color_id,
             design.pupil_transparency,
-            design.pupil_size
+            design.pupil_size,
+            category_map["pupil"]
         ),
         "graphic_diameter": design.graphic_diameter,
         "optic_zone": design.optic_zone,
@@ -208,6 +241,42 @@ def create_custom_design(
     if not user:
         raise ValueError(f"User not found: {user_id}")
 
+    def resolve_image_id(value: Optional[str], categories: List[str]) -> Optional[str]:
+        if value in (None, ""):
+            return None
+
+        try:
+            value_int = int(value)
+        except (TypeError, ValueError):
+            value_int = None
+
+        if value_int is not None:
+            image = db.query(models.Image).filter(models.Image.id == value_int).first()
+            if image:
+                return str(image.id)
+
+        if categories:
+            image = db.query(models.Image).filter(
+                models.Image.category.in_(categories),
+                models.Image.display_name == str(value)
+            ).first()
+            if image:
+                return str(image.id)
+
+        return None
+
+    category_map = {
+        "line": ["라인", "line"],
+        "base1": ["바탕1", "base1"],
+        "base2": ["바탕2", "base2"],
+        "pupil": ["동공", "pupil"],
+    }
+
+    design_line_image_id = resolve_image_id(form_data.get("design_line_image_id"), category_map["line"])
+    design_base1_image_id = resolve_image_id(form_data.get("design_base1_image_id"), category_map["base1"])
+    design_base2_image_id = resolve_image_id(form_data.get("design_base2_image_id"), category_map["base2"])
+    design_pupil_image_id = resolve_image_id(form_data.get("design_pupil_image_id"), category_map["pupil"])
+
     # 커스텀 디자인 생성
     # 프로덕션 DB는 user_id가 varchar(20)이므로 username을 사용
     db_design = models.CustomDesign(
@@ -216,13 +285,13 @@ def create_custom_design(
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
         thumbnail_url=thumbnail_url,  # 썸네일 URL
         request_message=form_data.get("request_message"),
-        design_line_image_id=form_data.get("design_line_image_id"),
+        design_line_image_id=design_line_image_id,
         design_line_color_id=form_data.get("design_line_color_id"),
-        design_base1_image_id=form_data.get("design_base1_image_id"),
+        design_base1_image_id=design_base1_image_id,
         design_base1_color_id=form_data.get("design_base1_color_id"),
-        design_base2_image_id=form_data.get("design_base2_image_id"),
+        design_base2_image_id=design_base2_image_id,
         design_base2_color_id=form_data.get("design_base2_color_id"),
-        design_pupil_image_id=form_data.get("design_pupil_image_id"),
+        design_pupil_image_id=design_pupil_image_id,
         design_pupil_color_id=form_data.get("design_pupil_color_id"),
         line_transparency=form_data.get("line_transparency", "100"),
         base1_transparency=form_data.get("base1_transparency", "100"),
