@@ -43,6 +43,13 @@ def create_new_custom_design(
     current_user: models.AdminUser = Depends(get_current_user)
 ):
     """커스텀 디자인 요청 생성 - 요청 시에는 코드를 생성하지 않음"""
+
+    # 빈 문자열을 None으로 변환하는 헬퍼 함수
+    def empty_to_none(value: Optional[str]) -> Optional[str]:
+        if value is None or value == "" or (isinstance(value, str) and value.strip() == ""):
+            return None
+        return value
+
     # 코드 생성 없이 None으로 설정
     new_code = None
 
@@ -56,29 +63,37 @@ def create_new_custom_design(
 
     try:
         # --- 받은 Form 데이터로 Pydantic 모델 객체 생성 ---
+        # 각 필드를 독립적으로 처리 - 빈 문자열은 None으로 변환
         design_data = custom_design_schema.CustomDesignCreate(
             item_name=new_code,
-            request_message=request_message,
+            request_message=empty_to_none(request_message),
             main_image_url=main_image_url,
-            design_line_image_id=design_line_image_id,
-            design_line_color_id=design_line_color_id,
-            design_base1_image_id=design_base1_image_id,
-            design_base1_color_id=design_base1_color_id,
-            design_base2_image_id=design_base2_image_id,
-            design_base2_color_id=design_base2_color_id,
-            design_pupil_image_id=design_pupil_image_id,
-            design_pupil_color_id=design_pupil_color_id,
-            line_transparency=line_transparency,
-            base1_transparency=base1_transparency,
-            base2_transparency=base2_transparency,
-            pupil_transparency=pupil_transparency,
-            line_size=line_size,
-            base1_size=base1_size,
-            base2_size=base2_size,
-            pupil_size=pupil_size,
-            graphic_diameter=graphic_diameter,
-            optic_zone=optic_zone,
-            dia=dia
+            # 라인 (Line) - 지정하지 않으면 None
+            design_line_image_id=empty_to_none(design_line_image_id),
+            design_line_color_id=empty_to_none(design_line_color_id),
+            # 바탕1 (Base1) - 지정하지 않으면 None
+            design_base1_image_id=empty_to_none(design_base1_image_id),
+            design_base1_color_id=empty_to_none(design_base1_color_id),
+            # 바탕2 (Base2) - 지정하지 않으면 None
+            design_base2_image_id=empty_to_none(design_base2_image_id),
+            design_base2_color_id=empty_to_none(design_base2_color_id),
+            # 동공 (Pupil) - 지정하지 않으면 None
+            design_pupil_image_id=empty_to_none(design_pupil_image_id),
+            design_pupil_color_id=empty_to_none(design_pupil_color_id),
+            # 투명도 - 지정하지 않으면 None
+            line_transparency=empty_to_none(line_transparency),
+            base1_transparency=empty_to_none(base1_transparency),
+            base2_transparency=empty_to_none(base2_transparency),
+            pupil_transparency=empty_to_none(pupil_transparency),
+            # 사이즈 - 지정하지 않으면 None
+            line_size=empty_to_none(line_size),
+            base1_size=empty_to_none(base1_size),
+            base2_size=empty_to_none(base2_size),
+            pupil_size=empty_to_none(pupil_size),
+            # 기타 옵션
+            graphic_diameter=empty_to_none(graphic_diameter),
+            optic_zone=empty_to_none(optic_zone),
+            dia=empty_to_none(dia)
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"데이터 유효성 검사 실패: {e}")

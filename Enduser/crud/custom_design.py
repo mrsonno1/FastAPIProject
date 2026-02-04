@@ -231,18 +231,28 @@ def create_custom_design(
         thumbnail_url: Optional[str] = None
 ) -> models.CustomDesign:
     """커스텀 디자인 생성 - Form 데이터와 업로드된 이미지 URL 방식"""
-    
+
     # username으로 AdminUser의 id 조회
     user = db.query(models.AdminUser).filter(
         models.AdminUser.username == user_id,
         models.AdminUser.is_deleted == False
     ).first()
-    
+
     if not user:
         raise ValueError(f"User not found: {user_id}")
 
+    # 빈 문자열을 None으로 변환하는 헬퍼 함수
+    def empty_to_none(value: Optional[str]) -> Optional[str]:
+        if value is None or value == "" or (isinstance(value, str) and value.strip() == ""):
+            return None
+        return value
+
     def resolve_image_id(value: Optional[str], categories: List[str]) -> Optional[str]:
         if value in (None, ""):
+            return None
+
+        # 공백만 있는 경우도 처리
+        if isinstance(value, str) and value.strip() == "":
             return None
 
         try:
@@ -272,38 +282,61 @@ def create_custom_design(
         "pupil": ["동공", "pupil"],
     }
 
+    # 각 컴포넌트 이미지 ID를 독립적으로 처리 (지정하지 않은 것만 None)
     design_line_image_id = resolve_image_id(form_data.get("design_line_image_id"), category_map["line"])
     design_base1_image_id = resolve_image_id(form_data.get("design_base1_image_id"), category_map["base1"])
     design_base2_image_id = resolve_image_id(form_data.get("design_base2_image_id"), category_map["base2"])
     design_pupil_image_id = resolve_image_id(form_data.get("design_pupil_image_id"), category_map["pupil"])
 
+    # 각 컴포넌트 색상 ID를 독립적으로 처리 (빈 문자열은 None으로)
+    design_line_color_id = empty_to_none(form_data.get("design_line_color_id"))
+    design_base1_color_id = empty_to_none(form_data.get("design_base1_color_id"))
+    design_base2_color_id = empty_to_none(form_data.get("design_base2_color_id"))
+    design_pupil_color_id = empty_to_none(form_data.get("design_pupil_color_id"))
+
+    # 투명도와 사이즈는 지정하지 않으면 기본값 "100" 사용, 빈 문자열이면 None
+    def get_with_default(key: str, default: str = "100") -> Optional[str]:
+        value = form_data.get(key)
+        if value is None:
+            return default  # 키가 없으면 기본값
+        if value == "" or (isinstance(value, str) and value.strip() == ""):
+            return None  # 빈 문자열이면 None (지정하지 않음을 명시적으로 표시)
+        return value
+
     # 커스텀 디자인 생성
     # 프로덕션 DB는 user_id가 varchar(20)이므로 username을 사용
     db_design = models.CustomDesign(
         user_id=user_id,  # username을 그대로 사용 (Manager와 일치하도록)
-        item_name=form_data.get("item_name"),  # NULL 허용, get 메서드 사용으로 KeyError 방지
+        item_name=empty_to_none(form_data.get("item_name")),  # NULL 허용
         main_image_url=main_image_url,  # 이미 업로드된 URL 직접 사용
         thumbnail_url=thumbnail_url,  # 썸네일 URL
-        request_message=form_data.get("request_message"),
+        request_message=empty_to_none(form_data.get("request_message")),
+        # 라인 (Line) - 각 필드를 독립적으로 처리
         design_line_image_id=design_line_image_id,
-        design_line_color_id=form_data.get("design_line_color_id"),
+        design_line_color_id=design_line_color_id,
+        # 바탕1 (Base1) - 각 필드를 독립적으로 처리
         design_base1_image_id=design_base1_image_id,
-        design_base1_color_id=form_data.get("design_base1_color_id"),
+        design_base1_color_id=design_base1_color_id,
+        # 바탕2 (Base2) - 각 필드를 독립적으로 처리
         design_base2_image_id=design_base2_image_id,
-        design_base2_color_id=form_data.get("design_base2_color_id"),
+        design_base2_color_id=design_base2_color_id,
+        # 동공 (Pupil) - 각 필드를 독립적으로 처리
         design_pupil_image_id=design_pupil_image_id,
-        design_pupil_color_id=form_data.get("design_pupil_color_id"),
-        line_transparency=form_data.get("line_transparency", "100"),
-        base1_transparency=form_data.get("base1_transparency", "100"),
-        base2_transparency=form_data.get("base2_transparency", "100"),
-        pupil_transparency=form_data.get("pupil_transparency", "100"),
-        line_size=form_data.get("line_size", "100"),
-        base1_size=form_data.get("base1_size", "100"),
-        base2_size=form_data.get("base2_size", "100"),
-        pupil_size=form_data.get("pupil_size", "100"),
-        graphic_diameter=form_data.get("graphic_diameter"),
-        optic_zone=form_data.get("optic_zone"),
-        dia=form_data.get("dia"),
+        design_pupil_color_id=design_pupil_color_id,
+        # 투명도 - 각 필드를 독립적으로 처리
+        line_transparency=get_with_default("line_transparency"),
+        base1_transparency=get_with_default("base1_transparency"),
+        base2_transparency=get_with_default("base2_transparency"),
+        pupil_transparency=get_with_default("pupil_transparency"),
+        # 사이즈 - 각 필드를 독립적으로 처리
+        line_size=get_with_default("line_size"),
+        base1_size=get_with_default("base1_size"),
+        base2_size=get_with_default("base2_size"),
+        pupil_size=get_with_default("pupil_size"),
+        # 기타 옵션
+        graphic_diameter=empty_to_none(form_data.get("graphic_diameter")),
+        optic_zone=empty_to_none(form_data.get("optic_zone")),
+        dia=empty_to_none(form_data.get("dia")),
         status="0"  # 기본값 '0' (대기) 상태로 설정
     )
 

@@ -9,29 +9,42 @@ from fastapi import HTTPException
 
 # Manager/custom_design/crud/custom_design.py (일부분만)
 def create_design(db: Session, design: custom_design_schema.CustomDesignCreate, user_id: str):
+    # 빈 문자열을 None으로 변환하는 헬퍼 함수
+    def empty_to_none(value: Optional[str]) -> Optional[str]:
+        if value is None or value == "" or (isinstance(value, str) and value.strip() == ""):
+            return None
+        return value
+
     db_design = models.CustomDesign(
-        item_name=design.item_name,
-        request_message=design.request_message,
-        main_image_url=design.main_image_url,
-        design_line_image_id=design.design_line_image_id,
-        design_line_color_id=design.design_line_color_id,
-        design_base1_image_id=design.design_base1_image_id,
-        design_base1_color_id=design.design_base1_color_id,
-        design_base2_image_id=design.design_base2_image_id,
-        design_base2_color_id=design.design_base2_color_id,
-        design_pupil_image_id=design.design_pupil_image_id,
-        design_pupil_color_id=design.design_pupil_color_id,
-        line_transparency=design.line_transparency,
-        base1_transparency=design.base1_transparency,
-        base2_transparency=design.base2_transparency,
-        pupil_transparency=design.pupil_transparency,
-        line_size=design.line_size,
-        base1_size=design.base1_size,
-        base2_size=design.base2_size,
-        pupil_size=design.pupil_size,
-        graphic_diameter=design.graphic_diameter,
-        optic_zone=design.optic_zone,
-        dia=design.dia,
+        item_name=empty_to_none(design.item_name),
+        request_message=empty_to_none(design.request_message),
+        main_image_url=empty_to_none(design.main_image_url),
+        # 라인 (Line) - 각 필드를 독립적으로 처리
+        design_line_image_id=empty_to_none(design.design_line_image_id),
+        design_line_color_id=empty_to_none(design.design_line_color_id),
+        # 바탕1 (Base1) - 각 필드를 독립적으로 처리
+        design_base1_image_id=empty_to_none(design.design_base1_image_id),
+        design_base1_color_id=empty_to_none(design.design_base1_color_id),
+        # 바탕2 (Base2) - 각 필드를 독립적으로 처리
+        design_base2_image_id=empty_to_none(design.design_base2_image_id),
+        design_base2_color_id=empty_to_none(design.design_base2_color_id),
+        # 동공 (Pupil) - 각 필드를 독립적으로 처리
+        design_pupil_image_id=empty_to_none(design.design_pupil_image_id),
+        design_pupil_color_id=empty_to_none(design.design_pupil_color_id),
+        # 투명도 (Transparency) - 각 필드를 독립적으로 처리
+        line_transparency=empty_to_none(design.line_transparency),
+        base1_transparency=empty_to_none(design.base1_transparency),
+        base2_transparency=empty_to_none(design.base2_transparency),
+        pupil_transparency=empty_to_none(design.pupil_transparency),
+        # 사이즈 (Size) - 각 필드를 독립적으로 처리
+        line_size=empty_to_none(design.line_size),
+        base1_size=empty_to_none(design.base1_size),
+        base2_size=empty_to_none(design.base2_size),
+        pupil_size=empty_to_none(design.pupil_size),
+        # 기타 옵션
+        graphic_diameter=empty_to_none(design.graphic_diameter),
+        optic_zone=empty_to_none(design.optic_zone),
+        dia=empty_to_none(design.dia),
         user_id=user_id
     )
     db.add(db_design)
